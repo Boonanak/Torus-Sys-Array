@@ -9,3 +9,5 @@ Now I have edited this directly from the master
 I have now made my own branch 'sean' and am editing that
 
 Now I am writing some text from test branch
+
+Brian is also writing
