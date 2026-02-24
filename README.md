@@ -10,7 +10,7 @@ I have now made my own branch 'sean' and am editing that
 
 Now I am writing some text from test branch
 
-Brian is also writing
+Brian test on machine at home
 
 Boo vance was here
 
