@@ -26,7 +26,7 @@ module PE # (parameter OPERAND_WIDTH = 8
     logic [ACCUMULATE_WIDTH - 1 : 0] ALU_RESULT;
     assign ALU_RESULT = A * B + C_in; 
 
-    always_ff @(posedge clk) begin
+    always_ff @(posedge clk_i) begin
         if (reset) begin
             C_out_reg <= '0;
         end else begin

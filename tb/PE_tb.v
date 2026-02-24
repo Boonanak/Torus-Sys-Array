@@ -34,6 +34,9 @@ module PE_tb;
     // Stimulus
     // REPLACE WITH BSG_TAG LATER, just basic and simple directed tests for now.
     initial begin
+
+        $dumpfile("PE_tb.vcd");
+        $dumpvars();
         // Initialize Inputs
         reset = 1;
         A = 0;
