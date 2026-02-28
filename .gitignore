@@ -1,0 +1,9 @@
+# Ignore PDK/Cell Library formats
+*.lib
+*.db
+*.lef
+*.def
+*.gds
+*.mil
+*.view
+*.tlef
