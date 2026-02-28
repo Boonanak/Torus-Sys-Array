@@ -8,7 +8,6 @@
 // ACCUMULATE_WIDTH: bit width of accumulated sum and output C.
 //                   assumed to be enough with 2 * OPERAND_WIDTH.
 //                   technically requires 2 * OPERAND_WIDTH + $CLOG2(SIZE OF SYSTOLIC ARRAY)
-
 import PE_pkg::*;
 
 module PE  // parametrize for ready/valid handshake interface
@@ -24,7 +23,7 @@ module PE  // parametrize for ready/valid handshake interface
 
     // intermediate logic to connect to multiply module with pipelining in future.
     int16_t ALU_RESULT;
-    assign ALU_RESULT.value = A_in.value * B_in.value + Partial_Sum_in.value; 
+    assign ALU_RESULT = A_in * B_in + Partial_Sum_in; 
 
     always_ff @(posedge clk_i) begin
         if (reset) begin
