@@ -1,0 +1,15 @@
+# List of all Verilog source files to include in this build.
+# Used by both synthesis and RTL simulation.
+
+synthesis.inputs.input_files: [
+  # TODO: list verilog files
+  # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
+  "v/PE_pkg.sv",
+  "v/PE.sv",
+]
+synthesis.inputs.input_files_meta: [append, subst]
+
+# Add synthesis input files to simulation inputs
+# (Only for RTL sim)
+sim.inputs.input_files: synthesis.inputs.input_files
+sim.inputs.input_files_meta: [crossref, subst]
