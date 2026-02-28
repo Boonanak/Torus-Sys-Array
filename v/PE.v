@@ -9,28 +9,32 @@
 //                   assumed to be enough with 2 * OPERAND_WIDTH.
 //                   technically requires 2 * OPERAND_WIDTH + $CLOG2(SIZE OF SYSTOLIC ARRAY)
 
-module PE # (parameter OPERAND_WIDTH = 8
-            ,parameter ACCUMULATE_WIDTH = 16)
-    (input clk_i
-    ,input reset
-    ,input [OPERAND_WIDTH - 1 : 0] A
-    ,input [OPERAND_WIDTH - 1 : 0] B
-    ,input [ACCUMULATE_WIDTH - 1 : 0] C_in
-    ,output [ACCUMULATE_WIDTH - 1 : 0] C_out
+import PE_pkg::*;
+
+module PE  // parametrize for ready/valid handshake interface
+    (input      logic       clk_i
+    ,input      logic       reset
+    ,input      int8_t      A_in
+    ,input      int8_t      B_in
+    ,input      int16_t     Partial_Sum_in
+    ,output     int8_t      A_out
+    ,output     int8_t      B_out   // TODO: add logic to send B_out and Partial_Sum_out on same wires
+    ,output     int16_t     Partial_Sum_out
     );
 
-    logic [ACCUMULATE_WIDTH - 1 : 0] C_out_reg;
-    assign C_out = C_out_reg;
-
     // intermediate logic to connect to multiply module with pipelining in future.
-    logic [ACCUMULATE_WIDTH - 1 : 0] ALU_RESULT;
-    assign ALU_RESULT = A * B + C_in; 
+    int16_t ALU_RESULT;
+    assign ALU_RESULT.value = A_in.value * B_in.value + Partial_Sum_in.value; 
 
     always_ff @(posedge clk_i) begin
         if (reset) begin
-            C_out_reg <= '0;
+            Partial_Sum_out <= '0;
+            A_out <= '0;
+            B_out <= '0;
         end else begin
-            C_out_reg <= ALU_RESULT;
+            Partial_Sum_out <= ALU_RESULT;
+            A_out <= A_in;
+            B_out <= B_in;
         end
     end
     
