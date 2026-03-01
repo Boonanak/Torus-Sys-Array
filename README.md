@@ -33,5 +33,7 @@ these wraparound links are long interconnects, which poses significant timing, p
 
 # Solution (work in progress)
 We intend on minimizing the interconnect length by applying additional shuffling to the twisted torus based TPU.
+<img width="1822" height="3199" alt="image" src="https://github.com/user-attachments/assets/342e3d0d-7130-4525-b137-3418bcec8207" />
 <img width="2517" height="6737" alt="image" src="https://github.com/user-attachments/assets/d4345515-9c13-4035-8122-d21e2a615876" />
+
 
