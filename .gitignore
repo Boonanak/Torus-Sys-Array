@@ -8,6 +8,11 @@
 *.view
 *.tlef
 
+# Hammer files, logs, reports that might contain some info to be safe
+build/*
+hammer.log
+output.json
+
 # waveforms / simulation files
 *.vvp
 *.vcd
