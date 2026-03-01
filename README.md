@@ -23,7 +23,7 @@ When we want to do a matrix multiply operation A x B = C with a weight stationar
 <img width="1728" height="822" alt="image" src="https://github.com/user-attachments/assets/df279c21-77e1-44ff-a03b-01678f754cf6" />
 this creates two problems. first is that area efficiency of systolic array is reduced from the shift registers in red triangular area to correctly support skew. second is that now compute takes 7 cycles, instead of four if all the rows are aligned. this can be problematic in cases where it is compute bound and matrix weights of B is consistently changing, because the total matrix multiplication operation takes (cycles to load matrix B + cycles to shift A through PE's) and this impacts not only latency but also throughput. note that if matrix B rarely changes and next data is always ready, we can coalesce next and previous weights of matrix A and we would have same throughput as if we had all data aligned, but if B frequently changes we cannot do that because we must wait for B to correctly be loaded into the systolic array.
 
-## Reference Solution
+## Ideas and Previous works
 simply rearranging the diagram a bit does not solve the problem as there are still shift registers and skew problem, but reveals us an idea that leads to this publication: https://ieeexplore.ieee.org/document/11098764
 <img width="1574" height="549" alt="image" src="https://github.com/user-attachments/assets/e1aeaab8-4eea-4823-9365-575d819bb32a" />
 The core idea is that we can wrap around the PE's that extend out of regular 4x4 grid structure (B24, B33, B34, B42, B43, B44) and bring it back into the 4x4 grid.
@@ -31,9 +31,16 @@ The core idea is that we can wrap around the PE's that extend out of regular 4x4
 There are additional wraparound link from B_4j to B_1j to accomodate for the changes, which leads us to a twisted torus shaped systolic array.
 these wraparound links are long interconnects, which poses significant timing, power, and routing issues.
 
-# Solution (work in progress)
-We intend on minimizing the interconnect length by applying additional shuffling to the twisted torus based TPU.
+# Our Solution (work in progress, advised by Prof. Ang Li)
+We intend on minimizing the interconnect length by applying additional shuffling to the twisted torus based TPU. This in turn requires slightly more complex structure where not only partial sums, but also matrix weights of A and B must also move in diagonal direction.
+Below is a diagram for loading weights.
 <img width="1822" height="3199" alt="image" src="https://github.com/user-attachments/assets/342e3d0d-7130-4525-b137-3418bcec8207" />
+
+Below is a diagram for actual computation after loading weights
 <img width="2517" height="6737" alt="image" src="https://github.com/user-attachments/assets/d4345515-9c13-4035-8122-d21e2a615876" />
 
+A challenge and complexity of this problem now comes to generating the initial pattern of B in hardware efficient manner and at maximum throughput.
+<img width="682" height="566" alt="image" src="https://github.com/user-attachments/assets/e35d7e25-e7f1-49ae-b8f3-12ab46ed677a" />
 
+we must first convert the data into column major, so that we can shift each column by preset amount (different for each column, but it is set for each column). To convert row major data into column major data, we can use transposer designed similarly to GEMMINI (https://github.com/ucb-bar/gemmini/blob/master/src/main/scala/gemmini/Transposer.scala) to ensure full throughput transposition, then design a shifter with FSM to control how much each column is shifted by. This logic can be extended to any size of systolic array, and Ang and his team has proven that this shifter network needs at most 3 hop to maintain 1 hop systolic array using coloring theory. The long interconnect routing is now offloaded from systolic array to transposer-shifter array, which is less demanding in performance as they are mostly designed with registers and muxes and does not have its associated multiplier/adders.
+We can further improve throughput.
