@@ -2,6 +2,7 @@
 EE 478 Capstone Project. Testing PPA differences between a conventional weight-stationary systolic array and a new torus architecture systolic array
 
 # Directory
+```bash
 ├── docs/               # Specs, pinout diagrams, and registers
 ├── hdl/                # Hardware Description Language files
 │   ├── rtl/            # Synthesizable logic (Verilog/VHDL)
@@ -14,7 +15,7 @@ EE 478 Capstone Project. Testing PPA differences between a conventional weight-s
 ├── layout/             # GDSII, LEF, DEF, and floorplan files
 ├── verification/       # Formal, STA (Timing), and Power analysis
 └── third_party/        # IP cores or external libraries (as submodules)
-
+```
 # Problem we intend to address
 <img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/07a91294-237e-40b5-9c24-dea08b597701" />
 As this wikipedia image from https://en.wikipedia.org/wiki/Systolic_array#/media/File:Weights_Stationary_Systolic_Array_Example.png shows, 
@@ -32,3 +33,4 @@ these wraparound links are long interconnects, which poses significant timing, p
 
 # Solution (work in progress)
 We intend on minimizing the interconnect length by applying additional shuffling to the twisted torus based TPU.
+
