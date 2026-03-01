@@ -13,6 +13,11 @@ build/*
 hammer.log
 output.json
 
+# allow to personally modify the toplevel based on what you are working on.
+# do not push this to remote since people will have merge conflicts!
+cfg/cfg.yml
+
+
 # waveforms / simulation files
 *.vvp
 *.vcd
