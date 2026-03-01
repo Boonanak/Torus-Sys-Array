@@ -10,7 +10,7 @@ module PE_tb;
 
   /* Non-synth clock generator */
   logic clk;
-  bsg_nonsynth_clock_gen #(3310) clk_gen_1 (clk);
+  bsg_nonsynth_clock_gen #(7500) clk_gen_1 (clk);
 
   /* Non-synth reset generator */
   logic reset;
