@@ -1,8 +1,8 @@
 # Main hammer config file
 
 # TODO: Set top levels
-synthesis.inputs.top_module: "PE"
-sim.inputs.tb_name: "PE_tb"
+synthesis.inputs.top_module: "PE_combine_B_PS"
+sim.inputs.tb_name: "PE_combine_B_PS_tb"
 
 # Don't synthesize these gate-level netlist modules
 # TODO: List the names of any modules that don't require synthesis

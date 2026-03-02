@@ -6,6 +6,7 @@ synthesis.inputs.input_files: [
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
   "v/PE_pkg.sv",
   "v/PE.sv",
+  "v/PE_combine_B_PS.sv",
 ]
 synthesis.inputs.input_files_meta: [append, subst]
 

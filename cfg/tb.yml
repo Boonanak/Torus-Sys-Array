@@ -9,6 +9,7 @@ sim.inputs.tb_incdir_meta: [subst]
 sim.inputs.tb_input_files: [
   # TODO: list verilog files
   "v/PE_tb.sv",
+  "v/PE_combine_B_PS_tb.sv",
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_test/bsg_nonsynth_clock_gen.v",

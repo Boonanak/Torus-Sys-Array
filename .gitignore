@@ -7,6 +7,10 @@
 *.mil
 *.view
 *.tlef
+novas.conf
+novas.rc
+verdiLog/*
+
 
 # Hammer files, logs, reports that might contain some info to be safe
 build/*

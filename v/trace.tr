@@ -7,29 +7,48 @@
 0000__00000000_00000000_00000000_00000000
 0000__00000000_00000000_00000000_00000000
 
-### Happy case
-#SEND| A_in=5 | B_in=5 | Partial_Sum_in=5
-0001__00000101_00000101_0000000000000101
-#RECV| A_out=5 | B_out=5 | Partial_Sum_Out=30
-0010__00000101_00000101_0000000000011110
+### load B = 3, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______1__________00101100_________10111000_00000011
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________00101100_________00000000_00000011
 
-### handle negative
-#SEND| A_in=-5 | B_in=15 | Partial_Sum_in=30
-0001__11111011_00001111_0000000000011110
-#RECV| A_out=-5 | B_out=5 | Partial_Sum_Out=-45
-0010__11111011_00001111_1111111111010011
+### feed A = 5, PS = 25, PS_out = 5 * 3 + 25 = 40
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______0__________00000101_________00000000_00011001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________00000101_________00000000_00101000
 
-### handle negative * negative
-#SEND| A_in=-15 | B_in=-15 | Partial_Sum_in=-45
-0001__11110001_11110001_1111111111010011
-#RECV| A_out=-15 | B_out=-15 | Partial_Sum_Out=180
-0010__11110001_11110001_0000000010110100
+### feed A = -15, PS = 40, PS_out = -15 * 3 + 40 = -5
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______0__________11110001_________00000000_00101000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________11110001_________11111111_11111011
 
-### overflow test case
-#SEND| A_in=127 | B_in=127 | Partial_Sum_in=16641 (just enough to overflow)
-0001__01111111_01111111_0100000100000001
-#RECV| A_out=127 | B_out=127 | Partial_Sum_Out=-32766
-0010__01111111_01111111_1000000000000010
+### load B = -17, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______1__________11111111_________00010000_11101111
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________11111111_________00000000_11101111
+
+### feed A = -2, PS = -72, PS_out = -2 * -17 - 72 = -38
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______0__________11111110_________11111111_10111000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________11111110_________11111111_11011010
+
+### load B = 127, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______1__________11111111_________00001100_01111111
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________11111111_________00000000_01111111
+
+### feed A = 127, PS = 16641, PS_out = 127 * 127 + 16641 = 32770 > 32767 (max value for 16bit signed int)
+### THIS SHOULD OVERFLOW TO -32766
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______0__________01111111_________01000001_00000001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______0__________01111111_________10000000_00000010
 
 # Finish simulation
-0100__00000000_00000000_00000000_00000000
+0100__0_00000000_00000000_00000000
