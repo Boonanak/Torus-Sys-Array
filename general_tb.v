@@ -4,7 +4,9 @@
 // optional handshake logic, and trace replay
 //
 
-module gcd_tb;
+module general_tb;
+
+    localparam int PERIOD = 1000;
 
   /* Dump Test Waveform To VPD File */
   initial begin
