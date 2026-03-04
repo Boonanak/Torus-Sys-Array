@@ -12,6 +12,8 @@ def write_trace(file_name):
                 match tb_type:
                     case "PE":
                         trace.write(parse_PE_line(line))
+                    case "SR":
+                        trace.write(parse_SR_line(line))
                     case "TU":
                         trace.write(parse_TU_line(line))
                     case "ARR":
@@ -24,7 +26,7 @@ def write_trace(file_name):
 
 def parse_PE_line(PE_line):
     space_i = PE_line.find(' ')
-    command = PE_line[:space_i]
+    command = PE_line[:space_i] if space_i > 0 else PE_line
     trace_line = ''
     match command.casefold():
         case 'load':
@@ -52,13 +54,46 @@ def parse_PE_line(PE_line):
             for i in range(n):
                 trace_line += "0000__00000000_00000000_00000000_00000000\n"
         case 'end':
-            trace_line += "ENDING SIMULATION\n0100__0_00000000_00000000_00000000\n"
-        case _:
+            trace_line += "# ENDING SIMULATION\n0100__0_00000000_00000000_00000000\n"
+        case '###':
             trace_line += PE_line
     return trace_line + '\n'
 
+def parse_SR_line(SR_line):
+    return SR_line
+
 def parse_TU_line(TU_line):
-    return TU_line
+    space_i = TU_line.find(' ')
+    command = TU_line[:space_i] if space_i > 0 else TU_line
+    print(command)
+    trace_line = ''
+    match command.casefold():
+        case 'load':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line += f"# SEND  |  {numbers}\n"
+            trace_line += f"0001_________"
+            for i in range(12):
+                trace_line += "_00000000"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'recv':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line += f"# RECV  |     0    |   {numbers}\n"
+            trace_line += f"0010_________"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'wait':
+            n = int(TU_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += "0000__00000000_00000000_00000000_00000000\n"
+        case 'end':
+            trace_line += "# ENDING SIMULATION\n0100__0_00000000_00000000_00000000\n"
+        case '###':
+            trace_line += TU_line
+    return trace_line + '\n'
 
 def parse_ARR_line(ARR_line):
     return ARR_line
@@ -94,4 +129,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('PE_test.txt')
+write_trace('TU_test.txt')
