@@ -1,0 +1,11 @@
+DFF
+wait 6
+load 0 1
+recv 0
+load 1 1
+recv 1
+load 1 -6
+recv -6
+load 0 -10
+recv -6
+end

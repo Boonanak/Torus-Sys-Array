@@ -1,0 +1,24 @@
+PE
+wait 6
+### load B = 3, A propagates, B sets top 8 bits to 0 and propagates
+load 44 184 3
+recv 44 3
+### feed A = 5, PS = 25, PS_out = 5 * 3 + 25 = 40
+compute 5 25
+recv 5 40
+### feed A = -15, PS = 40, PS_out = -15 * 3 + 40 = -5
+compute -15 40
+recv -15 -5
+### load B = -17, A propagates, B sets top 8 bits to 0 and propagates
+load 255 16 -17
+recv 255 -17
+### feed A = -2, PS = -72, PS_out = -2 * -17 - 72 = -38
+compute -2 -72
+recv -2 -38
+### load B = 127, A propagates, B sets top 8 bits to 0 and propagates
+load 255 12 127
+recv 255 127
+### feed A = 127, PS = 16641, PS_out = 127 * 127 + 16641 = 32770 > 32767 (max value for 16bit signed int)
+compute 127 16641
+recv 127 -32766
+end
