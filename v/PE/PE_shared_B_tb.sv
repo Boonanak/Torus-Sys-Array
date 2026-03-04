@@ -29,7 +29,7 @@ module PE_shared_B_tb;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [35:0] rom_data_lo;
+  logic [29:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
 
