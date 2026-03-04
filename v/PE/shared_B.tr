@@ -1,0 +1,102 @@
+
+# Wait 6 Cycles
+0000__00000000_00000000_00000000_00000000
+0000__00000000_00000000_00000000_00000000
+0000__00000000_00000000_00000000_00000000
+0000__00000000_00000000_00000000_00000000
+0000__00000000_00000000_00000000_00000000
+0000__00000000_00000000_00000000_00000000
+
+###### load_B = {load_B_through_A, load_B_through_PS}
+###### assert 10 to load through A, 01 to load through PS
+###### assert 00 to compute, and 11 undefined
+
+### load B = 3, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______01__________00101100_________10111000_00000011
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________00101100_________00000000_00000011
+
+### feed A = 5, PS = 25, PS_out = 5 * 3 + 25 = 40
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________00000101_________00000000_00011001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________00000101_________00000000_00101000
+
+### feed A = -15, PS = 40, PS_out = -15 * 3 + 40 = -5
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________11110001_________00000000_00101000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11110001_________11111111_11111011
+
+### load B = -17, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______01__________11111111_________00010000_11101111
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11111111_________00000000_11101111
+
+### feed A = -2, PS = -72, PS_out = -2 * -17 - 72 = -38
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________11111110_________11111111_10111000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11111110_________11111111_11011010
+
+### load B = 127, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______01__________11111111_________00001100_01111111
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11111111_________00000000_01111111
+
+### feed A = 127, PS = 16641, PS_out = 127 * 127 + 16641 = 32770 > 32767 (max value for 16bit signed int)
+### THIS SHOULD OVERFLOW TO -32766
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________01111111_________01000001_00000001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________01111111_________10000000_00000010
+
+###### repeat but load using A
+### load B = 3, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______10__________00000011_________10111000_00000011
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________00000011_________00000000_00000000
+
+### feed A = 5, PS = 25, PS_out = 5 * 3 + 25 = 40
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________00000101_________00000000_00011001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________00000101_________00000000_00101000
+
+### feed A = -15, PS = 40, PS_out = -15 * 3 + 40 = -5
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________11110001_________00000000_00101000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11110001_________11111111_11111011
+
+### load B = -17, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______10__________11101111_________00010000_11101101
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11101111_________00000000_00000000
+
+### feed A = -2, PS = -72, PS_out = -2 * -17 - 72 = -38
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________11111110_________11111111_10111000
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________11111110_________11111111_11011010
+
+### load B = 127, A propagates, B sets top 8 bits to 0 and propagates
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______10__________01111111_________00001100_01111111
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________01111111_________00000000_00000000
+
+### feed A = 127, PS = 16641, PS_out = 127 * 127 + 16641 = 32770 > 32767 (max value for 16bit signed int)
+### THIS SHOULD OVERFLOW TO -32766
+#SEND  |  load_B  |       A_in      |        shared_B_PS_in
+0001______00__________01111111_________01000001_00000001
+#RECV  |  0  |      A_out           |        shared_B_PS_out
+0010______00__________01111111_________10000000_00000010
+
+# Finish simulation
+0100__00x_00000000_00000000_00000000
