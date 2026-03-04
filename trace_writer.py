@@ -3,7 +3,7 @@
 def write_trace(file_name):
     index = 0
     tb_type = ''
-    with open(file_name, 'r') as file, open('trace.tr', 'w') as trace:
+    with open(file_name, 'r') as file, open('trace_SR.tr', 'w') as trace:
         for line in file:
             line = line.rstrip()
             if(index == 0):
