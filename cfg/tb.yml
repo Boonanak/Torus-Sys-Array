@@ -8,8 +8,13 @@ sim.inputs.tb_incdir_meta: [subst]
 # List of Verilog testbenches (or other sources) needed for simulation only.
 sim.inputs.tb_input_files: [
   # TODO: list verilog files
-  "v/PE_tb.sv",
-  "v/PE_combine_B_PS_tb.sv",
+  "v/PE/PE_tb.sv",
+  "v/PE/PE_combine_B_PS_tb.sv",
+
+  "v/transpose/dff_en_tb.v",
+  "v/transpose/shift_reg_tb.v",
+  "v/transpose/transpose_tb.v",
+
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_test/bsg_nonsynth_clock_gen.v",
@@ -20,5 +25,6 @@ sim.inputs.tb_input_files_meta: [append, subst]
 
 # List of trace files for the simulation
 sim.inputs.trace_files: [
-  "v/trace.tr",
+  "v/PE/trace.tr",
+  "v/PE/trace_separateBPS.tr",
 ]

@@ -62,7 +62,7 @@ module PE_tb;
     dut_data_r  <= dut_data_lo;
   end
 
-  trace_rom #(.width_p(36),.addr_width_p(32))
+  trace_separateBPS_rom #(.width_p(36),.addr_width_p(32))
     ROM
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
