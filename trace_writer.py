@@ -12,6 +12,8 @@ def write_trace(file_name):
                 match tb_type:
                     case "PE":
                         trace.write(parse_PE_line(line))
+                    case "DFF":
+                        trace.write(parse_DFF_line(line))
                     case "SR":
                         trace.write(parse_SR_line(line))
                     case "TU":
@@ -52,20 +54,75 @@ def parse_PE_line(PE_line):
             n = int(PE_line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line += "0000__00000000_00000000_00000000_00000000\n"
+                trace_line += f"0000__{'0'*25}\n"
         case 'end':
-            trace_line += "# ENDING SIMULATION\n0100__0_00000000_00000000_00000000\n"
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*25}\n"
         case '###':
             trace_line += PE_line
     return trace_line + '\n'
 
+def parse_DFF_line(DFF_line):
+    space_i = DFF_line.find(' ')
+    command = DFF_line[:space_i] if space_i > 0 else DFF_line
+    trace_line = ''
+    match command.casefold():
+        case 'load':
+            numbers = [int(n) for n in DFF_line[space_i:].split()]
+            en = numbers[0]
+            d = numbers[1]
+            trace_line += f"# SEND  | en={en} |   D = {d}\n"
+            trace_line += f"0001_____{en}_______{to_signed_nbit_binary(d, 8)}\n"
+        case 'recv':
+            q = int(DFF_line[space_i:])
+            trace_line += f"# RECV  |   Q = {q}\n"
+            trace_line += f"0010_____0_______{to_signed_nbit_binary(q, 8)}\n"
+        case 'wait':
+            n = int(DFF_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*9}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*9}\n"
+        case '###':
+            trace_line += DFF_line
+    return trace_line + '\n'
+
 def parse_SR_line(SR_line):
-    return SR_line
+    space_i = SR_line.find(' ')
+    command = SR_line[:space_i] if space_i > 0 else SR_line
+    trace_line = ''
+    match command.casefold():
+        case 'load':
+            numbers = [int(n) for n in SR_line[space_i:].split()]
+            write = numbers[0]
+            read = numbers[1]
+            data_i = numbers[2]
+            trace_line += f"# SEND  | write={write} | read={read} | data = {data_i}\n"
+            trace_line += f"0001______{write}____{read}_______{'_00000000'*7}_{to_signed_nbit_binary(data_i, 8)}\n"
+        case 'recv':
+            numbers = [int(n) for n in SR_line[space_i:].split()]
+            full = numbers[0]
+            empty = numbers[1]
+            numbers = numbers[2:]
+            trace_line += f"# RECV  | full={full} | empty={empty} | data = {numbers}\n"
+            trace_line += f"0010______{full}____{empty}_______"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'wait':
+            n = int(SR_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*66}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*66}\n"
+        case '###':
+            trace_line += SR_line
+    return trace_line + '\n'
 
 def parse_TU_line(TU_line):
     space_i = TU_line.find(' ')
     command = TU_line[:space_i] if space_i > 0 else TU_line
-    print(command)
     trace_line = ''
     match command.casefold():
         case 'load':
@@ -88,9 +145,9 @@ def parse_TU_line(TU_line):
             n = int(TU_line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line += "0000__00000000_00000000_00000000_00000000\n"
+                trace_line += f"0000__{'0'*128}\n"
         case 'end':
-            trace_line += "# ENDING SIMULATION\n0100__0_00000000_00000000_00000000\n"
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*128}\n"
         case '###':
             trace_line += TU_line
     return trace_line + '\n'
@@ -129,4 +186,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('TU_test.txt')
+write_trace('SR_test.txt')
