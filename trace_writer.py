@@ -1,9 +1,9 @@
 # Code to generate trace files
 
-def write_trace(file_name):
+def write_trace(input_file_name, trace_file_name):
     index = 0
     tb_type = ''
-    with open(file_name, 'r') as file, open('trace_SR.tr', 'w') as trace:
+    with open(input_file_name, 'r') as file, open(trace_file_name, 'w') as trace:
         for line in file:
             line = line.rstrip()
             if(index == 0):
@@ -186,4 +186,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('SR_test.txt')
+write_trace('DFF_test.txt', 'dff_en_trace.tr')

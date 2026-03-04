@@ -62,13 +62,13 @@ module dff_en_tb;
     dut_data_r  <= dut_data_lo;
   end
 
-  trace_rom #(.width_p(13),.addr_width_p(32))
+  dff_en_trace_rom #(.width_p(13),.addr_width_p(32))
     ROM
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
       );
 
-  shift_reg DUT
+  dff_en DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
@@ -77,6 +77,8 @@ module dff_en_tb;
 
     ,.data_o   ( dut_data_lo[7:0] )
     );
+
+  assign dut_data_lo[8] = 0;
 
   // no handshake logic. all ready/valid signal is 1.
   assign dut_ready_lo = '1;
