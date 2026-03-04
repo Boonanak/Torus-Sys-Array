@@ -27,5 +27,6 @@ sim.inputs.tb_input_files_meta: [append, subst]
 sim.inputs.trace_files: [
   "v/PE/trace.tr",
   "v/PE/trace_separateBPS.tr",
-  "v/transpose/dff_en_trace.tr"
+  "v/transpose/dff_en_trace.tr",
+  "v/transpose/shift_reg_trace.tr",
 ]

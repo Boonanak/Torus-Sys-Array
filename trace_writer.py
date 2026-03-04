@@ -186,4 +186,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('DFF_test.txt', 'dff_en_trace.tr')
+write_trace('SR_test.txt', 'shift_reg_trace.tr')
