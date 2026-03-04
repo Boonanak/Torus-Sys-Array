@@ -186,4 +186,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('SR_test.txt', 'shift_reg_trace.tr')
+write_trace('scripts/SR_test.txt', 'v/transpose/shift_reg_trace.tr')
