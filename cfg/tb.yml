@@ -11,9 +11,9 @@ sim.inputs.tb_input_files: [
   "v/PE/PE_tb.sv",
   "v/PE/PE_combine_B_PS_tb.sv",
 
-  "v/tranpose/dff_en_tb.v",
-  "v/tranpose/shift_reg_tb.v",
-  "v/tranpose/transpose_tb.v",
+  "v/transpose/dff_en_tb.v",
+  "v/transpose/shift_reg_tb.v",
+  "v/transpose/transpose_tb.v",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
@@ -26,5 +26,5 @@ sim.inputs.tb_input_files_meta: [append, subst]
 # List of trace files for the simulation
 sim.inputs.trace_files: [
   "v/PE/trace.tr",
-  "v/PE/trace_seperateBPS.tr",
+  "v/PE/trace_separateBPS.tr",
 ]
