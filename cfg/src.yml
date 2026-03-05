@@ -12,6 +12,9 @@ synthesis.inputs.input_files: [
   "v/transpose/dff_en.v",
   "v/transpose/shift_reg.v",
   "v/transpose/transpose.v",
+
+  "v/sys_array/col_gen.sv",
+  "v/sys_array/sys_array.sv",
 ]
 synthesis.inputs.input_files_meta: [append, subst]
 
