@@ -30,7 +30,7 @@ module PE_final
     int16_t alu_result;
 
     // should never overflow unless control logic for A and B is messed up
-    signed logic [16:0] intermediate;
+    logic signed [16:0] intermediate;
 
     always_comb begin 
         intermediate = A * B + PS;
@@ -54,7 +54,7 @@ module PE_final
 
     int8_t B_reg;
 
-    always_ff @(posedge clk) begin 
+    always_ff @(posedge clk_i) begin 
         if (reset) begin 
             B_reg   <= '0;
             A_out   <= '0;

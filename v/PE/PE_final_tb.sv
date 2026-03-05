@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module PE_shared_B_tb;
+module PE_final_tb;
 
     /* Dump Test Waveform To VPD File */
   initial begin
