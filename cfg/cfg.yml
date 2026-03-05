@@ -1,8 +1,8 @@
 # Main hammer config file
 
 # TODO: Set top levels
-synthesis.inputs.top_module: "shift_reg"
-sim.inputs.tb_name: "shift_reg_tb"
+synthesis.inputs.top_module: "PE_final"
+sim.inputs.tb_name: "PE_final_tb"
 
 # Don't synthesize these gate-level netlist modules
 # TODO: List the names of any modules that don't require synthesis
