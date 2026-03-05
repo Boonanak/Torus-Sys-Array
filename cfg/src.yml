@@ -7,6 +7,7 @@ synthesis.inputs.input_files: [
   "v/PE/PE_pkg.sv",
   "v/PE/PE.sv",
   "v/PE/PE_combine_B_PS.sv",
+  "v/PE/PE_shared_B.sv",
 
   "v/transpose/dff_en.v",
   "v/transpose/shift_reg.v",
