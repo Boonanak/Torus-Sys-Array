@@ -73,8 +73,8 @@ module PE_final_tb;
     (.clk_i  ( clk )
     ,.reset( reset )
 
-    ,.B_is_row_major    ( tr_data_lo[33] )
-    ,.load_B            ( tr_data_lo[32] )
+    ,.B_is_row_major    ( tr_data_lo[32] )
+    ,.load_B            ( tr_data_lo[33] )
     ,.A_in              ( tr_data_lo[31:16] )
     ,.PS_in             ( tr_data_lo[15:0]  )
 

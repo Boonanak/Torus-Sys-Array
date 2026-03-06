@@ -24,7 +24,7 @@ module PE_final
 
     // parsed inputs
     int8_t A;
-    int8_t B;  
+    int8_t B, B_reg;  
     int16_t PS;
 
     int16_t alu_result;
@@ -34,8 +34,8 @@ module PE_final
 
     always_comb begin 
         intermediate = A * B + PS;
-        alu_result = (intermediate < -32768) ? 16'h7FFF :
-                     (intermediate > 32767) ? 16'h8000 : intermediate[15:0];
+        alu_result = (intermediate < -32768) ? 16'h8000 :
+                     (intermediate > 32767) ? 16'h7FFF : intermediate[15:0];
     end
 
     always_comb begin
@@ -48,11 +48,9 @@ module PE_final
         else begin 
             A = (B_is_row_major) ? A_in[7:0] : PS_in[7:0];
             PS = (B_is_row_major) ? PS_in : A_in;
-            B = '0;
+            B = B_reg;
         end
     end
-
-    int8_t B_reg;
 
     always_ff @(posedge clk_i) begin 
         if (reset) begin 
