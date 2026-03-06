@@ -68,26 +68,44 @@ module tp_node_tb;
       ,.data_o( rom_data_lo )
       );
 
+  logic row = tr_data_lo[42:40];
+  logic col = tr_data_lo[39:37];
+  logic [7:0] data_pass_0_i  [0:DIM_p-1][0:DIM_p-1];
+  assign data_pass_0_i[row][col] = tr_data_lo[31:24];
+  logic [7:0] data_pass_1_i  [0:DIM_p-1][0:DIM_p-1];
+  assign data_pass_1_i[row][col] = tr_data_lo[23:16];
+  logic [7:0] data_shift_0_i [0:DIM_p-1][0:DIM_p-1];
+  assign data_shift_0_i[row][col] = tr_data_lo[15:8];
+  logic [7:0] data_shift_1_i [0:DIM_p-1][0:DIM_p-1];
+  assign data_shift_1_i[row][col] = tr_data_lo[7:0];
+  logic [7:0] data_out       [0:DIM_p-1][0:DIM_p-1];
+  assign dut_data_lo = {35'b0, data_out[row][col]};
+
   genvar r, c;
-  logic [7:0] data_pass_0_i  [0:WIDTH_p-1][0:WIDTH_p-1]
-  logic [7:0] data_pass_1_i  [0:WIDTH_p-1][0:WIDTH_p-1]
-  logic [7:0] data_shift_0_i [0:WIDTH_p-1][0:WIDTH_p-1]
-  logic [7:0] data_shift_1_i [0:WIDTH_p-1][0:WIDTH_p-1]
-  logic [7:0] data_out       [0:WIDTH_p-1][0:WIDTH_p-1]
-  
-  transpose DUT
-    (.clk_i    ( clk )
-    ,.rst_n_i  ( reset )
+  generate
+    for (r = 0; r < DIM_p; r = r + 1) begin : row_gen
+      for (c = 0; r < DIM_p; c = c + 1) begin : col_gen
+        tp_node #(
+          .WIDTH_p(8),
+          .DIM_p(8),
+          .NODE_COL_p(c),
+          .NODE_ROW_p(r)
+        ) DUT (
+          .clk_i   ( clk ),
+          .rst_n_i ( ~reset ),
+          .en_i    ( tr_data_lo[36] ),
 
-    ,.write_i  ( tr_data_lo[65] )
-    ,.read_i   ( tr_data_lo[64] )
+          .data_pass_0_i  ( data_pass_0_i[r][c] ),
+          .data_pass_1_i  ( data_pass_1_i[r][c] ),
+          .data_shift_0_i ( data_shift_0_i[r][c] ),
+          .data_shift_1_i ( data_shift_1_i[r][c] ),
+          .state_counter  ( tr_data_lo[35:32] ),
 
-    ,.data_i   ( tr_data_lo[7:0] )
-
-    ,.data_o   ( dut_data_lo[63:0] )
-    ,.full_o   ( dut_data_lo[65] )
-    ,.empty_o  ( dut_data_lo[64] )
-    );
+          .data_out       ( data_out[r][c] )
+        );
+      end
+    end
+  endgenerate
 
   // no handshake logic. all ready/valid signal is 1.
   assign dut_ready_lo = '1;
