@@ -18,6 +18,8 @@ def write_trace(input_file_name, trace_file_name):
                         trace.write(parse_DFF_line(line))
                     case "SR":
                         trace.write(parse_SR_line(line))
+                    case "TP_node":
+                        trace.write(parse_TP_node_line(line))
                     case "TU":
                         trace.write(parse_TU_line(line))
                     case "ARR":
@@ -90,7 +92,6 @@ def parse_PE_final_line(PE_line):
             trace_line += f"0001______0______{int(major)}______{A_in_trace if major else PS_in_trace}______{PS_in_trace if major else A_in_trace}\n"
         case 'recv':
             PE_line = PE_line[space_i+1:]
-            print(PE_line)
             space_i = PE_line.find(' ')
             major = True if PE_line[:space_i] == 'R' else False
             numbers = [int(n) for n in PE_line[space_i:].split()]
@@ -168,6 +169,38 @@ def parse_SR_line(SR_line):
             trace_line += f"# ENDING SIMULATION\n0100__{'0'*66}\n"
         case '###':
             trace_line += SR_line
+    return trace_line + '\n'
+
+def parse_TU_node_line(TU_line):
+    space_i = TU_line.find(' ')
+    command = TU_line[:space_i] if space_i > 0 else TU_line
+    trace_line = ''
+    match command.casefold():
+        case 'load':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line += f"# SEND  |  {numbers}\n"
+            trace_line += f"0001_________"
+            for i in range(12):
+                trace_line += "_00000000"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'recv':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line += f"# RECV  |     0    |   {numbers}\n"
+            trace_line += f"0010_________"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'wait':
+            n = int(TU_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*128}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*128}\n"
+        case '###':
+            trace_line += TU_line
     return trace_line + '\n'
 
 def parse_TU_line(TU_line):
