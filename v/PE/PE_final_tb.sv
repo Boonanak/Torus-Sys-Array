@@ -21,11 +21,11 @@ module PE_final_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [33:0] dut_data_lo, dut_data_r;
+  logic [34:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [33:0] tr_data_lo;
+  logic [34:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
@@ -33,7 +33,7 @@ module PE_final_tb;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(34)
+  bsg_fsb_node_trace_replay #(.ring_width_p(35)
                              ,.rom_addr_width_p(32) )
     trace_replay
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -63,7 +63,7 @@ module PE_final_tb;
   end
 
   // / 1 bit load_B / 1 bit row_major / 16 bits A / 16 bits B_PS / 4 bits for trace replay
-  PE_final_trace_rom #(.width_p(38),.addr_width_p(32))
+  PE_final_trace_rom #(.width_p(39),.addr_width_p(32))
     ROM_BPS
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
@@ -73,8 +73,9 @@ module PE_final_tb;
     (.clk_i  ( clk )
     ,.reset( reset )
 
-    ,.B_is_row_major    ( tr_data_lo[32] )
-    ,.load_B            ( tr_data_lo[33] )
+    ,.B_is_row_major_in    ( tr_data_lo[32] )
+    ,.load_B_in            ( tr_data_lo[33] )
+    ,.enable            ( tr_data_lo[34] )
     ,.A_in              ( tr_data_lo[31:16] )
     ,.PS_in             ( tr_data_lo[15:0]  )
 
@@ -85,7 +86,7 @@ module PE_final_tb;
   // no handshake logic. all ready/valid signal is 1.
   assign dut_ready_lo = '1;
   assign dut_v_lo = '1;
-  assign dut_data_lo[33:32] = '0;
+  assign dut_data_lo[34:32] = '0;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
