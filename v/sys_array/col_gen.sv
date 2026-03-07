@@ -8,25 +8,27 @@ module col_gen #(
 )(
     input  logic        clk,
     input  logic        reset,
-    input  logic        load_B_A,
-    input  logic        load_B_PS,
-    input  int8_t       data_in_A  [ROWS-1:0], // Inputs from the left
+    input  logic        load_B,
+    input  logic        row_major,
+    input  logic        enable,
+    input  logic [15:0] data_in_A  [ROWS-1:0], // Inputs from the left
     input  logic [15:0] data_in_PS [ROWS-1:0],
-    output int8_t       data_out_A [ROWS-1:0], // Outputs to the right
+    output logic [15:0] data_out_A [ROWS-1:0], // Outputs to the right
     output logic [15:0] data_out_PS[ROWS-1:0]
 );
     genvar i;
     generate
         for (i = 0; i < ROWS; i = i + 1) begin : pe_instances
-            PE_shared_B pe_cell (
+            PE_final pe_cell (
                 .clk_i             (clk),
                 .reset             (reset),
-                .load_B_through_A  (load_B_A),
-                .load_B_through_PS (load_B_PS),
-                .A_or_B_in         (data_in_A[i]),
-                .A_or_B_out        (data_out_A[i]),
-                .PS_or_B_in        (data_in_PS[i]),
-                .PS_or_B_out       (data_out_PS[i])
+                .load_B_in            (load_B),
+                .B_is_row_major_in (row_major),
+                .enable            (enable),
+                .A_in         (data_in_A[i]),
+                .A_out        (data_out_A[i]),
+                .PS_in        (data_in_PS[i]),
+                .PS_out       (data_out_PS[i])
             );
         end
     endgenerate

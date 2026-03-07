@@ -11,7 +11,7 @@ exit the generate statement for that column and move on to the next.
 
 NOTE THIS IS CURRENTLY SPECIFIC FOR A 4X4 MATRIX
 */
-`include "../PE/PE_pkg.sv" // There may be a more robust way to do this
+//`include "../PE/PE_pkg.sv" // There may be a more robust way to do this
 
 import PE_pkg::*;
 
@@ -23,40 +23,61 @@ module sys_array #(
 )(
     input  logic        clk,
     input  logic        reset,
-    input  logic        load_B_A,
-    input  logic        load_B_PS,
+    input  logic        load_B,
+    input  logic        row_major,
     
+
     // Data enters from the LEFTmost side of array
-    input  int8_t       A_in_left   [ROWS-1:0],
-    input  int16_t PS_in_left  [ROWS-1:0],
-    
+    input  int8_t      transposer_data   [ROWS-1:0],
+
     // Data exits from the RIGHTmost side of array
-    output int8_t       A_out_right  [ROWS-1:0],
-    output int16_t PS_out_right [ROWS-1:0]
+    output logic [15:0]      A_out_right  [ROWS-1:0],
+    output logic [15:0]      PS_out_right [ROWS-1:0],
+
+    input  logic        transposer_valid_in,
+    output logic        transposer_ready_out,
+    
+    input  logic        output_buffer_ready_in,
+    output logic        output_buffer_valid_out
 );
 
     // col_in_X[j] is the data waiting to enter the left side of column j
-    int8_t       col_in_A  [COLS:0][ROWS-1:0];
+    logic [15:0] col_in_A  [COLS:0][ROWS-1:0];
     logic [15:0] col_in_PS [COLS:0][ROWS-1:0];
 
+    // control signals derived from valid/ready
+    logic enable, PE_load_B;
+
+    // only do compute if output buffer can accept data
+    assign enable = output_buffer_ready_in & transposer_valid_in;
+    // load_B asserted from message handler FSM, 
+    // but it might not know if transposer's inputs are valid
+    assign PE_load_B = load_B & transposer_valid_in;  
+
+    // valid/ready handshake
+    assign transposer_ready_out = output_buffer_ready_in;
+    assign output_buffer_valid_out = enable;
+
     // Initial inputs feed into the first column (j=0)
-    assign col_in_A[0]  = A_in_left;
-    assign col_in_PS[0] = PS_in_left;
+    always_comb begin 
+        col_in_A[0]  = row_major ? {8'b0, transposer_data} : 16'b0;
+        col_in_PS[0] = row_major ? 16'b0 : {8'b0, transposer_data};
+    end
 
     genvar j;
     generate
         for (j = 0; j < COLS; j = j + 1) begin : column_loop
             
-            // Outputs emerging from the right side of the current column
-            int8_t       col_out_A  [ROWS-1:0];
+            logic [15:0] col_out_A  [ROWS-1:0];
             logic [15:0] col_out_PS [ROWS-1:0];
 
             // Instantiate the column slice
             col_gen #(.ROWS(ROWS)) column_inst (
                 .clk       (clk),
                 .reset     (reset),
-                .load_B_A  (load_B_A),
-                .load_B_PS (load_B_PS),
+                .load_B  (PE_load_B),
+                .row_major (row_major),
+                .enable    (enable),
                 .data_in_A (col_in_A[j]),
                 .data_in_PS(col_in_PS[j]),
                 .data_out_A(col_out_A),
