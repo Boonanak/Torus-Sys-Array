@@ -69,8 +69,8 @@ module sys_array_tb;
       ,.data_o( rom_data_lo )
       );
 
-  logic [7:0] input [3:0];
-  assign input = {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]};
+  logic [3:0][7:0] data_in;
+  assign data_in = {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]};
   sys_array DUT
     (.clk       ( clk )
     ,.reset     ( reset )
