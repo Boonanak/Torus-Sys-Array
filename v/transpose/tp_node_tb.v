@@ -86,7 +86,7 @@ module tp_node_tb;
   genvar r, c;
   generate
     for (r = 0; r < DIM_p; r = r + 1) begin : row_gen
-      for (c = 0; r < DIM_p; c = c + 1) begin : col_gen
+      for (c = 0; c < DIM_p; c = c + 1) begin : col_gen
         tp_node #(
           .WIDTH_p(8),
           .DIM_p(DIM_p),
