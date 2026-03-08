@@ -79,15 +79,17 @@ module transpose_tb;
     ,.valid_i ( tr_v_lo )
     ,.ready_i ( dut_yumi_li )
 
-    ,.valid_o ( dut_v_lo )
-    ,.ready_o ( dut_ready_lo )
+    //,.valid_o ( dut_v_lo )
+    //,.ready_o ( dut_ready_lo )
+    ,.valid_o (  )
+    ,.ready_o (  )
 
     ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
     );
 
   // no handshake logic. all ready/valid signal is 1.
-  // assign dut_ready_lo = '1;
-  // assign dut_v_lo = '1;
+  assign dut_ready_lo = '1;
+  assign dut_v_lo = '1;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
