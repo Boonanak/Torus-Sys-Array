@@ -72,16 +72,23 @@ module tp_node_tb;
 
   logic row = tr_data_lo[42:40];
   logic col = tr_data_lo[39:37];
-  wire [7:0] data_pass_0_i  [0:DIM_p-1][0:DIM_p-1];
-  assign data_pass_0_i[row][col] = tr_data_lo[31:24];
-  wire [7:0] data_pass_1_i  [0:DIM_p-1][0:DIM_p-1];
-  assign data_pass_1_i[row][col] = tr_data_lo[23:16];
-  wire [7:0] data_shift_0_i [0:DIM_p-1][0:DIM_p-1];
-  assign data_shift_0_i[row][col] = tr_data_lo[15:8];
-  wire [7:0] data_shift_1_i [0:DIM_p-1][0:DIM_p-1];
-  assign data_shift_1_i[row][col] = tr_data_lo[7:0];
-  wire [7:0] data_out       [0:DIM_p-1][0:DIM_p-1];
-  assign dut_data_lo = {35'b0, data_out[row][col]};
+  logic [7:0] data_pass_0_i  [0:DIM_p-1][0:DIM_p-1];
+  
+  logic [7:0] data_pass_1_i  [0:DIM_p-1][0:DIM_p-1];
+  
+  logic [7:0] data_shift_0_i [0:DIM_p-1][0:DIM_p-1];
+  
+  logic [7:0] data_shift_1_i [0:DIM_p-1][0:DIM_p-1];
+  
+  logic [7:0] data_out       [0:DIM_p-1][0:DIM_p-1];
+  
+  always_comb begin
+    assign data_pass_0_i[row][col] = tr_data_lo[31:24];
+    assign data_pass_1_i[row][col] = tr_data_lo[23:16];
+    assign data_shift_0_i[row][col] = tr_data_lo[15:8];
+    assign data_shift_1_i[row][col] = tr_data_lo[7:0];
+    assign dut_data_lo = {35'b0, data_out[row][col]};
+  end
 
   genvar r, c;
   generate
