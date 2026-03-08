@@ -88,8 +88,8 @@ module sys_array_tb;
     );
 
   // no handshake logic. all ready/valid signal is 1.
-  assign dut_ready_lo = '1;
-  assign dut_v_lo = '1;
+  //assign dut_ready_lo = '1;
+  //assign dut_v_lo = '1;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
