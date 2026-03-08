@@ -73,7 +73,7 @@ module transpose_tb;
     (.clk_i    ( clk )
     ,.rst_n_i  ( reset )
 
-    ,.col_major_i (  )
+    ,.col_major_i ( 1'b0 )
     ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
 
     ,.valid_i ( tr_v_lo )
