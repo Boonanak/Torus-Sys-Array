@@ -135,13 +135,11 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // so the output data is in the last row of the bus. 
     // if direction is 0, we are shifting left, so the output 
     // data is in the last column of the bus
-    integer i;
-    always_comb begin
+    generate
         for (int i = 0; i < DIM_p; i++) begin
             assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
-    end
-
+    endgenerate
     // Easier break-out of state counter bits
     assign direction = state_counter[DIM_CLOG2_p]; // top bit of the counter is the direction bit
     assign count = state_counter[DIM_CLOG2_p-1:0]; // bottom bits of the counter are the count

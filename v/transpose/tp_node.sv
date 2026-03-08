@@ -15,7 +15,7 @@ module tp_node #(parameter WIDTH_p = 8, // bitwidth of the stored data
                 input logic [WIDTH_p-1:0] data_pass_1_i, // data passed in from the mode 1 direction
                 input logic [WIDTH_p-1:0] data_shift_0_i, // data shifted in from mode 0 direction
                 input logic [WIDTH_p-1:0] data_shift_1_i, // data shifted in from mode 1 direction
-                input logic [$clog2(DIM_p)+1:0] state_counter, // external state counter to control the node's behavior
+                input logic [$clog2(DIM_p):0] state_counter, // external state counter to control the node's behavior
                                                                // top bit is the direction bit, bottom bits are the count within the current direction
                 output logic [WIDTH_p-1:0] data_out
                );
