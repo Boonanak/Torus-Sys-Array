@@ -22,7 +22,8 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     logic [DIM_CLOG2_p-1:0] count;
     
     // States for ready-valid logic
-    enum logic state_e {EMPTY, FILL, FULL, DRAIN} curr, next;
+    typedef enum logic [1:0] {EMPTY, FILL, FULL, DRAIN} state_e;
+    state_e curr, next;
     // EMPTY: no values are in the transposer
     // FILL: We are putting values in but the output is not valid yet
     // FULL: transposer is full, output is valid. we can maintain this if we read and write at the same time
