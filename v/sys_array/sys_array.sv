@@ -42,8 +42,8 @@ module sys_array #(
 );
 
     // col_in_X[j] is the data waiting to enter the left side of column j
-    logic [15:0] col_in_A  [COLS:0][ROWS-1:0];
-    logic [15:0] col_in_PS [COLS:0][ROWS-1:0];
+    logic [15:0] col_in_A  [COLS-1:0][ROWS-1:0];
+    logic [15:0] col_in_PS [COLS-1:0][ROWS-1:0];
 
     // control signals derived from valid/ready
     logic enable, PE_load_B;
@@ -62,8 +62,8 @@ module sys_array #(
     genvar i;
     generate
     for (i = 0; i < COLS; i = i + 1) begin 
-        col_in_A[0][i] = {8'b0, transposer_data[i]};
-        col_in_PS[0][i] = 16'b0;
+        col_in_A[i][0] = {8'b0, transposer_data[i]};
+        col_in_PS[i][0] = 16'b0;
     end
     endgenerate
 
