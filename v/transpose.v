@@ -1,12 +1,12 @@
 // A pipelined transpose module for a DIM_p x DIM_p matrix with WIDTH_p bit elements
 // Takes in a full row of an input matrix and outputs a full column of the transposed matrix
-module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DIM_p)
+module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
                     parameter WIDTH_p = 8, // Width of each element in bits
                     localparam DIM_CLOG2_p = $clog2(DIM_p)
                 ) (
                     input logic clk_i, 
                     input logic rst_n_i, // Active low reset
-                    input logic col_major_i, // input is in column-major order
+                    input logic col_major_i, // input is in column-major order (NONFUNCTIONAL)
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
@@ -25,14 +25,33 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     enum logic state_e {EMPTY, FILL, FULL, DRAIN} curr, next;
     // EMPTY: no values are in the transposer
     // FILL: We are putting values in but the output is not valid yet
-    // FULL: transposer is full, Output is valid. we can maintain this if we read and write at the same time
+    // FULL: transposer is full, output is valid. we can maintain this if we read and write at the same time
     // DRAIN: a value from the full transposer was read out before a new one could be read in, so we have to drain the whole transposer before accepting new input.
 
-    genvar i;
-    genvar j;
-    generate // Make the array of transposer nodes, magic interconnect logic
+    logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
+
+    genvar i; // row
+    genvar j; // col
+    generate // Make the array of transposer nodes, magic interconnect logic, row major input version
         for (i = 0; i < DIM_p; i++) begin : row_loop
             for (j = 0; j < DIM_p; j++) begin : col_loop // Iterate through each column first
+                logic [WIDTH_p-1:0] data_pass_0_i, data_pass_1_i, data_shift_0_i, data_shift_1_i;
+
+                // Pass-through data stream
+                //if row = 0 pass1 = in[col]
+                //if col = 0 pass0 = in[row]
+                //if col > 0 pass0 = bus[row][col-1]
+                //if row > 0 pass1 = bus[row-1][col]
+                data_pass_1_i = (i == 0) ? in_data[j] : tp_bus[i-1][j];
+                data_pass_0_i = (j == 0) ? in_data[i] : tp_bus[i][j-1];
+                
+                // Shift data stream
+                //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
+                //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
+                data_shift_0_i = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
+                data_shift_1_i = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
+
+                // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_P)
                          ,.DIM_p(DIM_p)
                          ,.NODE_COL_p(j)
@@ -41,13 +60,13 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
                          ,.en_i(enable)
-                         ,.data_pass_0_i()
-                         ,.data_pass_1_i()
-                         ,.data_shift_0_i()
-                         ,.data_shift_1_i()
+                         ,.data_pass_0_i(data_pass_0_i)
+                         ,.data_pass_1_i(data_pass_1_i)
+                         ,.data_shift_0_i(data_shift_0_i)
+                         ,.data_shift_1_i(data_shift_1_i)
                          ,.state_counter(state_counter)
-                         ,.data_out()
-                         )
+                         ,.data_out(tp_bus[i][j])
+                         );
             end
         end
     endgenerate
@@ -71,7 +90,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 ready_o <= 1'b1;
                 valid_o <= 1'b0;
                 if (valid_i) begin
-                    state_counter <= state_counter + 1; // Increment count if we have valid input data
+                    state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
                     enable <= 1'b1; // Enable the nodes to shift in the data
                 end else begin
                     enable <= 1'b0; // Hold the data in place if we don't have valid input data
@@ -79,7 +98,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
             end else if (curr == FULL) begin
                 valid_o <= 1'b1;
                 if (ready_i) begin
-                    state_counter <= state_counter + 1; // Increment count if we have valid input data
+                    state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
                     enable <= 1'b1; 
                     ready_o <= 1'b1; // We can accept new data if old data is being read out
                 end else begin
@@ -90,7 +109,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 ready_o <= 1'b0; // Not ready to accept new data when draining
                 valid_o <= 1'b1; // Output is still valid when draining
                 if (ready_i) begin
-                    state_counter <= state_counter + 1; 
+                    state_counter <= state_counter + 1'b1; 
                     enable <= 1'b1; // Enable the nodes to shift out the data
                 end else begin
                     enable <= 1'b0; // Hold the data in place
@@ -100,6 +119,8 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     end
 
     // Next-state logic 
+    // NOTE: Potential for glitches if valid_i glitches, we could go to the wrong state. 
+    // Mostly only a problem for FULL -> DRAIN which would cause lost throughput
     always_comb begin
         case(curr)
             EMPTY: next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
@@ -109,9 +130,31 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         endcase
     end
 
+    // if direction is 1, we are shifting up, 
+    // so the output data is in the last row of the bus. 
+    // if direction is 0, we are shifting left, so the output 
+    // data is in the last column of the bus
+    always_comb begin
+        for (int i = 0; i < DIM_p; i++) begin
+            out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+        end
+    end
+
     // Easier break-out of state counter bits
     assign direction = state_counter[DIM_CLOG2_p]; // top bit of the counter is the direction bit
     assign count = state_counter[DIM_CLOG2_p-1:0]; // bottom bits of the counter are the count
+
+    // Assertions to check for valid parameter settings
+    initial begin
+        assert ((DIM_p & (DIM_p - 1)) == 0)
+            else $fatal("DIM_p (%0d) must be a power of 2", DIM_p);
+        assert (col_major_i == 1'b0)
+            else $fatal("col_major_i must be 0 for row-major input, column-major input is not supported");
+        assert (DIM_p > 1)
+            else $fatal("DIM_p (%0d) must be greater than 1", DIM_p);
+        assert (WIDTH_p > 0)
+            else $fatal("WIDTH_p (%0d) must be greater than 0", WIDTH_p);
+    end
 
 endmodule
 
@@ -126,5 +169,13 @@ if ready_i is set, advance the pipeline until it goes false
 if there is valid data to put into the pipeline that can immediatly follow the previous, keep accpeting new data
 if not, set ~ready_o and wait to empty the pipeline
 once empty, reset, ready_o
+============================================
+if row = 0 pass1 = input data
+if col = 0 pass0 = input data
 
+if col > 0 shift0 = bus[col-1][row-1] unless row-1 = -1, then shift0 = bus[col-1][DIM_p-1]
+if col > 0 pass0 = bus[col-1][row]
+
+if row > 0 shift1 = bus[col-1][row-1] unless col-1 = -1, then shift1 = bus[DIM_p-1][row-1]
+if row > 0 pass1 = bus[col][row-1]
 */
