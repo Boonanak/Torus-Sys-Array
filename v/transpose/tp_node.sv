@@ -2,7 +2,7 @@
 // Has 4 input data streams, and will chose one to be the output 
 // Output selection takes into account the parameterized position and the 
 // current value of the counter, which is used to control the behavior of the node
-module tp_node (parameter WIDTH_p = 8, // bitwidth of the stored data
+module tp_node #(parameter WIDTH_p = 8, // bitwidth of the stored data
                 parameter DIM_p = 8, // dimension of the transposer (ONLY SUPPORTS powers of 2)
                 parameter NODE_COL_p = 0, // this nodes column index in the transposer
                 parameter NODE_ROW_p = 0  // this nodes row index in the transposer
