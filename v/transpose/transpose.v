@@ -53,7 +53,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 assign data_shift_1_i = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
 
                 // Transposer node instantiation
-                tp_node #(.WIDTH_p(WIDTH_P)
+                tp_node #(.WIDTH_p(8)
                          ,.DIM_p(DIM_p)
                          ,.NODE_COL_p(j)
                          ,.NODE_ROW_p(i)
