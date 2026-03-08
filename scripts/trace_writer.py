@@ -238,7 +238,44 @@ def parse_TU_line(TU_line):
     return trace_line + '\n'
 
 def parse_ARR_line(ARR_line):
-    return ARR_line
+    space_i = ARR_line.find(' ')
+    command = ARR_line[:space_i] if space_i > 0 else ARR_line
+    trace_line = ''
+    match command.casefold():
+        case 'loadb':
+            ARR_line = ARR_line[space_i+1:]
+            space_i = ARR_line.find(' ')
+            major = True if ARR_line[:space_i] == 'R' else False
+            numbers = [int(n) for n in ARR_line[space_i:].split()]
+            trace_line += f"# SEND  |   1   | {'row maj' if major else 'col maj'} | B[i] = {numbers}\n"
+            trace_line += f"0001______1______{int(major)}______{'0'*94}_______"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'compute':
+            numbers = [int(n) for n in ARR_line[space_i:].split()]
+            trace_line += f"# SEND  |   0   | row maj | A[i] = {numbers}\n"
+            trace_line += f"0001______0______1_____________{'0'*94}_______"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line += '\n'
+        case 'recv':
+            numbers = [int(n) for n in ARR_line[space_i:].split()]
+            trace_line += f"# RECV  |    00    | A[i] = [0, 0, 0, 0] | C[i] = {numbers}\n"
+            trace_line += f"0010______0______0_____{'_0000000000000000'*4}_______"
+            for n in numbers:
+                trace_line += f"_{to_signed_nbit_binary(n, 16)}"
+            trace_line += '\n'
+        case 'wait':
+            n = int(ARR_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*128}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*128}\n"
+        case '###':
+            trace_line += ARR_line
+    return trace_line + '\n'
 
 def parse_TPU_line(TPU_line):
     return TPU_line
@@ -271,4 +308,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/TP_node_test.txt', 'v/transpose/tp_node_trace.tr')
+write_trace('scripts/ARR_test.txt', 'v/PE/sys_array_trace.tr')
