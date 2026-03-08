@@ -68,7 +68,8 @@ module transpose_tb;
       ,.data_o( rom_data_lo )
       );
 
-  transpose DUT
+  transpose #(.WIDTH_P(8), .DIM_p(4))
+    DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( reset )
 

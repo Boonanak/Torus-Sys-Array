@@ -68,6 +68,8 @@ module tp_node_tb;
       ,.data_o( rom_data_lo )
       );
 
+  localparam DIM_p = 8;
+
   logic row = tr_data_lo[42:40];
   logic col = tr_data_lo[39:37];
   logic [7:0] data_pass_0_i  [0:DIM_p-1][0:DIM_p-1];
@@ -87,7 +89,7 @@ module tp_node_tb;
       for (c = 0; r < DIM_p; c = c + 1) begin : col_gen
         tp_node #(
           .WIDTH_p(8),
-          .DIM_p(8),
+          .DIM_p(DIM_p),
           .NODE_COL_p(c),
           .NODE_ROW_p(r)
         ) DUT (
