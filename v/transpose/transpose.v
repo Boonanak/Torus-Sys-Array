@@ -43,14 +43,14 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                data_pass_1_i = (i == 0) ? in_data[j] : tp_bus[i-1][j];
-                data_pass_0_i = (j == 0) ? in_data[i] : tp_bus[i][j-1];
+                assign data_pass_1_i = (i == 0) ? in_data[j] : tp_bus[i-1][j];
+                assign data_pass_0_i = (j == 0) ? in_data[i] : tp_bus[i][j-1];
                 
                 // Shift data stream
                 //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
                 //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                data_shift_0_i = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
-                data_shift_1_i = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
+                assign data_shift_0_i = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
+                assign data_shift_1_i = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_P)
@@ -124,10 +124,10 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // Mostly only a problem for FULL -> DRAIN which would cause lost throughput
     always_comb begin
         case(curr)
-            EMPTY: next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
-            FILL: next = (count == DIM_p-1) ? FULL : FILL; // If we've filled the pipeline, go to full, else keep filling
-            FULL: next = valid_i ? FULL : DRAIN; // If we have more valid input data, stay full and keep accepting, else go to drain
-            DRAIN: next = (count == 0) ? EMPTY : DRAIN; // If we've drained the pipeline, go to empty, else keep draining
+            EMPTY: assign next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
+            FILL: assign next = (count == DIM_p-1) ? FULL : FILL; // If we've filled the pipeline, go to full, else keep filling
+            FULL: assign next = valid_i ? FULL : DRAIN; // If we have more valid input data, stay full and keep accepting, else go to drain
+            DRAIN: assign next = (count == 0) ? EMPTY : DRAIN; // If we've drained the pipeline, go to empty, else keep draining
         endcase
     end
 
@@ -137,7 +137,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // data is in the last column of the bus
     always_comb begin
         for (int i = 0; i < DIM_p; i++) begin
-            out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     end
 

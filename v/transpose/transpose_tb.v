@@ -21,19 +21,19 @@ module transpose_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [127:0] dut_data_lo, dut_data_r;
+  logic [31:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [127:0] tr_data_lo;
+  logic [31:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [131:0] rom_data_lo;
+  logic [35:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(128)
+  bsg_fsb_node_trace_replay #(.ring_width_p(32)
                              ,.rom_addr_width_p(32) )
     trace_replay
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -62,29 +62,31 @@ module transpose_tb;
     dut_data_r  <= dut_data_lo;
   end
 
-  trace_rom #(.width_p(132),.addr_width_p(32))
+  transpose_trace_rom #(.width_p(36),.addr_width_p(32))
     ROM
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
       );
 
-  shift_reg DUT
+  transpose DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( reset )
 
-    ,.write_i  ( tr_data_lo[65] )
-    ,.read_i   ( tr_data_lo[64] )
+    ,.col_major_i (  )
+    ,.in_data ( tr_data_lo[31:0] )
 
-    ,.data_i   ( tr_data_lo[7:0] )
+    ,.valid_i ( tr_v_lo )
+    ,.ready_i ( dut_yumi_li )
 
-    ,.data_o   ( dut_data_lo[63:0] )
-    ,.full_o   ( dut_data_lo[65] )
-    ,.empty_o  ( dut_data_lo[64] )
+    ,.valid_o ( dut_v_lo )
+    ,.ready_o ( dut_ready_lo )
+
+    ,.out_data ( dut_data_lo[31:0] )
     );
 
   // no handshake logic. all ready/valid signal is 1.
-  assign dut_ready_lo = '1;
-  assign dut_v_lo = '1;
+  // assign dut_ready_lo = '1;
+  // assign dut_v_lo = '1;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
