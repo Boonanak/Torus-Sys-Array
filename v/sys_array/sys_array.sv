@@ -59,10 +59,13 @@ module sys_array #(
     assign output_buffer_valid_out = enable;
 
     // Initial inputs feed into the first column (j=0)
-    always_comb begin 
-        col_in_A[0]  = row_major ? {8'b0, transposer_data} : 16'b0;
-        col_in_PS[0] = row_major ? 16'b0 : {8'b0, transposer_data};
+    genvar i;
+    generate
+    for (i = 0; i < COLS; i = i + 1) begin 
+        col_in_A[0][i] = {8'b0, transposer_data[i]};
+        col_in_PS[0][i] = 16'b0;
     end
+    endgenerate
 
     genvar j;
     generate

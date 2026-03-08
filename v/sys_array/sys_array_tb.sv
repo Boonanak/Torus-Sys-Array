@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module PE_shared_B_tb;
+module sys_array_tb;
 
     /* Dump Test Waveform To VPD File */
   initial begin
@@ -21,19 +21,19 @@ module PE_shared_B_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [127:0] dut_data_lo, dut_data_r;
+  logic [63:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [127:0] tr_data_lo;
+  logic [63:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [131:0] rom_data_lo;
+  logic [67:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(128)
+  bsg_fsb_node_trace_replay #(.ring_width_p(64)
                              ,.rom_addr_width_p(32) )
     trace_replay
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -63,22 +63,22 @@ module PE_shared_B_tb;
   end
 
   // / 1 bit load_B / 8 bits A / 16 bits B_PS / 4 bits for trace replay
-  sys_array_trace_rom #(.width_p(132),.addr_width_p(32))
+  sys_array_trace_rom #(.width_p(68),.addr_width_p(32))
     ROM_BPS
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
       );
 
   sys_array DUT
-    (.clk_i     ( clk )
+    (.clk       ( clk )
     ,.reset     ( reset )
-    ,.load_B    ( tr_data_lo[127] )
-    ,.row_major ( tr_data_lo[126] )
+    ,.load_B    ( tr_data_lo[63] )
+    ,.row_major ( tr_data_lo[62] )
 
-    ,.transposer_data ( tr_data_lo[31:0] )
+    ,.transposer_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
 
-    ,.A_out_right     ( dut_data_lo[127:64] )
-    ,.PS_out_right    ( dut_data_lo[63:0] )
+    ,.A_out_right     (  )
+    ,.PS_out_right    ( {dut_data_lo[63:48], dut_data_lo[47:32], dut_data_lo[31:16], dut_data_lo[15:0]} )
 
     ,.transposer_valid_in  ( tr_v_lo )
     ,.transposer_ready_out ( dut_ready_lo )
