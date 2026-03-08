@@ -74,7 +74,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     // Ready-valid handshake logic based on current state
     always_ff @(posedge clk_i) begin
-        if !(rst_n_i) begin
+        if ~(rst_n_i) begin
             enable <= 1'b0;
             state_counter <= '0;
             ready_o <= 1'b1;
