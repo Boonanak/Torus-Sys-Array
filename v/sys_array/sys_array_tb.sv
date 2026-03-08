@@ -81,15 +81,17 @@ module sys_array_tb;
     ,.PS_out_right    ( {dut_data_lo[63:48], dut_data_lo[47:32], dut_data_lo[31:16], dut_data_lo[15:0]} )
 
     ,.transposer_valid_in  ( tr_v_lo )
-    ,.transposer_ready_out ( dut_ready_lo )
+    //,.transposer_ready_out ( dut_ready_lo )
+    ,.transposer_ready_out (  )
 
     ,.output_buffer_ready_in  ( dut_yumi_li )
-    ,.output_buffer_valid_out ( dut_v_lo )
+    //,.output_buffer_valid_out ( dut_v_lo )
+    ,.output_buffer_valid_out (  )
     );
 
   // no handshake logic. all ready/valid signal is 1.
-  //assign dut_ready_lo = '1;
-  //assign dut_v_lo = '1;
+  assign dut_ready_lo = '1;
+  assign dut_v_lo = '1;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
