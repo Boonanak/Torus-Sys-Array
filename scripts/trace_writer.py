@@ -214,14 +214,12 @@ def parse_TU_line(TU_line):
             numbers = [int(n) for n in TU_line[space_i:].split()]
             trace_line += f"# SEND  |  {numbers}\n"
             trace_line += f"0001_________"
-            for i in range(12):
-                trace_line += "_00000000"
             for n in numbers:
                 trace_line += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line += '\n'
         case 'recv':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line += f"# RECV  |     0    |   {numbers}\n"
+            trace_line += f"# RECV  |  {numbers}\n"
             trace_line += f"0010_________"
             for n in numbers:
                 trace_line += f"_{to_signed_nbit_binary(n, 8)}"
@@ -230,9 +228,9 @@ def parse_TU_line(TU_line):
             n = int(TU_line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line += f"0000__{'0'*128}\n"
+                trace_line += f"0000__{'0'*32}\n"
         case 'end':
-            trace_line += f"# ENDING SIMULATION\n0100__{'0'*128}\n"
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
         case '###':
             trace_line += TU_line
     return trace_line + '\n'
@@ -308,4 +306,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/ARR_test.txt', 'v/sys_array/sys_array_trace.tr')
+write_trace('scripts/TU_test.txt', 'v/transpose/transpose_trace.tr')
