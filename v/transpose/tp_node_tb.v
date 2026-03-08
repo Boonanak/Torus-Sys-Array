@@ -21,19 +21,19 @@ module tp_node_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [127:0] dut_data_lo, dut_data_r;
+  logic [42:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [127:0] tr_data_lo;
+  logic [42:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [131:0] rom_data_lo;
+  logic [46:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(128)
+  bsg_fsb_node_trace_replay #(.ring_width_p(43)
                              ,.rom_addr_width_p(32) )
     trace_replay
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -62,7 +62,7 @@ module tp_node_tb;
     dut_data_r  <= dut_data_lo;
   end
 
-  tp_node_trace_rom #(.width_p(132),.addr_width_p(32))
+  tp_node_trace_rom #(.width_p(47),.addr_width_p(32))
     ROM
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
