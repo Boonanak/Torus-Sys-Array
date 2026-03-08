@@ -62,8 +62,8 @@ module sys_array #(
     genvar i;
     generate
     for (i = 0; i < COLS; i = i + 1) begin : col_fill
-        col_in_A[i][0] = {8'b0, transposer_data[i]};
-        col_in_PS[i][0] = 16'b0;
+        assign col_in_A[i][0] = {8'b0, transposer_data[i]};
+        assign col_in_PS[i][0] = 16'b0;
     end
     endgenerate
 
