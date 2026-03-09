@@ -35,21 +35,21 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
         for (i = 0; i < DIM_p; i++) begin : row_loop
             for (j = 0; j < DIM_p; j++) begin : col_loop // Iterate through each column first
-                logic [WIDTH_p-1:0] data_pass_0_i, data_pass_1_i, data_shift_0_i, data_shift_1_i;
+                wire [WIDTH_p-1:0] data_pass_0, data_pass_1, data_shift_0, data_shift_1;
 
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                data_pass_1_i = (i == 0) ? in_data[j] : tp_bus[i-1][j];
-                data_pass_0_i = (j == 0) ? in_data[i] : tp_bus[i][j-1];
+                assign data_pass_1 = (i == 0) ? in_data[j] : tp_bus[i-1][j];
+                assign data_pass_0 = (j == 0) ? in_data[i] : tp_bus[i][j-1];
                 
                 // Shift data stream
                 //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
                 //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                data_shift_0_i = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
-                data_shift_1_i = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
+                assign data_shift_0 = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
+                assign data_shift_1 = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_P)
@@ -60,10 +60,10 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
                          ,.en_i(enable)
-                         ,.data_pass_0_i(data_pass_0_i)
-                         ,.data_pass_1_i(data_pass_1_i)
-                         ,.data_shift_0_i(data_shift_0_i)
-                         ,.data_shift_1_i(data_shift_1_i)
+                         ,.data_pass_0_i(data_pass_0)
+                         ,.data_pass_1_i(data_pass_1)
+                         ,.data_shift_0_i(data_shift_0)
+                         ,.data_shift_1_i(data_shift_1)
                          ,.state_counter(state_counter)
                          ,.data_out(tp_bus[i][j])
                          );
