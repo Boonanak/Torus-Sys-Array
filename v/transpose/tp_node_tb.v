@@ -21,19 +21,19 @@ module tp_node_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [127:0] dut_data_lo, dut_data_r;
+  logic [42:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [127:0] tr_data_lo;
+  logic [42:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [131:0] rom_data_lo;
+  logic [46:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(128)
+  bsg_fsb_node_trace_replay #(.ring_width_p(43)
                              ,.rom_addr_width_p(32) )
     trace_replay
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -62,32 +62,41 @@ module tp_node_tb;
     dut_data_r  <= dut_data_lo;
   end
 
-  tp_node_trace_rom #(.width_p(132),.addr_width_p(32))
+  tp_node_trace_rom #(.width_p(47),.addr_width_p(32))
     ROM
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo )
       );
 
+  localparam DIM_p = 8;
+
   logic row = tr_data_lo[42:40];
   logic col = tr_data_lo[39:37];
   logic [7:0] data_pass_0_i  [0:DIM_p-1][0:DIM_p-1];
-  assign data_pass_0_i[row][col] = tr_data_lo[31:24];
+  
   logic [7:0] data_pass_1_i  [0:DIM_p-1][0:DIM_p-1];
-  assign data_pass_1_i[row][col] = tr_data_lo[23:16];
+  
   logic [7:0] data_shift_0_i [0:DIM_p-1][0:DIM_p-1];
-  assign data_shift_0_i[row][col] = tr_data_lo[15:8];
+  
   logic [7:0] data_shift_1_i [0:DIM_p-1][0:DIM_p-1];
-  assign data_shift_1_i[row][col] = tr_data_lo[7:0];
+  
   logic [7:0] data_out       [0:DIM_p-1][0:DIM_p-1];
-  assign dut_data_lo = {35'b0, data_out[row][col]};
+  
+  always_comb begin
+    data_pass_0_i[row][col] = tr_data_lo[31:24];
+    data_pass_1_i[row][col] = tr_data_lo[23:16];
+    data_shift_0_i[row][col] = tr_data_lo[15:8];
+    data_shift_1_i[row][col] = tr_data_lo[7:0];
+    dut_data_lo = {35'b0, data_out[row][col]};
+  end
 
   genvar r, c;
   generate
     for (r = 0; r < DIM_p; r = r + 1) begin : row_gen
-      for (c = 0; r < DIM_p; c = c + 1) begin : col_gen
+      for (c = 0; c < DIM_p; c = c + 1) begin : col_gen
         tp_node #(
           .WIDTH_p(8),
-          .DIM_p(8),
+          .DIM_p(DIM_p),
           .NODE_COL_p(c),
           .NODE_ROW_p(r)
         ) DUT (
