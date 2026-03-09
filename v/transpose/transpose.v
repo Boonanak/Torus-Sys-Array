@@ -124,10 +124,10 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // Mostly only a problem for FULL -> DRAIN which would cause lost throughput
     always_comb begin
         case(curr)
-            EMPTY: assign next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
-            FILL: assign next = (count == DIM_p-1) ? FULL : FILL; // If we've filled the pipeline, go to full, else keep filling
-            FULL: assign next = valid_i ? FULL : DRAIN; // If we have more valid input data, stay full and keep accepting, else go to drain
-            DRAIN: assign next = (count == 0) ? EMPTY : DRAIN; // If we've drained the pipeline, go to empty, else keep draining
+            EMPTY: next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
+            FILL: next = (count == DIM_p-1) ? FULL : FILL; // If we've filled the pipeline, go to full, else keep filling
+            FULL: next = valid_i ? FULL : DRAIN; // If we have more valid input data, stay full and keep accepting, else go to drain
+            DRAIN: next = (count == 0) ? EMPTY : DRAIN; // If we've drained the pipeline, go to empty, else keep draining
         endcase
     end
 
