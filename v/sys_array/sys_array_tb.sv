@@ -5,7 +5,7 @@ module sys_array_tb;
     /* Dump Test Waveform To VPD File */
   initial begin
     $fsdbDumpfile("waveform.fsdb");
-    $fsdbDumpvars();
+    $fsdbDumpvars("+all");
   end
 
   /* Non-synth clock generator */
@@ -57,7 +57,7 @@ module sys_array_tb;
 
   always_ff @(negedge clk) begin
     dut_ready_r <= dut_ready_lo;
-    tr_yumi_li  <= dut_ready_r & tr_v_lo;
+    tr_yumi_li  <= '1;
     dut_v_r     <= dut_v_lo;
     dut_data_r  <= dut_data_lo;
   end
@@ -69,8 +69,8 @@ module sys_array_tb;
       ,.data_o( rom_data_lo )
       );
 
-  logic [7:0] input [3:0];
-  assign input = {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]};
+  logic [15:0] ps_out_data [3:0];
+
   sys_array DUT
     (.clk       ( clk )
     ,.reset     ( reset )
@@ -80,20 +80,21 @@ module sys_array_tb;
     ,.transposer_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
 
     ,.A_out_right     (  )
-    ,.PS_out_right    ( {dut_data_lo[63:48], dut_data_lo[47:32], dut_data_lo[31:16], dut_data_lo[15:0]} )
+    ,.PS_out_right    ( ps_out_data )
 
     ,.transposer_valid_in  ( tr_v_lo )
-    //,.transposer_ready_out ( dut_ready_lo )
-    ,.transposer_ready_out (  )
+    ,.transposer_ready_out ( dut_ready_lo )
+    // ,.transposer_ready_out ( )
 
-    ,.output_buffer_ready_in  ( dut_yumi_li )
-    //,.output_buffer_valid_out ( dut_v_lo )
-    ,.output_buffer_valid_out (  )
+    ,.output_buffer_ready_in  ( '1 )
+    ,.output_buffer_valid_out ( dut_v_lo )
+    // ,.output_buffer_valid_out ()
     );
 
-  // no handshake logic. all ready/valid signal is 1.
-  assign dut_ready_lo = '1;
-  assign dut_v_lo = '1;
+  assign dut_data_lo[63:48] = ps_out_data[0];
+  assign dut_data_lo[47:32] = ps_out_data[1];
+  assign dut_data_lo[31:16] = ps_out_data[2];
+  assign dut_data_lo[15:0]  = ps_out_data[3];
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;

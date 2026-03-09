@@ -25,4 +25,4 @@ cfg/cfg.yml
 # waveforms / simulation files
 *.vvp
 *.vcd
-
+Verdi.*
