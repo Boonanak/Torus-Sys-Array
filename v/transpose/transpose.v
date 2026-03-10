@@ -17,13 +17,17 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                   );
 
     logic [DIM_CLOG2_p:0] state_counter; // Top bit is direction bit, bottom bits are the count 
-    logic enable; // Whether to enable the nodes to shift
     logic direction;
     logic [DIM_CLOG2_p-1:0] count;
-    
+
+    logic [1:0] row_enable [DIM_p-1:0]; // 2 bit code for row shifting/passing
+    logic [1:0] col_enable [DIM_p-1:0]; // 2 bit code for column shifting/passing
+
+    logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
+    logic output_valid; // Top bit of the valid signal indicates if output is valid
+
     // States for ready-valid logic
-    typedef enum logic [1:0] {EMPTY, FILL, FULL, DRAIN} state_e;
-    state_e curr, next;
+    enum logic [1:0] {EMPTY, FILL, FULL, DRAIN} curr, next;
     // EMPTY: no values are in the transposer
     // FILL: We are putting values in but the output is not valid yet
     // FULL: transposer is full, output is valid. we can maintain this if we read and write at the same time
@@ -31,11 +35,11 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
 
-    genvar i; // row
-    genvar j; // col
+    genvar row;
+    genvar col;
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
-        for (i = 0; i < DIM_p; i++) begin : row_loop
-            for (j = 0; j < DIM_p; j++) begin : col_loop // Iterate through each column first
+        for (row = 0; row < DIM_p; row++) begin : row_loop
+            for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
                 wire [WIDTH_p-1:0] data_pass_0, data_pass_1, data_shift_0, data_shift_1;
 
                 // Pass-through data stream
@@ -43,39 +47,46 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                assign data_pass_1 = (i == 0) ? in_data[j] : tp_bus[i-1][j];
-                assign data_pass_0 = (j == 0) ? in_data[i] : tp_bus[i][j-1];
+                assign data_pass_1 = (row == 0) ? in_data[col] : tp_bus[row-1][col];
+                assign data_pass_0 = (col == 0) ? in_data[row] : tp_bus[row][col-1];
                 
                 // Shift data stream
                 //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
                 //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                assign data_shift_0 = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
-                assign data_shift_1 = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
+                assign data_shift_0 = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
+                assign data_shift_1 = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(8)
-                         ,.DIM_p(DIM_p)
-                         ,.NODE_COL_p(j)
-                         ,.NODE_ROW_p(i)
                          ) node (
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
-                         ,.en_i(enable)
                          ,.data_pass_0_i(data_pass_0)
                          ,.data_pass_1_i(data_pass_1)
                          ,.data_shift_0_i(data_shift_0)
                          ,.data_shift_1_i(data_shift_1)
-                         ,.state_counter(state_counter)
-                         ,.data_out(tp_bus[i][j])
+                         ,.row_en_i(row_enable[row])
+                         ,.col_en_i(col_enable[col])
+                         ,.data_out(tp_bus[row][col])
                          );
             end
         end
     endgenerate
 
+    // Shift register to store what columns/rows have valid data
+    shift_reg_simple #(.WIDTH_p(1), 
+                       .DEPTH_p(DIM_p))
+        valid_tracker (
+                       .clk_i(clk_i),
+                       .rst_n_i(rst_n_i),  
+                       .shift_i(), 
+                       .data_in_i(), 
+                       .data_out_o(valid) 
+                      );
+
     // Ready-valid handshake logic based on current state
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
-            enable <= 1'b0;
             state_counter <= '0;
             ready_o <= 1'b1;
             valid_o <= 1'b0;
@@ -85,36 +96,27 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
             if (curr == EMPTY) begin
                 ready_o <= 1'b1;
                 valid_o <= 1'b0;
-                enable <= 1'b0;
                 // hold state counter
             end else if (curr == FILL) begin
                 ready_o <= 1'b1;
                 valid_o <= 1'b0;
                 if (valid_i) begin
                     state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
-                    enable <= 1'b1; // Enable the nodes to shift in the data
-                end else begin
-                    enable <= 1'b0; // Hold the data in place if we don't have valid input data
                 end
             end else if (curr == FULL) begin
                 valid_o <= 1'b1;
                 if (ready_i) begin
                     state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
-                    enable <= 1'b1; 
                     ready_o <= 1'b1; // We can accept new data if old data is being read out
                 end else begin
-                    enable <= 1'b0;
                     ready_o <= 1'b0; // cannot accept new data until old is read out 
                 end
             end else if (curr == DRAIN) begin
                 ready_o <= 1'b0; // Not ready to accept new data when draining
                 valid_o <= 1'b1; // Output is still valid when draining
                 if (ready_i) begin
-                    state_counter <= state_counter + 1'b1; 
-                    enable <= 1'b1; // Enable the nodes to shift out the data
-                end else begin
-                    enable <= 1'b0; // Hold the data in place
-                end
+                    state_counter <= state_counter + 1'b1;
+                end 
             end 
         end
     end
@@ -140,9 +142,11 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
             assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
-    // Easier break-out of state counter bits
+
+    // Constant assignments for control signals
     assign direction = state_counter[DIM_CLOG2_p]; // top bit of the counter is the direction bit
     assign count = state_counter[DIM_CLOG2_p-1:0]; // bottom bits of the counter are the count
+    assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
 
     // Assertions to check for valid parameter settings
     initial begin
