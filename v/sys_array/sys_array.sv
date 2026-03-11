@@ -20,6 +20,7 @@ module sys_array #(
     // divide to rows and cols within the module itself
     parameter ROWS = 4,
     parameter COLS = 4
+    // might help to add parameter for data width?
 )(
     input  logic        clk_i,
     input  logic        reset,
@@ -70,7 +71,7 @@ module sys_array #(
                         : valid[0];
 
         load_B_control_next = (transposer_valid_in && transposer_ready_out) ? 
-                              (load_B ? {load_B_control[2:0], load_B} : {COLS{1'b0}}) 
+                              (load_B ? {load_B_control[COLS-2:0], load_B} : {COLS{1'b0}}) 
                               : load_B_control;
         row_major_control_next = (transposer_valid_in && transposer_ready_out) ? {row_major_control[2:0], row_major} : row_major_control;
     end
@@ -149,25 +150,37 @@ module sys_array #(
     endgenerate
 
     logic fifo_yumi;
-    always_ff @(posedge clk_i) begin 
-        if (reset) begin 
-            fifo_yumi <= '0;
+    assign fifo_yumi = output_buffer_ready_in;
+    // always_ff @(posedge clk_i) begin 
+    //     if (reset) begin 
+    //         fifo_yumi <= '0;
+    //     end
+    //     else begin 
+    //         fifo_yumi <= output_buffer_ready_in;
+    //     end
+    // end
+
+    logic [COLS * 16 - 1 : 0] flattened_result_buffer, flattened_PS_out_right;
+    always_comb begin 
+        for (int i = 0; i < COLS; i++) begin 
+            flattened_result_buffer[i * 16 +: 16] = result_buffer[i];
         end
-        else begin 
-            fifo_yumi <= output_buffer_ready_in;
+
+        for (int i = 0; i < COLS; i++) begin 
+            PS_out_right[i] = flattened_PS_out_right[i * 16 +: 16];
         end
     end
 
     // synchronous fifo, use ready then valid since thats what we expect from this thing!!!!
     // could probably parametrize width_p and els_p using COL/ROW params
-    bsg_fifo_1r1w_small_hardened #(.width_p(64), .els_p(8), .ready_THEN_valid_p(1)) fifo 
+    bsg_fifo_1r1w_small_hardened #(.width_p(ROWS * 16), .els_p(COLS * 2), .ready_THEN_valid_p(1)) fifo 
         (.clk_i(clk_i)
         ,.reset_i(reset)
         ,.v_i(fifo_valid_out)
         ,.ready_o(fifo_ready_in) 
-        ,.data_i({result_buffer[3], result_buffer[2], result_buffer[1], result_buffer[0]})
+        ,.data_i(flattened_result_buffer)
         ,.v_o(output_buffer_valid_out)
-        ,.data_o({PS_out_right[3], PS_out_right[2], PS_out_right[1], PS_out_right[0]})
+        ,.data_o(flattened_PS_out_right)
         ,.yumi_i(fifo_yumi)
         );
 endmodule
