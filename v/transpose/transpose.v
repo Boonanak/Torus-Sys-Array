@@ -16,23 +16,30 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                     output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
-    logic direction;
-    logic [DIM_CLOG2_p-1:0] count;
-    logic [DIM_CLOG2_p:0] write_counter;
+    // Params for row/col enable selection
+    localparam logic PASS = 1'b0;
+    localparam logic SHIFT = 1'b1;
 
-    logic [1:0] row_enable [DIM_p-1:0]; // 2 bit code for row shifting/passing
-    logic [1:0] col_enable [DIM_p-1:0]; // 2 bit code for column shifting/passing
+    logic direction; // The current direction of shifting
+                     // direction = 0 means horizontal (column) shift
+                     // direction = 1 means vertical (row) shift
+    logic [DIM_CLOG2_p-1:0] count; // bottom bits of the write counter
+    logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
+
+    // 2 bit code for row/col shifting/passing. top bit is enable, bottom bit is 0 for pass, 1 for shift
+    logic [1:0] row_enable [DIM_p-1:0]; 
+    logic [1:0] col_enable [DIM_p-1:0]; 
 
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
-    logic output_valid; // Top bit of the valid signal indicates if output is valid, all valid is if every bit is valid
-    logic shift, enable;
-
-    // States for ready-valid logic
-    enum logic [1:0] {EMPTY, PARTIAL, FULL} curr, next;
-    // EMPTY: no values are in the transposer
-    // FILL: We are putting values in but the output is not valid yet
-    // FULL: transposer is full, output is valid. we can maintain this if we read and write at the same time
-    // DRAIN: a value from the full transposer was read out before a new one could be read in, so we have to drain the whole transposer before accepting new input.
+    logic output_valid, enable, ready, can_read, can_write, read_or_write;
+    /*
+    output_valid: whether the output data is valid, determined by the last bit of the valid shift register
+    enable: enable the rows/cols of the transposer to shift data, as well as the valid shift register
+    ready: whether the transposer can accept data (its not full)
+    can_read: whether data can be read out from the transposer
+    can_write: whether data can be written into the transposer
+    read_or_write: if we can either read or write data, used to control shifting and enabling
+    */
 
     logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
 
@@ -58,7 +65,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 assign data_shift_1 = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
 
                 // Transposer node instantiation
-                tp_node #(.WIDTH_p(8)
+                tp_node #(.WIDTH_p(WIDTH_p)
                          ) node (
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
@@ -74,13 +81,13 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         end
     endgenerate
 
-    // Shift register to store what columns/rows have valid data
+    // Shift register to store what columns/rows have valid data. Single array used for both directions
     shift_reg_simple #(.WIDTH_p(1), 
                        .DEPTH_p(DIM_p))
         valid_tracker (
                        .clk_i(clk_i),
                        .rst_n_i(rst_n_i),  
-                       .enable_i(shift), 
+                       .enable_i(enable), 
                        .shift_in_i(valid_i), 
                        .data_out_o(valid) 
                       );
@@ -90,47 +97,26 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         if (~rst_n_i) begin
             ready_o <= 1'b1;
             valid_o <= 1'b0;
-            shift <= 1'b0;
-            curr <= EMPTY;
             enable <= 1'b0;
             write_counter <= '0;
         end else begin
             curr <= next;
             valid_o <= output_valid;
-            if (curr == EMPTY) begin
-                ready_o <= 1'b1;
-                valid_o <= 1'b0;
-                shift <= 1'b0;
-                enable <= 1'b0;
-            end else if (curr == PARTIAL) begin
-                
-            end else if (curr == FULL) begin
-                
-            end     
+            ready_o <= ready; // if output is valid, only be ready if we are also reading, otherwise always ready
+            enable <= read_or_write; 
+            if (can_write) // increment if writting
+                write_counter <= write_counter + 1;
         end
     end
 
-    // Next-state logic 
-    always_comb begin
-        case(curr)
-            EMPTY: next = valid_i ? PARTIAL : EMPTY;
-            PARTIAL: next = (valid == 0) EMPTY : (valid == (DIM_p-1)) ? FULL : PARTIAL;
-            FULL: next = (valid == (DIM_p-1)) ? FULL : PARTIAL;
-        endcase
-    end
-
     // Set the row and column enable lines
+    // Has to be a generate because col and row enable are unpacked arrays.
+    genvar i;
     generate
-        logic selection;
-        for (int i = 0; i < DIM_p; i++) begin : enable_loop
-            if (i == 0) 
-                assign selection = 1'b0; // pass
-            else if (i < count)
-                assign selection = 1'b1; // shift
-            else
-                assign selection = 1'b0; // pass
-            assign col_enable[i] = direction ? '0 : {enable, selection};
-            assign row_enable[i] = direction ? {enable, selection} : '0;
+        for (i = 0; i < DIM_p; i++) begin : enable_loop
+            wire selection = (i == 0) ? PASS : (i < count) ? SHIFT : PASS;
+            assign col_enable[i] = direction ? 2'b00 : {enable, selection}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = direction ? {enable, selection} : 2'b00;
         end
     endgenerate
 
@@ -148,6 +134,10 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
     assign direction = write_counter[DIM_CLOG2_p];
     assign count = write_counter[DIM_CLOG2_p-1:0];
+    assign ready = output_valid ? ready_i : 1'b1;
+    assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
+    assign can_write = valid_i && ready; // able to write if input is valid and we have space
+    assign read_or_write = can_read || can_write; // able to read or write at this time
 
     // Assertions to check for valid parameter settings
     initial begin
@@ -168,4 +158,11 @@ endmodule
 
     row = 0 and col = 0 will always be pass
 
+
+    valid_o when ever the last line is valid
+    ready_o = 1 unless output_valid, then ready_o = ready_i
+
+    if valid_i and ready_o, shift, enable. else nothing.
+    if ready_i and valid_o, shift, enable, shift in invalid. else nothing. 
+    if valid_i and ready_i, (provided ready_o and valid_o) shift, enable, shift in valid. else nothing
 */

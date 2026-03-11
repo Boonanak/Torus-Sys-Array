@@ -20,9 +20,9 @@ module tp_node #(parameter WIDTH_p = 8, // bitwidth of the stored data
             data_out <= '0; 
         end else begin
             if (row_en_i[1]) // Top bit is the enable signal, bottom is select bit
-                data_out <= row_en_i[0] ? data_shift1_i : data_pass1_i; // Rows are direction 1 (vertical) operation
+                data_out <= row_en_i[0] ? data_shift_1_i : data_pass_1_i; // Rows are direction 1 (vertical) operation
             else if (col_en_i[1])
-                data_out <= col_en_i[0] ? data_shift0_i : data_pass0_i; // columns are direction 0 (horiziontal) operation
+                data_out <= col_en_i[0] ? data_shift_0_i : data_pass_0_i; // columns are direction 0 (horiziontal) operation
             // else hold current value
             // Both enable bits being true is an invalid state (but it will resolve to row taking priority)
         end
