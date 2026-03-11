@@ -35,28 +35,6 @@ module sys_array_tb_twotrace;
 
   bsg_fsb_node_trace_replay #(.ring_width_p(64)
                              ,.rom_addr_width_p(32) )
-    trace_replay_send
-      ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
-      , .reset_i( reset )
-      , .en_i( 1'b1 )
-
-      , .v_i    ( dut_v_r )
-      , .data_i (  )
-      , .ready_o(  )
-
-      , .v_o   ( tr_v_lo )
-      , .data_o( tr_data_lo )
-      , .yumi_i( tr_yumi_li )
-
-      , .rom_addr_o( rom_addr_li )
-      , .rom_data_i( rom_data_lo_send )
-
-      , .done_o()
-      , .error_o()
-      );
-
-  bsg_fsb_node_trace_replay #(.ring_width_p(64)
-                             ,.rom_addr_width_p(32) )
     trace_replay_recv
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
       , .reset_i( reset )
@@ -72,6 +50,28 @@ module sys_array_tb_twotrace;
 
       , .rom_addr_o(  )
       , .rom_data_i( rom_data_lo_recv )
+
+      , .done_o()
+      , .error_o()
+      );
+
+  bsg_fsb_node_trace_replay #(.ring_width_p(64)
+                             ,.rom_addr_width_p(32) )
+    trace_replay_send
+      ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
+      , .reset_i( reset )
+      , .en_i( 1'b1 )
+
+      , .v_i    ( dut_v_r )
+      , .data_i (  )
+      , .ready_o(  )
+
+      , .v_o   ( tr_v_lo )
+      , .data_o( tr_data_lo )
+      , .yumi_i( tr_yumi_li )
+
+      , .rom_addr_o( rom_addr_li )
+      , .rom_data_i( rom_data_lo_send )
 
       , .done_o()
       , .error_o()

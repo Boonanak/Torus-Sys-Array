@@ -316,7 +316,7 @@ def parse_ARR_2_line(ARR_line):
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line_recv += '\n'
             trace_line_send += f"# NOOP for SEND while receiving\n0000__{'0'*64}\n"
-        case 'loadB_recv':
+        case 'loadb_recv':
             ARR_line = ARR_line[space_i+1:]
             space_i = ARR_line.find(' ')
             major = True if ARR_line[:space_i] == 'R' else False
