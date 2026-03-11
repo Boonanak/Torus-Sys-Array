@@ -13,10 +13,17 @@ synthesis.inputs.input_files: [
   "v/transpose/dff_en.v",
   "v/transpose/shift_reg.v",
   "v/transpose/tp_node.sv",
-  "v/transpose/transpose.v",
-
+  #"v/transpose/transpose.v",
+  ## excluded for synthesis. this file was throwing errors. uncomment them when resolved.
   "v/sys_array/col_gen.sv",
   "v/sys_array/sys_array.sv",
+
+  "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_hardened.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_tracker.v",
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w_sync.v",
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w_sync_synth.v",
+  "${bsg_root}/bsg_misc/bsg_dff_en.v",
+  "${bsg_root}/bsg_misc/bsg_circular_ptr.v",
 ]
 synthesis.inputs.input_files_meta: [append, subst]
 
