@@ -114,7 +114,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            wire selection = (i == 0) ? PASS : (i < count) ? SHIFT : PASS;
+            wire selection = (i == 0) ? PASS : (i <= count) ? SHIFT : PASS;
             assign col_enable[i] = direction ? 2'b00 : {enable, selection}; // enable cols if direction is 0, otherwise enable rows
             assign row_enable[i] = direction ? {enable, selection} : 2'b00;
         end
@@ -125,7 +125,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // if direction is 0, we are shifting left, so the output 
     // data is in the last column of the bus
     generate
-        for (i = 0; i < DIM_p; i++) begin
+        for (i = 0; i < DIM_p; i++) begin : output_loop
             assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
