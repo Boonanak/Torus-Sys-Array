@@ -268,7 +268,7 @@ def parse_ARR_line(ARR_line):
         case 'recv':
             numbers = [int(n) for n in ARR_line[space_i:].split()]
             trace_line += f"# RECV  |    00    | C[i] = {numbers}\n"
-            trace_line += f"0010______0______0_______"
+            trace_line += f"0010_______"
             for n in numbers:
                 trace_line += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line += '\n'
@@ -311,7 +311,7 @@ def parse_ARR_2_line(ARR_line):
         case 'recv':
             numbers = [int(n) for n in ARR_line[space_i:].split()]
             trace_line_recv += f"# RECV  |    00    | C[i] = {numbers}\n"
-            trace_line_recv += f"0010______0______0_______"
+            trace_line_recv += f"0010_______"
             for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line_recv += '\n'
@@ -327,7 +327,7 @@ def parse_ARR_2_line(ARR_line):
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# RECV  |    00    | C[i] = {numbers[4:]}\n"
-            trace_line_recv += f"0010______0______0_______"
+            trace_line_recv += f"0010_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line_recv += '\n'
@@ -339,7 +339,7 @@ def parse_ARR_2_line(ARR_line):
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# RECV  |    00    | C[i] = {numbers[4:]}\n"
-            trace_line_recv += f"0010______0______0_______"
+            trace_line_recv += f"0010_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line_recv += '\n'
