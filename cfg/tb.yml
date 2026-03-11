@@ -14,7 +14,7 @@ sim.inputs.tb_input_files: [
   "v/PE/PE_final_tb.sv",
 
   "v/sys_array/sys_array_tb.sv",
-  "v/sys_array_sys_array_tb_twotrace.sv",
+  "v/sys_array/sys_array_tb_twotrace.sv",
 
 
   "v/transpose/dff_en_tb.v",
