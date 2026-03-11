@@ -2,7 +2,6 @@
 // Takes in a full row of an input matrix and outputs a full column of the transposed matrix
 module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
                     parameter WIDTH_p = 8, // Width of each element in bits
-                    localparam DIM_CLOG2_p = $clog2(DIM_p)
                 ) (
                     input logic clk_i, 
                     input logic rst_n_i, // Active low reset
@@ -17,6 +16,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                   );
 
     // Params for row/col enable selection
+    localparam DIM_CLOG2_p = $clog2(DIM_p)
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
 
@@ -100,7 +100,6 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
             enable <= 1'b0;
             write_counter <= '0;
         end else begin
-            curr <= next;
             valid_o <= output_valid;
             ready_o <= ready; // if output is valid, only be ready if we are also reading, otherwise always ready
             enable <= read_or_write; 
