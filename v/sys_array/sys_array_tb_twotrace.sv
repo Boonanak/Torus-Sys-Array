@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module sys_array_tb;
+module sys_array_tb_twotrace;
 
     /* Dump Test Waveform To VPD File */
   initial begin
@@ -29,7 +29,7 @@ module sys_array_tb;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [67:0] rom_data_lo;
+  logic [67:0] rom_data_lo_send, rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
 
@@ -49,7 +49,7 @@ module sys_array_tb;
       , .yumi_i( tr_yumi_li )
 
       , .rom_addr_o( rom_addr_li )
-      , .rom_data_i( rom_data_lo )
+      , .rom_data_i( rom_data_lo_send )
 
       , .done_o()
       , .error_o()
@@ -71,7 +71,7 @@ module sys_array_tb;
       , .yumi_i( tr_yumi_li )
 
       , .rom_addr_o(  )
-      , .rom_data_i( rom_data_lo )
+      , .rom_data_i( rom_data_lo_recv )
 
       , .done_o()
       , .error_o()
@@ -85,10 +85,16 @@ module sys_array_tb;
   end
 
   // / 1 bit load_B / 8 bits A / 16 bits B_PS / 4 bits for trace replay
-  sys_array_trace_rom #(.width_p(68),.addr_width_p(32))
-    ROM_BPS
+  sys_array_send_trace_rom #(.width_p(68),.addr_width_p(32))
+    ROM_BPS_send
       (.addr_i( rom_addr_li )
-      ,.data_o( rom_data_lo )
+      ,.data_o( rom_data_lo_send )
+      );
+
+  sys_array_recv_trace_rom #(.width_p(68),.addr_width_p(32))
+    ROM_BPS_send
+      (.addr_i( rom_addr_li )
+      ,.data_o( rom_data_lo_recv )
       );
 
   logic [15:0] ps_out_data [3:0];
