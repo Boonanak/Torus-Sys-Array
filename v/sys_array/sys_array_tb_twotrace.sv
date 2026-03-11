@@ -92,7 +92,7 @@ module sys_array_tb_twotrace;
       );
 
   sys_array_recv_trace_rom #(.width_p(68),.addr_width_p(32))
-    ROM_BPS_send
+    ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
