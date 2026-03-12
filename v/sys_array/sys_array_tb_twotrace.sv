@@ -98,13 +98,13 @@ module sys_array_tb_twotrace;
       );
 
   logic [15:0] ps_out_data [3:0];
-  logic [7:0] A_out_data [3:0];
-  logic [31:0] transposer_data_in;
+  logic [15:0] A_out_data [3:0];
+  logic [7:0] transposer_data_in [3:0];
 
-  assign transposer_data_in[31:24] = tr_data_lo[31:24];
-  assign transposer_data_in[23:16] = tr_data_lo[23:16];
-  assign transposer_data_in[15:8] = tr_data_lo[15:8];
-  assign transposer_data_in[7:0] = tr_data_lo[7:0];
+  assign transposer_data_in[3] = tr_data_lo[31:24];
+  assign transposer_data_in[2] = tr_data_lo[23:16];
+  assign transposer_data_in[1] = tr_data_lo[15:8];
+  assign transposer_data_in[0] = tr_data_lo[7:0];
 
   sys_array DUT
     (.clk_i       ( clk )
