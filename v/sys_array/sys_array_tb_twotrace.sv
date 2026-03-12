@@ -114,7 +114,7 @@ module sys_array_tb_twotrace;
     ,.transposer_ready_out ( dut_ready_lo )
     // ,.transposer_ready_out ( )
 
-    ,.output_buffer_ready_in  ( '1 )
+    ,.output_buffer_ready_in  ( tr_ready_lo )
     ,.output_buffer_valid_out ( dut_v_lo )
     // ,.output_buffer_valid_out ()
     );
