@@ -13,11 +13,11 @@ recv 0 0 0 0
 load 13 14 15 16
 recv 1 1 1 1
 load 0 0 0 0
-recv 5 14 3 12
+recv 3 5 12 14
 load 0 0 0 0
-recv 13 10 7 4
+recv 4 7 10 13
 load 0 0 0 0
-recv 9 2 15 8
+recv 2 8 9 15
 load 0 0 0 0
 recv 1 6 11 16
 end

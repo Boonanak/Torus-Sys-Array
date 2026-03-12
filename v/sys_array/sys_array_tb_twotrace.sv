@@ -100,7 +100,7 @@ module sys_array_tb_twotrace;
   logic [15:0] ps_out_data [3:0];
 
   sys_array DUT
-    (.clk       ( clk )
+    (.clk_i     ( clk )
     ,.reset     ( reset )
     ,.load_B    ( tr_data_lo[63] )
     ,.row_major ( tr_data_lo[62] )
