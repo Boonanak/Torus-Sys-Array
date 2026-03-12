@@ -16,7 +16,6 @@ sim.inputs.tb_input_files: [
   "v/sys_array/sys_array_tb.sv",
   "v/sys_array/sys_array_tb_twotrace.sv",
 
-
   "v/transpose/dff_en_tb.v",
   "v/transpose/shift_reg_tb.v",
   "v/transpose/tp_node_tb.v",
