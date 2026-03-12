@@ -127,7 +127,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         valid_tracker (
                        .clk_i(clk_i),
                        .rst_n_i(rst_n_i),  
-                       .enable_i(enable), 
+                       .enable_i(read_or_write), 
                        .shift_in_i(valid_i), 
                        .data_out_o(valid) 
                       );
