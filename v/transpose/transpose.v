@@ -21,15 +21,24 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
 
+    // Flip incomming data 
+    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
+    always_comb begin
+        for (int i = 0; i < DIM_p; i++) begin
+            flipped_in_data[i] = in_data[DIM_p-1 - i];
+        end
+    end 
+
+    // Flip first and second rows if rotate is enabled, otherwise keep the same
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
     always_comb begin 
         for (integer i = 0; i < DIM_p; i++) begin 
             if (i == 0) begin 
-                processed_in_data[i] = (rotate) ? in_data[1] : in_data[0];
+                processed_in_data[i] = (rotate) ? flipped_in_data[1] : flipped_in_data[0];
             end else if (i == 1) begin 
-                processed_in_data[i] = (rotate) ? in_data[0] : in_data[1];
+                processed_in_data[i] = (rotate) ? flipped_in_data[0] : flipped_in_data[1];
             end else begin 
-                processed_in_data[i] = in_data[i];
+                processed_in_data[i] = flipped_in_data[i];
             end
         end
     end
@@ -66,13 +75,6 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     read_or_write: if we can either read or write data, used to control shifting and enabling
     */
 
-    
-    //logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
-    //logic [WIDTH_p-1:0] data_pass_0   [DIM_p][DIM_p]; // Possible signals that a node can draw data from, 4 per node
-    //logic [WIDTH_p-1:0] data_pass_1   [DIM_p][DIM_p];
-    //logic [WIDTH_p-1:0] data_shift_0  [DIM_p][DIM_p];
-    //logic [WIDTH_p-1:0] data_shift_1  [DIM_p][DIM_p];
-
     `ifdef SYNTHESIS
         // ============================================================
         // Synthesis-only version (unpacked arrays)
@@ -96,8 +98,6 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     genvar row;
     genvar col;
-
-
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
@@ -182,8 +182,6 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         end
     endgenerate
 
-
-
     // if direction is 1, we are shifting up, 
     // so the output data is in the last row of the bus. 
     // if direction is 0, we are shifting left, so the output 
@@ -218,17 +216,3 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     end
 
 endmodule
-
-/*
-    direction will flip every DIM_p cycles if the last row/col is valid
-
-    row = 0 and col = 0 will always be pass
-
-
-    valid_o when ever the last line is valid
-    ready_o = 1 unless output_valid, then ready_o = ready_i
-
-    if valid_i and ready_o, shift, enable. else nothing.
-    if ready_i and valid_o, shift, enable, shift in invalid. else nothing. 
-    if valid_i and ready_i, (provided ready_o and valid_o) shift, enable, shift in valid. else nothing
-*/
