@@ -8,7 +8,7 @@ module shift_reg_simple #(parameter WIDTH_p = 8,
                         input logic rst_n_i,
                         input logic enable_i,
                         input logic [WIDTH_p-1:0] shift_in_i, // value to shift in
-                        output logic [WIDTH_p-1:0] data_out_o [LENGTH_p-1:0]
+                        output logic [LENGTH_p-1:0][WIDTH_p-1:0] data_out_o 
                        );
 
     // Move the top bits up 1 and shift in the new value at the bottom
