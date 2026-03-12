@@ -13,7 +13,7 @@ sim.inputs.tb_input_files: [
   "v/PE/PE_shared_B_tb.sv",
   "v/PE/PE_final_tb.sv",
   "v/sys_array/sys_array_tb.sv",
-
+  "v/sys_array/sys_array_tb_twotrace.sv",
 
   "v/transpose/dff_en_tb.v",
   "v/transpose/shift_reg_tb.v",
@@ -36,7 +36,8 @@ sim.inputs.trace_files: [
   "v/PE/PE_final_trace.tr",
   
   "v/sys_array/sys_array_trace.tr",
-
+  "v/sys_array/sys_array_send_trace.tr",
+  "v/sys_array/sys_array_recv_trace.tr",
 
   "v/transpose/dff_en_trace.tr",
   "v/transpose/shift_reg_trace.tr",
