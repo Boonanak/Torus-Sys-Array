@@ -1,9 +1,8 @@
 // A pipelined transpose module for a DIM_p x DIM_p matrix with WIDTH_p bit elements
 // Takes in a full row of an input matrix and outputs a full column of the transposed matrix
 module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
-                    parameter WIDTH_p = 8 // Width of each element in bits
-                ) (
-                    input logic clk_i, 
+                    parameter WIDTH_p = 8) // Width of data
+                  ( input logic clk_i, 
                     input logic rst_n_i, // Active low reset
                     input logic col_major_i, // input is in column-major order (NONFUNCTIONAL)
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
