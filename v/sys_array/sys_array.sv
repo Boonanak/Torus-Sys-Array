@@ -48,22 +48,22 @@ module sys_array #(
     logic [15:0] col_in_PS [COLS-1:0][ROWS-1:0];
 
     // control signals
-    logic [COLS - 1 : 0] valid, valid_next;
+    logic [COLS : 0] valid, valid_next;
     logic [COLS - 1 : 0] load_B_control, load_B_control_next;
     logic [COLS - 1 : 0] row_major_control, row_major_control_next;
-    logic [COLS - 1 : 0] enable;
+    logic [COLS : 0] enable;
 
     logic fifo_ready_in, fifo_valid_out;
 
     always_comb begin
-        enable[COLS - 1] = ~valid[COLS - 1]; 
-        for (integer i = COLS - 2; i >= 0; i--) begin 
+        enable[COLS] = ~valid[COLS]; 
+        for (integer i = COLS - 1; i >= 0; i--) begin 
             enable[i] = enable[i+1] || !valid[i];
         end
 
         if (fifo_ready_in && fifo_valid_out) enable = '1;
 
-        for (integer i = COLS - 1; i >= 1; i--) begin 
+        for (integer i = COLS; i >= 1; i--) begin 
             valid_next[i] = enable[i] ? valid[i - 1] : valid;
         end
         valid_next[0] = enable[0] ? 
@@ -73,7 +73,7 @@ module sys_array #(
         load_B_control_next = (transposer_valid_in && transposer_ready_out) ? 
                               (load_B ? {load_B_control[COLS-2:0], load_B} : {COLS{1'b0}}) 
                               : load_B_control;
-        row_major_control_next = (transposer_valid_in && transposer_ready_out) ? {row_major_control[2:0], row_major} : row_major_control;
+        row_major_control_next = (transposer_valid_in && transposer_ready_out) ? {row_major_control[COLS - 2:0], row_major} : row_major_control;
     end
 
     assign transposer_ready_out = !(&valid) | (fifo_ready_in && fifo_valid_out);
@@ -83,14 +83,14 @@ module sys_array #(
             valid                   <= '0;
             load_B_control          <= '0;
             row_major_control       <= '0;
-            fifo_valid_out <= '0;
         end else begin 
             valid                   <= valid_next;
             load_B_control          <= load_B_control_next;
             row_major_control       <= row_major_control_next;
-            fifo_valid_out <= valid[COLS-1];
         end
     end
+
+    assign fifo_valid_out = valid[COLS-1];
 
     // initialize PE
     genvar i;
