@@ -32,6 +32,7 @@ module transpose_tb;
   logic [35:0] rom_data_lo;
 
   logic tr_yumi_li, dut_yumi_li;
+  logic valid_i_r;
 
   bsg_fsb_node_trace_replay #(.ring_width_p(32)
                              ,.rom_addr_width_p(32) )
@@ -60,6 +61,8 @@ module transpose_tb;
     tr_yumi_li  <= dut_ready_r & tr_v_lo;
     dut_v_r     <= dut_v_lo;
     dut_data_r  <= dut_data_lo;
+
+    valid_i_r <= tr_v_lo;
   end
 
   transpose_trace_rom #(.width_p(36),.addr_width_p(32))
@@ -76,7 +79,7 @@ module transpose_tb;
     ,.col_major_i ( 1'b0 )
     ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
 
-    ,.valid_i ( tr_v_lo )
+    ,.valid_i ( valid_i_r )
     ,.ready_i ( dut_yumi_li )
 
     ,.valid_o ( dut_v_lo )
