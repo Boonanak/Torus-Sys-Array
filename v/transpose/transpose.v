@@ -154,7 +154,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     generate 
         for (j = 0; j < DIM_p; j++) begin : selection_loop
             // first line always passes, then we shift more and more lines as count increases, then we go back to passing after count exceeds the index
-            assign selection[j] = (j == 0) ? PASS : (j <= count) ? SHIFT : PASS; 
+            assign selection[j] = (j == 0) ? PASS : (j < count) ? SHIFT : PASS; 
         end
     endgenerate
 
