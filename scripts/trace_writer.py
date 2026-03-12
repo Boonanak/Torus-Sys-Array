@@ -390,4 +390,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/ARR_test_2.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
+write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
