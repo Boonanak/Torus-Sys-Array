@@ -41,37 +41,40 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     */
 
     logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
+    logic [WIDTH_p-1:0] data_pass_0   [DIM_p][DIM_p]; // Possible signals that a node can draw data from, 4 per node
+    logic [WIDTH_p-1:0] data_pass_1   [DIM_p][DIM_p];
+    logic [WIDTH_p-1:0] data_shift_0  [DIM_p][DIM_p];
+    logic [WIDTH_p-1:0] data_shift_1  [DIM_p][DIM_p];
 
     genvar row;
     genvar col;
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
-                wire [WIDTH_p-1:0] data_pass_0, data_pass_1, data_shift_0, data_shift_1;
 
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                assign data_pass_1 = (row == 0) ? in_data[col] : tp_bus[row-1][col];
-                assign data_pass_0 = (col == 0) ? in_data[row] : tp_bus[row][col-1];
+                assign data_pass_1[row][col] = (row == 0) ? in_data[col] : tp_bus[row-1][col];
+                assign data_pass_0[row][col] = (col == 0) ? in_data[row] : tp_bus[row][col-1];
                 
                 // Shift data stream
                 //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
                 //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                assign data_shift_0 = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
-                assign data_shift_1 = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
+                assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
+                assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_p)
                          ) node (
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
-                         ,.data_pass_0_i(data_pass_0)
-                         ,.data_pass_1_i(data_pass_1)
-                         ,.data_shift_0_i(data_shift_0)
-                         ,.data_shift_1_i(data_shift_1)
+                         ,.data_pass_0_i(data_pass_0[row][col])
+                         ,.data_pass_1_i(data_pass_1[row][col])
+                         ,.data_shift_0_i(data_shift_0[row][col])
+                         ,.data_shift_1_i(data_shift_1[row][col])
                          ,.row_en_i(row_enable[row])
                          ,.col_en_i(col_enable[col])
                          ,.data_out(tp_bus[row][col])
@@ -107,16 +110,28 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         end
     end
 
+    // Selection logic bus for whether each row/col should shift or pass based on the current count and direction.
+    logic [DIM_p-1:0] selection;
+    genvar j;
+    generate 
+        for (j = 0; j < DIM_p; j++) begin : selection_loop
+            // first line always passes, then we shift more and more lines as count increases, then we go back to passing after count exceeds the index
+            assign selection[j] = (j == 0) ? PASS : (j <= count) ? SHIFT : PASS; 
+        end
+    endgenerate
+
     // Set the row and column enable lines
     // Has to be a generate because col and row enable are unpacked arrays.
+    // 2 bit code for whether to shift or pass for this row/col, shared between row and col enables since only one is active at a time
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            wire selection = (i == 0) ? PASS : (i <= count) ? SHIFT : PASS;
-            assign col_enable[i] = direction ? 2'b00 : {enable, selection}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = direction ? {enable, selection} : 2'b00;
+            assign col_enable[i] = direction ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = direction ? {enable, selection[i]} : 2'b00;
         end
     endgenerate
+
+
 
     // if direction is 1, we are shifting up, 
     // so the output data is in the last row of the bus. 
