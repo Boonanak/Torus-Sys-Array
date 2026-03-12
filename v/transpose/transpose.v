@@ -8,6 +8,8 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
+                    input logic rotate,
+                    input logic transpose, 
                     ///////////////////////////////////////////////////////////////////////////////
                     output logic valid_o, // if the transposer output is valid
                     output logic ready_o, // if the transposer is ready to accept new input data
@@ -18,6 +20,19 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     localparam DIM_CLOG2_p = $clog2(DIM_p);
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
+
+    logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
+    always_comb begin 
+        for (integer i = 0; i < DIM_p; i++) begin 
+            if (i == 0) begin 
+                processed_in_data[i] = (rotate) ? in_data[1] : in_data[0];
+            end else if (i == 1) begin 
+                processed_in_data[i] = (rotate) ? in_data[0] : in_data[1];
+            end else begin 
+                processed_in_data[i] = in_data[i];
+            end
+        end
+    end
 
     logic direction; // The current direction of shifting
                      // direction = 0 means horizontal (column) shift
@@ -98,14 +113,15 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                assign data_pass_1[row][col] = (row == 0) ? in_data[col] : tp_bus[row-1][col];
-                assign data_pass_0[row][col] = (col == 0) ? in_data[row] : tp_bus[row][col-1];
 
-                //assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
-                //assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
+                assign data_pass_1[row][col] = (row == 0) ? (processed_in_data[col]) : tp_bus[row-1][col];
+                assign data_pass_0[row][col] = (col == 0) ? (processed_in_data[row]) : tp_bus[row][col-1];
 
-                assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
-                assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
+                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
+                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
+
+                //assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
+                //assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_p)

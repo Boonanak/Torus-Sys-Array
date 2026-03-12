@@ -71,13 +71,15 @@ module transpose_tb;
       ,.data_o( rom_data_lo )
       );
 
-  transpose #(.WIDTH_P(8), .DIM_p(4))
+  transpose #(.WIDTH_p(8), .DIM_p(4))
     DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
     ,.col_major_i ( 1'b0 )
-    ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
+    ,.in_data ( {tr_data_lo[7:0], tr_data_lo[15:8], tr_data_lo[23:16], tr_data_lo[31:24]} )
+    ,.rotate    ( 1'b1 )
+    ,.transpose ( 1'b1 )
 
     ,.valid_i ( valid_i_r )
     ,.ready_i ( dut_yumi_li )
