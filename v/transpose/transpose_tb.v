@@ -5,7 +5,7 @@ module transpose_tb;
     /* Dump Test Waveform To VPD File */
   initial begin
     $fsdbDumpfile("waveform.fsdb");
-    $fsdbDumpvars();
+    $fsdbDumpvars("+all");
   end
 
   /* Non-synth clock generator */
@@ -71,7 +71,7 @@ module transpose_tb;
   transpose #(.WIDTH_P(8), .DIM_p(4))
     DUT
     (.clk_i    ( clk )
-    ,.rst_n_i  ( reset )
+    ,.rst_n_i  ( ~reset )
 
     ,.col_major_i ( 1'b0 )
     ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
@@ -79,10 +79,10 @@ module transpose_tb;
     ,.valid_i ( tr_v_lo )
     ,.ready_i ( dut_yumi_li )
 
-    //,.valid_o ( dut_v_lo )
-    //,.ready_o ( dut_ready_lo )
     ,.valid_o ( dut_v_lo )
     ,.ready_o ( dut_ready_lo )
+    //,.valid_o (  )
+    //,.ready_o (  )
 
     ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
     );

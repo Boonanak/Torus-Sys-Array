@@ -1,10 +1,8 @@
 // A pipelined transpose module for a DIM_p x DIM_p matrix with WIDTH_p bit elements
 // Takes in a full row of an input matrix and outputs a full column of the transposed matrix
 module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
-                    parameter WIDTH_p = 8, // Width of each element in bits
-                    localparam DIM_CLOG2_p = $clog2(DIM_p)
-                ) (
-                    input logic clk_i, 
+                    parameter WIDTH_p = 8) // Width of data
+                  ( input logic clk_i, 
                     input logic rst_n_i, // Active low reset
                     input logic col_major_i, // input is in column-major order (NONFUNCTIONAL)
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
@@ -16,133 +14,181 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                     output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
-    logic [DIM_CLOG2_p:0] state_counter; // Top bit is direction bit, bottom bits are the count 
-    logic enable; // Whether to enable the nodes to shift
-    logic direction;
-    logic [DIM_CLOG2_p-1:0] count;
+    // Params for row/col enable selection
+    localparam DIM_CLOG2_p = $clog2(DIM_p);
+    localparam logic PASS = 1'b0;
+    localparam logic SHIFT = 1'b1;
+
+    logic direction; // The current direction of shifting
+                     // direction = 0 means horizontal (column) shift
+                     // direction = 1 means vertical (row) shift
+    logic [DIM_CLOG2_p-1:0] count; // bottom bits of the write counter
+    logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
+
+    // 2 bit code for row/col shifting/passing. top bit is enable, bottom bit is 0 for pass, 1 for shift
+    `ifdef SYNTHESIS
+        // ============================================================
+        // Synthesis-only version (unpacked arrays)
+        // ============================================================
+        logic [1:0] row_enable [DIM_p-1:0]; 
+        logic [1:0] col_enable [DIM_p-1:0];
+    `else
+        // ============================================================
+        // Simulation-only version (fully packed arrays)
+        // ============================================================
+        logic [DIM_p-1:0][1:0] row_enable; 
+        logic [DIM_p-1:0][1:0] col_enable; 
+    `endif
+
+    logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
+    logic output_valid, enable, ready, can_read, can_write, read_or_write;
+    /*
+    output_valid: whether the output data is valid, determined by the last bit of the valid shift register
+    enable: enable the rows/cols of the transposer to shift data, as well as the valid shift register
+    ready: whether the transposer can accept data (its not full)
+    can_read: whether data can be read out from the transposer
+    can_write: whether data can be written into the transposer
+    read_or_write: if we can either read or write data, used to control shifting and enabling
+    */
+
     
-    // States for ready-valid logic
-    typedef enum logic [1:0] {EMPTY, FILL, FULL, DRAIN} state_e;
-    state_e curr, next;
-    // EMPTY: no values are in the transposer
-    // FILL: We are putting values in but the output is not valid yet
-    // FULL: transposer is full, output is valid. we can maintain this if we read and write at the same time
-    // DRAIN: a value from the full transposer was read out before a new one could be read in, so we have to drain the whole transposer before accepting new input.
+    //logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
+    //logic [WIDTH_p-1:0] data_pass_0   [DIM_p][DIM_p]; // Possible signals that a node can draw data from, 4 per node
+    //logic [WIDTH_p-1:0] data_pass_1   [DIM_p][DIM_p];
+    //logic [WIDTH_p-1:0] data_shift_0  [DIM_p][DIM_p];
+    //logic [WIDTH_p-1:0] data_shift_1  [DIM_p][DIM_p];
 
-    logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
+    `ifdef SYNTHESIS
+        // ============================================================
+        // Synthesis-only version (unpacked arrays)
+        // ============================================================
+        logic [WIDTH_p-1:0] tp_bus       [DIM_p-1:0][DIM_p-1:0];
+        logic [WIDTH_p-1:0] data_pass_0  [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_pass_1  [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_shift_0 [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_shift_1 [DIM_p][DIM_p];
 
-    genvar i; // row
-    genvar j; // col
+    `else
+        // ============================================================
+        // Simulation-only version (fully packed arrays)
+        // ============================================================
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] tp_bus;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_0;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_1;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_0;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_1;
+    `endif
+
+    genvar row;
+    genvar col;
+
+
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
-        for (i = 0; i < DIM_p; i++) begin : row_loop
-            for (j = 0; j < DIM_p; j++) begin : col_loop // Iterate through each column first
-                wire [WIDTH_p-1:0] data_pass_0, data_pass_1, data_shift_0, data_shift_1;
+        for (row = 0; row < DIM_p; row++) begin : row_loop
+            for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
+                localparam int shift_amount_row = (col == 1) ?  1 :
+                                                 (col == 2) ?  2 :
+                                                 (col == 3) ? -1 : 0;
 
+                localparam int shift_amount_col = (row == 1) ?  1 :
+                                                 (row == 2) ?  2 :
+                                                 (row == 3) ? -1 : 0;
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
-                assign data_pass_1 = (i == 0) ? in_data[j] : tp_bus[i-1][j];
-                assign data_pass_0 = (j == 0) ? in_data[i] : tp_bus[i][j-1];
-                
-                // Shift data stream
-                //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
-                //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                assign data_shift_0 = (j == 0) ? 'X : ((i == 0) ? tp_bus[DIM_p-1][j-1] : tp_bus[i-1][j-1]);
-                assign data_shift_1 = (i == 0) ? 'X : ((j == 0) ? tp_bus[i-1][DIM_p-1] : tp_bus[i-1][j-1]);
+                assign data_pass_1[row][col] = (row == 0) ? in_data[col] : tp_bus[row-1][col];
+                assign data_pass_0[row][col] = (col == 0) ? in_data[row] : tp_bus[row][col-1];
+
+                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
+                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
 
                 // Transposer node instantiation
-                tp_node #(.WIDTH_p(8)
-                         ,.DIM_p(DIM_p)
-                         ,.NODE_COL_p(j)
-                         ,.NODE_ROW_p(i)
+                tp_node #(.WIDTH_p(WIDTH_p)
                          ) node (
                           .clk_i(clk_i)
                          ,.rst_n_i(rst_n_i)
-                         ,.en_i(enable)
-                         ,.data_pass_0_i(data_pass_0)
-                         ,.data_pass_1_i(data_pass_1)
-                         ,.data_shift_0_i(data_shift_0)
-                         ,.data_shift_1_i(data_shift_1)
-                         ,.state_counter(state_counter)
-                         ,.data_out(tp_bus[i][j])
+                         ,.data_pass_0_i(data_pass_0[row][col])
+                         ,.data_pass_1_i(data_pass_1[row][col])
+                         ,.data_shift_0_i(data_shift_0[row][col])
+                         ,.data_shift_1_i(data_shift_1[row][col])
+                         ,.row_en_i(row_enable[row])
+                         ,.col_en_i(col_enable[col])
+                         ,.data_out(tp_bus[row][col])
                          );
             end
         end
     endgenerate
 
+    // Shift register to store what columns/rows have valid data. Single array used for both directions
+    shift_reg_simple #(.WIDTH_p(1), 
+                       .LENGTH_p(DIM_p))
+        valid_tracker (
+                       .clk_i(clk_i),
+                       .rst_n_i(rst_n_i),  
+                       .enable_i(enable), 
+                       .shift_in_i(valid_i), 
+                       .data_out_o(valid) 
+                      );
+
     // Ready-valid handshake logic based on current state
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
-            enable <= 1'b0;
-            state_counter <= '0;
             ready_o <= 1'b1;
             valid_o <= 1'b0;
-            curr <= EMPTY;
+            enable <= 1'b0;
+            write_counter <= '0;
         end else begin
-            curr <= next;
-            if (curr == EMPTY) begin
-                ready_o <= 1'b1;
-                valid_o <= 1'b0;
-                enable <= 1'b0;
-                // hold state counter
-            end else if (curr == FILL) begin
-                ready_o <= 1'b1;
-                valid_o <= 1'b0;
-                if (valid_i) begin
-                    state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
-                    enable <= 1'b1; // Enable the nodes to shift in the data
-                end else begin
-                    enable <= 1'b0; // Hold the data in place if we don't have valid input data
-                end
-            end else if (curr == FULL) begin
-                valid_o <= 1'b1;
-                if (ready_i) begin
-                    state_counter <= state_counter + 1'b1; // Increment count if we have valid input data
-                    enable <= 1'b1; 
-                    ready_o <= 1'b1; // We can accept new data if old data is being read out
-                end else begin
-                    enable <= 1'b0;
-                    ready_o <= 1'b0; // cannot accept new data until old is read out 
-                end
-            end else if (curr == DRAIN) begin
-                ready_o <= 1'b0; // Not ready to accept new data when draining
-                valid_o <= 1'b1; // Output is still valid when draining
-                if (ready_i) begin
-                    state_counter <= state_counter + 1'b1; 
-                    enable <= 1'b1; // Enable the nodes to shift out the data
-                end else begin
-                    enable <= 1'b0; // Hold the data in place
-                end
-            end 
+            valid_o <= output_valid;
+            ready_o <= ready; // if output is valid, only be ready if we are also reading, otherwise always ready
+            enable <= read_or_write; 
+            if (can_write) // increment if writting
+                write_counter <= write_counter + 1'b1;
         end
     end
 
-    // Next-state logic 
-    // NOTE: Potential for glitches if valid_i glitches, we could go to the wrong state. 
-    // Mostly only a problem for FULL -> DRAIN which would cause lost throughput
-    always_comb begin
-        case(curr)
-            EMPTY: next = valid_i ? FILL : EMPTY; // If we have valid input data, start filling the pipeline
-            FILL: next = (count == DIM_p-1) ? FULL : FILL; // If we've filled the pipeline, go to full, else keep filling
-            FULL: next = valid_i ? FULL : DRAIN; // If we have more valid input data, stay full and keep accepting, else go to drain
-            DRAIN: next = (count == 0) ? EMPTY : DRAIN; // If we've drained the pipeline, go to empty, else keep draining
-        endcase
-    end
+    // Selection logic bus for whether each row/col should shift or pass based on the current count and direction.
+    logic [DIM_p-1:0] selection;
+    genvar j;
+    generate 
+        for (j = 0; j < DIM_p; j++) begin : selection_loop
+            // first line always passes, then we shift more and more lines as count increases, then we go back to passing after count exceeds the index
+            assign selection[j] = (j == 0) ? PASS : (j <= count) ? SHIFT : PASS; 
+        end
+    endgenerate
+
+    // Set the row and column enable lines
+    // Has to be a generate because col and row enable are unpacked arrays.
+    // 2 bit code for whether to shift or pass for this row/col, shared between row and col enables since only one is active at a time
+    genvar i;
+    generate
+        for (i = 0; i < DIM_p; i++) begin : enable_loop
+            assign col_enable[i] = direction ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = direction ? {enable, selection[i]} : 2'b00;
+        end
+    endgenerate
+
+
 
     // if direction is 1, we are shifting up, 
     // so the output data is in the last row of the bus. 
     // if direction is 0, we are shifting left, so the output 
     // data is in the last column of the bus
     generate
-        for (i = 0; i < DIM_p; i++) begin
+        for (i = 0; i < DIM_p; i++) begin : output_loop
             assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
-    // Easier break-out of state counter bits
-    assign direction = state_counter[DIM_CLOG2_p]; // top bit of the counter is the direction bit
-    assign count = state_counter[DIM_CLOG2_p-1:0]; // bottom bits of the counter are the count
+
+    // Constant assignments for control signals
+    assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
+    assign direction = write_counter[DIM_CLOG2_p];
+    assign count = write_counter[DIM_CLOG2_p-1:0];
+    assign ready = output_valid ? ready_i : 1'b1;
+    assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
+    assign can_write = valid_i && ready; // able to write if input is valid and we have space
+    assign read_or_write = can_read || can_write; // able to read or write at this time
 
     // Assertions to check for valid parameter settings
     initial begin
@@ -158,24 +204,16 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
 endmodule
 
-
 /*
-If the transposer it empty, output ready_o and ~valid_o, and wait for valid_i
-on valid_i, enable the array, and shift in the data.
-If valid_i remains true, keep shifting, else wait for valid_i. Maintain ready_o
+    direction will flip every DIM_p cycles if the last row/col is valid
 
-once data reaches the end of the pipeline, set valid_o and freeze the pipeline
-if ready_i is set, advance the pipeline until it goes false
-if there is valid data to put into the pipeline that can immediatly follow the previous, keep accpeting new data
-if not, set ~ready_o and wait to empty the pipeline
-once empty, reset, ready_o
-============================================
-if row = 0 pass1 = input data
-if col = 0 pass0 = input data
+    row = 0 and col = 0 will always be pass
 
-if col > 0 shift0 = bus[col-1][row-1] unless row-1 = -1, then shift0 = bus[col-1][DIM_p-1]
-if col > 0 pass0 = bus[col-1][row]
 
-if row > 0 shift1 = bus[col-1][row-1] unless col-1 = -1, then shift1 = bus[DIM_p-1][row-1]
-if row > 0 pass1 = bus[col][row-1]
+    valid_o when ever the last line is valid
+    ready_o = 1 unless output_valid, then ready_o = ready_i
+
+    if valid_i and ready_o, shift, enable. else nothing.
+    if ready_i and valid_o, shift, enable, shift in invalid. else nothing. 
+    if valid_i and ready_i, (provided ready_o and valid_o) shift, enable, shift in valid. else nothing
 */
