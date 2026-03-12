@@ -10,7 +10,7 @@ module sys_array_tb_twotrace;
 
   /* Non-synth clock generator */
   logic clk;
-  bsg_nonsynth_clock_gen #(7500) clk_gen_1 (clk);
+  bsg_nonsynth_clock_gen #(20000) clk_gen_1 (clk);
 
   /* Non-synth reset generator */
   logic reset;
@@ -98,6 +98,13 @@ module sys_array_tb_twotrace;
       );
 
   logic [15:0] ps_out_data [3:0];
+  logic [7:0] A_out_data [3:0];
+  logic [31:0] transposer_data_in;
+
+  assign transposer_data_in[31:24] = tr_data_lo[31:24];
+  assign transposer_data_in[23:16] = tr_data_lo[23:16];
+  assign transposer_data_in[15:8] = tr_data_lo[15:8];
+  assign transposer_data_in[7:0] = tr_data_lo[7:0];
 
   sys_array DUT
     (.clk_i       ( clk )
@@ -105,9 +112,9 @@ module sys_array_tb_twotrace;
     ,.load_B    ( tr_data_lo[63] )
     ,.row_major ( tr_data_lo[62] )
 
-    ,.transposer_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
+    ,.transposer_data ( transposer_data_in )
 
-    ,.A_out_right     (  )
+    ,.A_out_right     ( A_out_data )
     ,.PS_out_right    ( ps_out_data )
 
     ,.transposer_valid_in  ( tr_v_lo )
