@@ -1,7 +1,7 @@
 // This module is a singluar node that is part of a transposer unit
 // It takes 4 seperate data streams, and selects one to pass on
 // Selects the output based on a row or column enable.
-module tp_node #(parameter WIDTH_p = 8, // bitwidth of the stored data
+module tp_node #(parameter WIDTH_p = 8 // bitwidth of the stored data
              ) (
                 input logic clk_i,
                 input logic rst_n_i,
