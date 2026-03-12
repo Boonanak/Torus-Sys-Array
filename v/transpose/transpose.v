@@ -127,7 +127,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         valid_tracker (
                        .clk_i(clk_i),
                        .rst_n_i(rst_n_i),  
-                       .enable_i(read_or_write), 
+                       .enable_i(enable), 
                        .shift_in_i(valid_i), 
                        .data_out_o(valid) 
                       );
@@ -135,16 +135,10 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     // Ready-valid handshake logic based on current state
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
-            ready_o <= 1'b1;
-            valid_o <= 1'b0;
-            enable <= 1'b0;
             write_counter <= '0;
-        end else begin
-            valid_o <= output_valid;
-            ready_o <= ready; // if output is valid, only be ready if we are also reading, otherwise always ready
-            enable <= read_or_write; 
-            if (can_write) // increment if writting
-                write_counter <= write_counter + 1'b1;
+        end else if (can_write) begin
+            // increment if writting
+            write_counter <= write_counter + 1'b1;
         end
     end
 
@@ -188,7 +182,9 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
     assign can_write = valid_i && ready; // able to write if input is valid and we have space
-    assign read_or_write = can_read || can_write; // able to read or write at this time
+    assign enable = can_read || can_write; // enable shifting if we are either reading or writing
+    assign valid_o = output_valid & ~rst_n_i;
+    assign ready_o = ready;
 
     // Assertions to check for valid parameter settings
     initial begin
