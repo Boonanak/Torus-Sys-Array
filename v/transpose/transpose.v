@@ -82,7 +82,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     // Shift register to store what columns/rows have valid data. Single array used for both directions
     shift_reg_simple #(.WIDTH_p(1), 
-                       .DEPTH_p(DIM_p))
+                       .LENGTH_p(DIM_p))
         valid_tracker (
                        .clk_i(clk_i),
                        .rst_n_i(rst_n_i),  
