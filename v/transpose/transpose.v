@@ -183,7 +183,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
     assign can_write = valid_i && ready; // able to write if input is valid and we have space
     assign enable = can_read || can_write; // enable shifting if we are either reading or writing
-    assign valid_o = output_valid & ~rst_n_i;
+    assign valid_o = output_valid;
     assign ready_o = ready;
 
     // Assertions to check for valid parameter settings
