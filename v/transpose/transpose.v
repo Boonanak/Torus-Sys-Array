@@ -26,8 +26,19 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
 
     // 2 bit code for row/col shifting/passing. top bit is enable, bottom bit is 0 for pass, 1 for shift
-    logic [1:0] row_enable [DIM_p-1:0]; 
-    logic [1:0] col_enable [DIM_p-1:0]; 
+    `ifdef SYNTHESIS
+        // ============================================================
+        // Synthesis-only version (unpacked arrays)
+        // ============================================================
+        logic [1:0] row_enable [DIM_p-1:0]; 
+        logic [1:0] col_enable [DIM_p-1:0];
+    `else
+        // ============================================================
+        // Simulation-only version (fully packed arrays)
+        // ============================================================
+        logic [DIM_p-1:0][1:0] row_enable; 
+        logic [DIM_p-1:0][1:0] col_enable; 
+    `endif
 
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
     logic output_valid, enable, ready, can_read, can_write, read_or_write;
@@ -40,11 +51,33 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     read_or_write: if we can either read or write data, used to control shifting and enabling
     */
 
-    logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
-    logic [WIDTH_p-1:0] data_pass_0   [DIM_p][DIM_p]; // Possible signals that a node can draw data from, 4 per node
-    logic [WIDTH_p-1:0] data_pass_1   [DIM_p][DIM_p];
-    logic [WIDTH_p-1:0] data_shift_0  [DIM_p][DIM_p];
-    logic [WIDTH_p-1:0] data_shift_1  [DIM_p][DIM_p];
+    
+    //logic [WIDTH_p-1:0] tp_bus [DIM_p-1:0][DIM_p-1:0]; // The internal buses connecting the transposer nodes, indexed by [row][col]
+    //logic [WIDTH_p-1:0] data_pass_0   [DIM_p][DIM_p]; // Possible signals that a node can draw data from, 4 per node
+    //logic [WIDTH_p-1:0] data_pass_1   [DIM_p][DIM_p];
+    //logic [WIDTH_p-1:0] data_shift_0  [DIM_p][DIM_p];
+    //logic [WIDTH_p-1:0] data_shift_1  [DIM_p][DIM_p];
+
+    `ifdef SYNTHESIS
+        // ============================================================
+        // Synthesis-only version (unpacked arrays)
+        // ============================================================
+        logic [WIDTH_p-1:0] tp_bus       [DIM_p-1:0][DIM_p-1:0];
+        logic [WIDTH_p-1:0] data_pass_0  [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_pass_1  [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_shift_0 [DIM_p][DIM_p];
+        logic [WIDTH_p-1:0] data_shift_1 [DIM_p][DIM_p];
+
+    `else
+        // ============================================================
+        // Simulation-only version (fully packed arrays)
+        // ============================================================
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] tp_bus;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_0;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_1;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_0;
+        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_1;
+    `endif
 
     genvar row;
     genvar col;
@@ -106,7 +139,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
             ready_o <= ready; // if output is valid, only be ready if we are also reading, otherwise always ready
             enable <= read_or_write; 
             if (can_write) // increment if writting
-                write_counter <= write_counter + 1;
+                write_counter <= write_counter + 1'b1;
         end
     end
 
