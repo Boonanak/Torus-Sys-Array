@@ -81,10 +81,18 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     genvar row;
     genvar col;
+
+
     generate // Make the array of transposer nodes, magic interconnect logic, row major input version
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
+                localparam int shift_amount_row = (col == 1) ?  1 :
+                                                 (col == 2) ?  2 :
+                                                 (col == 3) ? -1 : 0;
 
+                localparam int shift_amount_col = (row == 1) ?  1 :
+                                                 (row == 2) ?  2 :
+                                                 (row == 3) ? -1 : 0;
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
@@ -92,12 +100,9 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
                 //if row > 0 pass1 = bus[row-1][col]
                 assign data_pass_1[row][col] = (row == 0) ? in_data[col] : tp_bus[row-1][col];
                 assign data_pass_0[row][col] = (col == 0) ? in_data[row] : tp_bus[row][col-1];
-                
-                // Shift data stream
-                //if col > 0 shift0 = bus[row-1][col-1] unless row == 0, then shift0 = bus[DIM_p-1][col-1]. if col == 0, dont care
-                //if row > 0 shift1 = bus[row-1][col-1] unless col == 0, then shift1 = bus[row-1][DIM_p-1]. if row == 0, dont care
-                assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
-                assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
+
+                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
+                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_p)
