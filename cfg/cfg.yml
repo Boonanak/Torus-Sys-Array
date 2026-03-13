@@ -2,7 +2,7 @@
 
 # TODO: Set top levels
 synthesis.inputs.top_module: "transpose"
-sim.inputs.tb_name: "transpose_tb"
+sim.inputs.tb_name: "transpose_tb_twotrace"
 
 # Don't synthesize these gate-level netlist modules
 # TODO: List the names of any modules that don't require synthesis
