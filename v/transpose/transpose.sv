@@ -22,7 +22,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     localparam logic SHIFT = 1'b1;
 
     // Pre-proccess the data
-    // Swap first and second rows if rotate is enabled
+    // Swap thrid and fourth rows if rotate is enabled
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
     always_comb begin 
         for (integer i = 0; i < DIM_p; i++) begin 
@@ -36,6 +36,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         end
     end
 
+    /* MARKED FOR REMOVAL 
     // Flip processed data 
     logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
     always_comb begin
@@ -43,6 +44,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
             flipped_in_data[i] = processed_in_data[DIM_p-1 - i];
         end
     end 
+    */
 
     // Counter values
     logic direction; // The current direction of shifting
