@@ -87,12 +87,12 @@ module transpose_tb;
     valid_i_r <= tr_v_lo;
   end
 
-  transpose_trace_recv_rom #(.width_p(36),.addr_width_p(32))
+  transpose_recv_trace_rom #(.width_p(36),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
-  transpose_trace_send_rom #(.width_p(36),.addr_width_p(32))
+  transpose_send_trace_rom #(.width_p(36),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )

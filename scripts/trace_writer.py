@@ -277,16 +277,31 @@ def parse_TU_2_line(TU_line):
             trace_line_send += f"# NOOP for SEND while loading B\n0000__{'0'*32}\n"
         case 'load_recv':
             numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# SEND  |  {numbers[:4]}\n"
+            trace_line_send += f"0001_________"
+            for n in numbers[:4]:
+                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_send += '\n'
+            trace_line_recv += f"# RECV  |  {numbers[4:]}\n"
+            trace_line_recv += f"0010_________"
+            for n in numbers[4:]:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
         case 'wait':
             n = int(TU_line[space_i:])
-            trace_line += f"# WAIT for {n} cycles\n"
+            trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line += f"0000__{'0'*32}\n"
+                trace_line_send += f"0000__{'0'*32}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000__{'0'*32}\n"
         case 'end':
-            trace_line += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
         case '###':
-            trace_line += TU_line
-    return trace_line + '\n'
+            trace_line_send += TU_line
+            trace_line_recv += TU_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
 
 def parse_ARR_line(ARR_line):
     space_i = ARR_line.find(' ')
@@ -444,5 +459,5 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
-# write_trace('scripts/TU_test_final.txt', 'v/sys_array/transpose_send_trace.tr', 'v/sys_array/transpose_recv_trace.tr')
+# write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
+write_trace('scripts/TU_test_final.txt', 'v/sys_array/transpose_send_trace.tr', 'v/sys_array/transpose_recv_trace.tr')
