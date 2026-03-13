@@ -21,31 +21,28 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
 
-    
-    // Flip processed data 
-    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
-    always_comb begin
-        for (int i = 0; i < DIM_p; i++) begin
-            flipped_in_data[i] = in_data[DIM_p-1 - i];
-        end
-    end 
-
     // Pre-proccess the data
     // Swap first and second rows if rotate is enabled
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
     always_comb begin 
         for (integer i = 0; i < DIM_p; i++) begin 
             if (i == 0) begin 
-                processed_in_data[i] = (rotate) ? flipped_in_data[1] : flipped_in_data[0];
+                processed_in_data[i] = (rotate) ? in_data[1] : in_data[0];
             end else if (i == 1) begin 
-                processed_in_data[i] = (rotate) ? flipped_in_data[0] : flipped_in_data[1];
+                processed_in_data[i] = (rotate) ? in_data[0] : in_data[1];
             end else begin 
-                processed_in_data[i] = flipped_in_data[i];
+                processed_in_data[i] = in_data[i];
             end
         end
     end
 
-
+    // Flip processed data 
+    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
+    always_comb begin
+        for (int i = 0; i < DIM_p; i++) begin
+            flipped_in_data[i] = processed_in_data[DIM_p-1 - i];
+        end
+    end 
 
     // Counter values
     logic direction; // The current direction of shifting
@@ -122,8 +119,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                 assign data_pass_1[row][col] = (row == 0) ? (flipped_in_data[col]) : tp_bus[row-1][col];
                 assign data_pass_0[row][col] = (col == 0) ? (flipped_in_data[row]) : tp_bus[row][col-1];
 
-                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
-                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
+                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row + shift_amount_row + DIM_p) % DIM_p][col - 1];
+                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col + shift_amount_col + DIM_p) % DIM_p];
 
                 //assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
                 //assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
