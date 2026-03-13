@@ -80,7 +80,7 @@ module transpose_tb_twotrace;
 
   always_ff @(negedge clk) begin
     dut_ready_r <= dut_ready_lo;
-    tr_yumi_li  <= dut_ready_r & tr_v_lo;
+    tr_yumi_li  <= 1'b1; //dut_ready_r & tr_v_lo;
     dut_v_r     <= dut_v_lo;
     dut_data_r  <= dut_data_lo;
 
