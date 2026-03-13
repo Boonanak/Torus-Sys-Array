@@ -21,28 +21,28 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
 
-    // Swap first and second rows if rotate is enabled
-    logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
-    always_comb begin 
-        for (integer i = 0; i < DIM_p; i++) begin 
-            if (i == 0) begin 
-                processed_in_data[i] = (rotate) ? in_data[1] : in_data[0];
-            end else if (i == 1) begin 
-                processed_in_data[i] = (rotate) ? in_data[0] : in_data[1];
-            end else begin 
-                processed_in_data[i] = in_data[i];
+    // Pre-proccess the data
+    // Swap rows 1 and 2 if rotate is enabled, then reverse the order of the whole array
+    logic [WIDTH_p-1:0] processed_data [DIM_p-1:0];
+    always_comb begin
+        for (int i = 0; i < DIM_p; i++) begin
+            int src_idx;
+
+            // First apply the swap (if rotate)
+            if (rotate) begin
+                if (i == 0)       src_idx = 1;
+                else if (i == 1)  src_idx = 0;
+                else              src_idx = i;
+            end else begin
+                src_idx = i;
             end
+
+            // Then apply the flip
+            processed_data[i] = in_data[DIM_p-1 - src_idx];
         end
     end
 
-    // Flip processed data 
-    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
-    always_comb begin
-        for (int i = 0; i < DIM_p; i++) begin
-            flipped_in_data[i] = processed_in_data[DIM_p-1 - i];
-        end
-    end 
-
+    // Counter values
     logic direction; // The current direction of shifting
                      // direction = 0 means horizontal (column) shift
                      // direction = 1 means vertical (row) shift
@@ -64,6 +64,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         logic [DIM_p-1:0][1:0] col_enable; 
     `endif
 
+    // Control signals
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
     logic output_valid, enable, ready, can_read, can_write, read_or_write;
     /*
@@ -84,7 +85,6 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         logic [WIDTH_p-1:0] data_pass_1  [DIM_p][DIM_p];
         logic [WIDTH_p-1:0] data_shift_0 [DIM_p][DIM_p];
         logic [WIDTH_p-1:0] data_shift_1 [DIM_p][DIM_p];
-
     `else
         // ============================================================
         // Simulation-only version (fully packed arrays)
@@ -98,7 +98,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
 
     genvar row;
     genvar col;
-    generate // Make the array of transposer nodes, magic interconnect logic, row major input version
+    generate // Make the array of transposer nodes, magic interconnect logic
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
                 localparam int shift_amount_row = (col == 1) ?  1 :
