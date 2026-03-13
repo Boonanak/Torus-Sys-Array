@@ -48,10 +48,10 @@ compute      127 127 127 127
 ### load in identity matrix in column major order
 loadB C      1 0 0 0
 loadB_recv C 0 1 0 0    32767 32767 32767 32767
-loadB_recv C 0 0 1 0    -1020 -1020 -1020 -1020
-loadB_recv C 0 0 0 1    -1020 -1020 -1020 -1020
+loadB_recv C 0 0 1 0    32767 32767 32767 32767
+loadB_recv C 0 0 0 1    32767 32767 32767 32767
 ### Compute A1 x I = I x I = I, A2 x I = A2, A3 x I = -A2
-compute_recv 1 2 3 4    -1020 -1020 -1020 -1020
+compute_recv 1 2 3 4    32767 32767 32767 32767
 compute_recv 2 3 4 3   1 0 0 0
 compute_recv 3 4 3 2   0 1 0 0
 compute_recv 4 3 2 1   0 0 1 0
@@ -87,8 +87,8 @@ compute      127 127 127 127
 compute      127 127 127 127
 compute      127 127 127 127
 wait 1
-recv -1020 -1020 -1020 -1020
-recv -1020 -1020 -1020 -1020
-recv -1020 -1020 -1020 -1020
-recv -1020 -1020 -1020 -1020
+recv 32767 32767 32767 32767
+recv 32767 32767 32767 32767
+recv 32767 32767 32767 32767
+recv 32767 32767 32767 32767
 end
