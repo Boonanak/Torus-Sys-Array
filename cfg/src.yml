@@ -13,7 +13,7 @@ synthesis.inputs.input_files: [
   #"v/transpose/dff_en.v",
   "v/transpose/shift_reg_simple.sv",
   "v/transpose/tp_node.sv",
-  "v/transpose/transpose.v",
+  "v/transpose/transpose.sv",
 
   #"v/sys_array/col_gen.sv",
   #"v/sys_array/sys_array.sv",
