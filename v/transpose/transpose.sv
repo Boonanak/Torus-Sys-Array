@@ -5,7 +5,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                   ( input logic clk_i, 
                     input logic rst_n_i, // Active low reset
                     input logic col_major_i, // input is in column-major order (NONFUNCTIONAL)
-                    input logic [DIM_p-1:0][WIDTH_p-1:0] in_data, // Full row input data
+                    input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
                     input logic rotate,
@@ -13,7 +13,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     ///////////////////////////////////////////////////////////////////////////////
                     output logic valid_o, // if the transposer output is valid
                     output logic ready_o, // if the transposer is ready to accept new input data
-                    output logic [DIM_p-1:0][WIDTH_p-1:0] out_data  // full column output data
+                    output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
     // Params for row/col enable selection
