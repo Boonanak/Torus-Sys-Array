@@ -29,7 +29,7 @@ module sys_array #(
     
 
     // Data enters from the LEFTmost side of array
-    input  int8_t      transposer_data   [ROWS-1:0],
+    input  logic [7:0]      transposer_data   [ROWS-1:0],
 
     // Data exits from the RIGHTmost side of array
     output logic [15:0]      A_out_right  [ROWS-1:0],
@@ -46,14 +46,17 @@ module sys_array #(
 
     logic [15:0] col_in_A  [COLS-1:0][ROWS-1:0];
     logic [15:0] col_in_PS [COLS-1:0][ROWS-1:0];
-
-    // control signals
-    logic [COLS : 0] valid, valid_next;
-    logic [COLS - 1 : 0] load_B_control, load_B_control_next;
-    logic [COLS - 1 : 0] row_major_control, row_major_control_next;
-    logic [COLS : 0] enable;
-
-    logic fifo_ready_in, fifo_valid_out;
+    //logic [7:0] transposer_data_reg [ROWS-1:0];
+    // control signals derived from valid/ready
+    logic load_B_reg;
+    logic enable, PE_load_B;
+    logic transposer_valid_in_reg;
+    logic output_buffer_ready_in_reg;
+    logic row_major_reg;
+    logic [7:0] transposer_data_reg [ROWS-1:0];
+    
+    logic [3:0] datafront_valid, datafront_valid_next;
+    logic [3:0] shifted_datafront;
 
     always_comb begin
         enable[COLS] = ~valid[COLS]; 
