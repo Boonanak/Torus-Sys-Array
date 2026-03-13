@@ -113,7 +113,7 @@ module sys_array #(
                 .clk       (clk_i),
                 .reset     (reset),
                 .load_B    (load_B_control_next[j]),
-                .row_major (row_major_control_next[j]),
+                .row_major (row_major_control_next[j] | load_B_control_next[j]), // if loading, should always load through same path
                 .enable    (enable[j]),
                 .data_in_A (col_in_A[j]),
                 .data_in_PS(col_in_PS[j]),
