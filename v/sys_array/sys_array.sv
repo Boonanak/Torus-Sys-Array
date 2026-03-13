@@ -28,7 +28,7 @@ module sys_array #(
     
 
     // Data enters from the LEFTmost side of array
-    input  int8_t      transposer_data   [ROWS-1:0],
+    input  logic [7:0]      transposer_data   [ROWS-1:0],
 
     // Data exits from the RIGHTmost side of array
     output logic [15:0]      A_out_right  [ROWS-1:0],
