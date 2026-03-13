@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module transpose_tb;
+module transpose_tb_twotrace;
 
     /* Dump Test Waveform To VPD File */
   initial begin
