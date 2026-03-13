@@ -96,8 +96,8 @@ module sys_array #(
     genvar i;
     generate
     for (i = 0; i < COLS; i = i + 1) begin : col_fill
-        assign col_in_A[0][COLS - 1 - i] = {8'b0, transposer_data[i]};
-        assign col_in_PS[0][COLS - 1 - i] = 16'b0;
+        assign col_in_A[0][COLS - 1 - i] = load_B ? {8'b0, transposer_data[i]} : (row_major ? {8'b0, transposer_data[i]} : 16'b0);
+        assign col_in_PS[0][COLS - 1 - i] = load_B ? 16'b0 : (row_major ? 16'b0 : {8'b0, transposer_data[i]});
     end
     endgenerate
 
@@ -113,7 +113,7 @@ module sys_array #(
                 .clk       (clk_i),
                 .reset     (reset),
                 .load_B    (load_B_control_next[j]),
-                .row_major (row_major_control_next[j]),
+                .row_major (row_major_control_next[j] || load_B_control_next[j]), // patchwork logic to make B load through same path always
                 .enable    (enable[j]),
                 .data_in_A (col_in_A[j]),
                 .data_in_PS(col_in_PS[j]),
@@ -141,10 +141,10 @@ module sys_array #(
             end else begin : last_column_exit
                 // Final outputs from the right side of the last column
                 assign A_out_right  = col_out_A;
-                assign result_buffer[0] = col_out_PS[3];
-                assign result_buffer[1] = col_out_PS[1];
-                assign result_buffer[2] = col_out_PS[2];
-                assign result_buffer[3] = col_out_PS[0];
+                assign result_buffer[0] = row_major_control[3] ? col_out_PS[3] : col_out_A[2];
+                assign result_buffer[1] = row_major_control[3] ? col_out_PS[1] : col_out_A[3];
+                assign result_buffer[2] = row_major_control[3] ? col_out_PS[2] : col_out_A[0];
+                assign result_buffer[3] = row_major_control[3] ? col_out_PS[0] : col_out_A[1];
             end
         end
     endgenerate
