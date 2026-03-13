@@ -123,9 +123,10 @@ module transpose_tb_twotrace;
   //assign dut_ready_lo = '1;
   //assign dut_v_lo = '1;
 
-  always_ff @(negedge clk) begin
-    dut_yumi_li <= tr_ready_lo & dut_v_lo;
-  end
+  //always_ff @(negedge clk) begin
+    //dut_yumi_li <= tr_ready_lo & dut_v_lo;
+  //end
 
+  assign dut_yumi_li <= tr_ready_lo & dut_v_lo;
 
 endmodule
