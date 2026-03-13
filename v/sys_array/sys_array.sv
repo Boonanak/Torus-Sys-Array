@@ -44,7 +44,7 @@ module sys_array #(
     // col_in_X[j] is the data waiting to enter the left side of column j
     logic [15:0] col_in_A  [COLS-1:0][ROWS-1:0];
     logic [15:0] col_in_PS [COLS-1:0][ROWS-1:0];
-    logic [7:0] transposer_data_reg [ROWS-1:0];
+    //logic [7:0] transposer_data_reg [ROWS-1:0];
     // control signals derived from valid/ready
     logic load_B_reg;
     logic enable, PE_load_B;
