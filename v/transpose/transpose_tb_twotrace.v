@@ -127,6 +127,6 @@ module transpose_tb_twotrace;
     //dut_yumi_li <= tr_ready_lo & dut_v_lo;
   //end
 
-  assign dut_yumi_li <= tr_ready_lo & dut_v_lo;
+  assign dut_yumi_li = tr_ready_lo & dut_v_lo;
 
 endmodule
