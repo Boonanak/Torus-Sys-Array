@@ -113,6 +113,8 @@ module transpose_tb_twotrace;
     ,.ready_o ( dut_ready_lo )
     //,.valid_o (  )
     //,.ready_o (  )
+    ,.rotate(1'b1)
+    ,.transpose(1'b1)
 
     ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
     );
