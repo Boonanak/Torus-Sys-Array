@@ -36,6 +36,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         end
     end
 
+
     // Flip processed data 
     logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
     always_comb begin
