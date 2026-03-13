@@ -169,7 +169,7 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
     generate 
         for (j = 0; j < DIM_p; j++) begin : selection_loop
             // first line always passes, then we shift more and more lines as count increases, then we go back to passing after count exceeds the index
-            assign selection[j] = (j == 0) ? PASS : (j <= count) ? SHIFT : PASS; 
+            assign selection[j] = (j == 0 || rotate) ? PASS : (j <= count) ? SHIFT : PASS; 
         end
     endgenerate
 
@@ -184,13 +184,12 @@ module transpose #( parameter DIM_p = 8, // Dimensions of the matrix (DIM_p x DI
         end
     endgenerate
 
-    // if direction is 1, we are shifting up, 
-    // so the output data is in the last row of the bus. 
-    // if direction is 0, we are shifting left, so the output 
-    // data is in the last column of the bus
+    // If direction = 1 read last row
+    // if direction = 0, read last col
+    // if not transpose, read opposite of direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = direction ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (direction ~^ transpose) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
 
