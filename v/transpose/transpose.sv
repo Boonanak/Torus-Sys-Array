@@ -21,6 +21,15 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     localparam logic PASS = 1'b0;
     localparam logic SHIFT = 1'b1;
 
+    
+    // Flip processed data 
+    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
+    always_comb begin
+        for (int i = 0; i < DIM_p; i++) begin
+            flipped_in_data[i] = in_data[DIM_p-1 - i];
+        end
+    end 
+
     // Pre-proccess the data
     // Swap first and second rows if rotate is enabled
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
@@ -37,13 +46,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     end
 
 
-    // Flip processed data 
-    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
-    always_comb begin
-        for (int i = 0; i < DIM_p; i++) begin
-            flipped_in_data[i] = in_data[DIM_p-1 - i];
-        end
-    end 
 
     // Counter values
     logic direction; // The current direction of shifting
