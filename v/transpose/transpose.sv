@@ -120,8 +120,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                 assign data_pass_1[row][col] = (row == 0) ? (processed_in_data[col]) : tp_bus[row-1][col];
                 assign data_pass_0[row][col] = (col == 0) ? (processed_in_data[row]) : tp_bus[row][col-1];
 
-                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row + shift_amount_row + DIM_p) % DIM_p][col - 1];
-                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col + shift_amount_col + DIM_p) % DIM_p];
+                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row - shift_amount_row + DIM_p) % DIM_p][col - 1];
+                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col - shift_amount_col + DIM_p) % DIM_p];
 
                 //assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
                 //assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
