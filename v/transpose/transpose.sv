@@ -185,7 +185,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     // if not transpose, read opposite of direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (write_counter[DIM_CLOG2_p] ~^ transpose) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
 
