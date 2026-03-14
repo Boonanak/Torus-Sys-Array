@@ -146,7 +146,7 @@ module sys_array_tb_twotrace;
       ,.load_B    ( tr_data_lo[63] )
       ,.row_major ( tr_data_lo[62] )
 
-      ,.transposer_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
+      ,.transposer_data ( tr_data_lo[31:0] )
 
       ,.A_out_right     ( A_out_data )
       ,.PS_out_right    ( ps_out_data )
