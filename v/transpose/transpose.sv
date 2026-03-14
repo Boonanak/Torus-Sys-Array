@@ -150,10 +150,12 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         if (~rst_n_i) begin
             write_counter <= '0;
             transpose_r <= 1'b0;
+            direction <= 1'b0;
         end else if (can_write) begin
             // increment if writting
             write_counter <= write_counter + 1'b1;
             transpose_r <= transpose;
+            direction <= (write_counter[DIM_CLOG2_p] ~^ transpose);
         end
     end
 
@@ -189,7 +191,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = (write_counter[DIM_CLOG2_p] ~^ transpose);
+   // direction
     assign count = write_counter[DIM_CLOG2_p-1:0];
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
