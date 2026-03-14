@@ -173,8 +173,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            assign col_enable[i] = (direction ~^ (transpose_r ^ tranpose)) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = (direction ~^ (transpose_r ^ tranpose)) ? {enable, selection[i]} : 2'b00;
+            assign col_enable[i] = (direction ~^ (transpose_r ^ transpose)) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = (direction ~^ (transpose_r ^ transpose)) ? {enable, selection[i]} : 2'b00;
         end
     endgenerate
 
