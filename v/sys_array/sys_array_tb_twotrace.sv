@@ -140,25 +140,25 @@ module sys_array_tb_twotrace;
   // `else
   // use this for sim-rtl 
 
-  //   sys_array DUT
-  //     (.clk_i       ( clk )
-  //     ,.reset     ( reset )
-  //     ,.load_B    ( tr_data_lo[63] )
-  //     ,.row_major ( tr_data_lo[62] )
+    // sys_array DUT
+    //   (.clk_i       ( clk )
+    //   ,.reset     ( reset )
+    //   ,.load_B    ( tr_data_lo[63] )
+    //   ,.row_major ( tr_data_lo[62] )
 
-  //     ,.transposer_data ( transposer_data_in )
+    //   ,.transposer_data ( transposer_data_in )
 
-  //     ,.A_out_right     ( A_out_data )
-  //     ,.PS_out_right    ( ps_out_data )
+    //   ,.A_out_right     ( A_out_data )
+    //   ,.PS_out_right    ( ps_out_data )
 
-  //     ,.transposer_valid_in  ( tr_v_lo )
-  //     ,.transposer_ready_out ( dut_ready_lo )
-  //     // ,.transposer_ready_out ( )
+    //   ,.transposer_valid_in  ( tr_v_lo )
+    //   ,.transposer_ready_out ( dut_ready_lo )
+    //   // ,.transposer_ready_out ( )
 
-  //     ,.output_buffer_ready_in  ( tr_ready_lo & dut_v_lo )
-  //     ,.output_buffer_valid_out ( dut_v_lo )
-  //     // ,.output_buffer_valid_out ()
-  //     );
+    //   ,.output_buffer_ready_in  ( tr_ready_lo & dut_v_lo )
+    //   ,.output_buffer_valid_out ( dut_v_lo )
+    //   // ,.output_buffer_valid_out ()
+    //   );
   // `endif
   assign dut_data_lo[63:48] = ps_out_data[0];
   assign dut_data_lo[47:32] = ps_out_data[1];

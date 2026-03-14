@@ -89,11 +89,12 @@ module sys_array #(
     // Initialize first column input
     genvar i, j, r;
     generate
-        for (i = 0; i < ROWS; i = i + 1) begin : col_fill
-            assign col_in_A[0][ROWS - 1 - i] = {8'b0, transposer_data[i]};
-            assign col_in_PS[0][ROWS - 1 - i] = 16'b0;
-        end
-
+    for (i = 0; i < COLS; i = i + 1) begin : col_fill
+        assign col_in_A[0][COLS - 1 - i] = load_B ? {8'b0, transposer_data[i]} : (row_major ? {8'b0, transposer_data[i]} : 16'b0);
+        assign col_in_PS[0][COLS - 1 - i] = load_B ? 16'b0 : (row_major ? 16'b0 : {8'b0, transposer_data[i]});
+    end
+    endgenerate
+    generate 
         for (j = 0; j < COLS; j = j + 1) begin : column_loop
             logic [15:0] col_out_A  [ROWS-1:0];
             logic [15:0] col_out_PS [ROWS-1:0];
@@ -102,7 +103,7 @@ module sys_array #(
                 .clk       (clk_i),
                 .reset     (reset),
                 .load_B    (load_B_control_next[j]),
-                .row_major (row_major_control_next[j]),
+                .row_major (row_major_control_next[j] || load_B_control_next[j]), // patchwork logic to make B load through same path always
                 .enable    (enable[j]),
                 .data_in_A (col_in_A[j]),
                 .data_in_PS(col_in_PS[j]),
@@ -114,20 +115,43 @@ module sys_array #(
                 for (r = 0; r < ROWS; r = r + 1) begin : row_routing
                     if (((j+1) % 2) != 0) begin : braid_pattern_1
                         // Generalizing Pattern 1: A-logic swaps neighbors on odd rows, PS on even
-                        assign col_in_A [j+1][r]     = ((r % 2) == 0) ? col_out_A[r]   : col_out_A[r^1];
-                        assign col_in_PS[j+1][r]     = ((r % 2) == 0) ? col_out_PS[r^1] : col_out_PS[r];
+                        assign col_in_A [j+1][r]     = (r == 0 | r == ROWS - 1) ? col_out_A[r] : ((r % 2 == 0) ? col_out_A[r - 1] : col_out_A[r + 1]);
+                        assign col_in_PS[j+1][r]     = (r % 2 == 0) ? col_out_PS[r + 1] : col_out_PS[r - 1];
                     end else begin : braid_pattern_2
                         // Generalizing Pattern 2: Flipped neighbor swap
-                        assign col_in_A [j+1][r]     = ((r % 2) == 0) ? col_out_A[r^1] : col_out_A[r];
-                        assign col_in_PS[j+1][r]     = ((r % 2) == 0) ? col_out_PS[r]   : col_out_PS[r^1];
+                        assign col_in_A [j+1][r]     = (r % 2 == 0) ? col_out_A[r + 1] : col_out_A[r - 1];
+                        assign col_in_PS[j+1][r]     = (r == 0 | r == ROWS - 1) ? col_out_PS[r] : ((r % 2 == 0) ? col_out_PS[r - 1] : col_out_PS[r + 1]);
                     end
                 end
             end else begin : last_column_exit
-                assign A_out_right = col_out_A;
-                // Generalizing the result_buffer reordering (mirroring the PS swap)
-                for (r = 0; r < ROWS; r = r + 1) begin : final_res_map
-                    assign result_buffer[r] = col_out_PS[r ^ 1];
-                end
+
+                assign A_out_right = col_out_A; // this doesnt matter but keep compiler happy with something driving A_out_right
+                // // Generalizing the result_buffer reordering (mirroring the PS swap)
+                // for (r = 0; r < ROWS; r = r + 1) begin : final_res_map
+                //     assign result_buffer[r] = col_out_PS[r ^ 1];
+                // end
+                // Final outputs from the right side of the last column
+                if (ROWS == 4) begin 
+                    assign result_buffer[0] = row_major_control[COLS - 1] ? col_out_PS[3] : col_out_A[2];
+                    assign result_buffer[1] = row_major_control[COLS - 1] ? col_out_PS[1] : col_out_A[3];
+                    assign result_buffer[2] = row_major_control[COLS - 1] ? col_out_PS[2] : col_out_A[0];
+                    assign result_buffer[3] = row_major_control[COLS - 1] ? col_out_PS[0] : col_out_A[1];
+                end 
+                else if (ROWS == 8) begin  // TODO : figure out output collection
+                    assign result_buffer[0] = row_major_control[COLS - 1] ? col_out_PS[3] : col_out_A[2];
+                    assign result_buffer[1] = row_major_control[COLS - 1] ? col_out_PS[1] : col_out_A[3];
+                    assign result_buffer[2] = row_major_control[COLS - 1] ? col_out_PS[2] : col_out_A[0];
+                    assign result_buffer[3] = row_major_control[COLS - 1] ? col_out_PS[0] : col_out_A[1];
+                    assign result_buffer[4] = row_major_control[COLS - 1] ? col_out_PS[3] : col_out_A[2];
+                    assign result_buffer[5] = row_major_control[COLS - 1] ? col_out_PS[1] : col_out_A[3];
+                    assign result_buffer[6] = row_major_control[COLS - 1] ? col_out_PS[2] : col_out_A[0];
+                    assign result_buffer[7] = row_major_control[COLS - 1] ? col_out_PS[0] : col_out_A[1];
+                end else begin  // default ROW = 4
+                    assign result_buffer[0] = row_major_control[COLS - 1] ? col_out_PS[3] : col_out_A[2];
+                    assign result_buffer[1] = row_major_control[COLS - 1] ? col_out_PS[1] : col_out_A[3];
+                    assign result_buffer[2] = row_major_control[COLS - 1] ? col_out_PS[2] : col_out_A[0];
+                    assign result_buffer[3] = row_major_control[COLS - 1] ? col_out_PS[0] : col_out_A[1];
+                end 
             end
         end
     endgenerate
