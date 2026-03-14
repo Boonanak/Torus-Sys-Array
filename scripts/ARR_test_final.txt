@@ -146,14 +146,15 @@ compute C         1    2    3    4
 compute C         2    3    4    3
 compute C         3    4    3    2
 compute C         4    3    2    1
-loadB_recv C      9    2   15    8         1    2    3    4
-loadB_recv C     13   10    7    4         2    3    4    3
-loadB_recv C      5   14    3   12         3    4    3    2
-loadB_recv C      1    6   11   16         4    3    2    1
-compute C         1    2    3    4
+loadB C           9    2   15    8         
+loadB_recv C     13   10    7    4         1    2    3    4
+loadB_recv C      5   14    3   12         2    3    4    3
+loadB_recv C      1    6   11   16         3    4    3    2
+compute_recv C    1    2    3    4         4    3    2    1
 compute C         2    3    4    3
 compute C         3    4    3    2
 compute C         4    3    2    1
+wait 1
 recv                                      90  100  110  120
 recv                                      92  104  116  128
 recv                                      76   88  100  112
