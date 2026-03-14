@@ -173,8 +173,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            assign col_enable[i] = direction ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = direction ? {enable, selection[i]} : 2'b00;
+            assign col_enable[i] = (direction ~^ transpose_r) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = (direction ~^ transpose_r) ? {enable, selection[i]} : 2'b00;
         end
     endgenerate
 
@@ -189,7 +189,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = (write_counter[DIM_CLOG2_p] ~^ transpose_r);
+    assign direction = (write_counter[DIM_CLOG2_p]);
     assign count = write_counter[DIM_CLOG2_p-1:0];
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
