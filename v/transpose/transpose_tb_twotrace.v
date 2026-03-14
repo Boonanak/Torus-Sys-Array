@@ -98,14 +98,17 @@ module transpose_tb_twotrace;
       ,.data_o( rom_data_lo_send )
       );
 
-  transpose #(.WIDTH_P(8), .DIM_p(4))
+  transpose #(.WIDTH_P(8), .DIM_p(4)) //params will be ingored for sim-syn
     DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
     ,.col_major_i ( 1'b0 )
-    ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
-
+    //,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} ) // sim-rtl
+    ,.\in_data[3] ( {tr_data_lo[31:24]} ) // sim-syn
+    ,.\in_data[2] ( {tr_data_lo[23:16]} )
+    ,.\in_data[1] ( {tr_data_lo[15:8]} )
+    ,.\in_data[0] ( {tr_data_lo[7:0]} )
     ,.valid_i ( tr_v_lo )
     ,.ready_i ( dut_yumi_li )
 
@@ -116,7 +119,11 @@ module transpose_tb_twotrace;
     ,.rotate(1'b1)
     ,.transpose(1'b1)
 
-    ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
+    //,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} ) // sim-rtl
+    ,.\out_data[3] ( {dut_data_lo[31:24]} ) // sim-syn
+    ,.\out_data[2] ( {dut_data_lo[23:16]} )
+    ,.\out_data[1] ( {dut_data_lo[15:8]} )
+    ,.\out_data[0] ( {dut_data_lo[7:0]} )
     );
 
   // no handshake logic. all ready/valid signal is 1.
