@@ -469,8 +469,8 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-# write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
-write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
+write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
+# write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
 
 # import random
 
