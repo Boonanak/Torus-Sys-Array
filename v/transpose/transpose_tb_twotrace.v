@@ -10,7 +10,7 @@ module transpose_tb_twotrace;
 
   /* Non-synth clock generator */
   logic clk;
-  bsg_nonsynth_clock_gen #(20000) clk_gen_1 (clk);
+  bsg_nonsynth_clock_gen #(12000) clk_gen_1 (clk);
 
   /* Non-synth reset generator */
   logic reset;

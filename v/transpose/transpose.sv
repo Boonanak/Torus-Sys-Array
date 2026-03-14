@@ -36,16 +36,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         end
     end
 
-    /* MARKED FOR REMOVAL 
-    // Flip processed data 
-    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
-    always_comb begin
-        for (int i = 0; i < DIM_p; i++) begin
-            flipped_in_data[i] = processed_in_data[DIM_p-1 - i];
-        end
-    end 
-    */
-
     // Counter values
     logic direction; // The current direction of shifting
                      // direction = 0 means horizontal (column) shift
