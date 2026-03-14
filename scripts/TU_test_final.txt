@@ -40,4 +40,18 @@ recv NA                   1 2 3 4
 recv NA                   5 6 7 8
 recv NA                   9 10 11 12
 recv NA                   13 14 15 16
+wait 1
+### RANDOM TESTS
+load RT        109   -5   55   41
+load RT          3  -26  -60 -124
+load RT        -64  -48   80 -109
+load RT       -116   73   41   78
+load_recv RT    30   36   53  -17       55    3 -109   73
+load_recv RT   -81   78  122   18       41  -60  -48 -116
+load_recv RT    50 -121 -117  -49       -5 -124  -64   41
+load_recv RT  -104   40  -91  -28      109  -26   80   78
+recv RT                                 53  -81  -49   40
+recv RT                                -17  122 -121 -104
+recv RT                                 36   18   50  -91
+recv RT                                 30   78 -117  -28
 end

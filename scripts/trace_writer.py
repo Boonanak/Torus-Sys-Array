@@ -469,5 +469,32 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
-# write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
+# write_trace('scripts/ARR_test_final.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
+write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
+
+# import random
+
+# def gen_matrix(N, min_val, max_val):
+#     return [[random.randint(min_val, max_val) for _ in range(N)] for _ in range(N)]
+
+# def print_matrix(M):
+#     for row in M:
+#         print([f"{v:4d}" for v in row])
+
+# def multiply(A, B):
+#     N = len(A)
+#     C = [[0]*N for _ in range(N)]
+#     for i in range(N):
+#         for j in range(N):
+#             for k in range(N):
+#                 C[i][j] += A[i][k] * B[k][j]
+#     return C
+
+# # Example: 4x4, int8 range
+# A = gen_matrix(4, -128, 127)
+# B = gen_matrix(4, -128, 127)
+# C = multiply(A, B)
+
+# print("A:"); print_matrix(A)
+# print("B:"); print_matrix(B)
+# print("C:"); print_matrix(C)
