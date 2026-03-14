@@ -101,10 +101,10 @@ loadB R          55    3 -109   73
 loadB R          41  -60  -48 -116
 loadB R          -5 -124  -64   41
 loadB R         109  -26   80   78
-compute         117  -49 -115  -92
-compute         -63 -122  -64  -32
-compute        -128   91   41  -27
-compute          29  122  -31   53
+compute R       117  -49 -115  -92
+compute R       -63 -122  -64  -32
+compute R      -128   91   41  -27
+compute R        29  122  -31   53
 loadB R          53  -81  -49   40
 loadB_recv R    -17  122 -121 -104      30638   -507  -3597  16232
 loadB_recv R     36   18   50  -91        575   4223  -2577  17025
