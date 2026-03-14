@@ -181,13 +181,13 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     // if not transpose, read opposite of direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = (direction ~^ transpose) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = write_counter[DIM_CLOG2_p];
+    assign direction = (write_counter[DIM_CLOG2_p] ~^ transpose);
     assign count = write_counter[DIM_CLOG2_p-1:0];
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
