@@ -8,8 +8,32 @@ load_recv RT 1 2 3 4      0 0 0 0
 load_recv RT 5 6 7 8      0 0 0 0
 load_recv RT 9 10 11 12   0 0 0 0
 load_recv RT 13 14 15 16  1 1 1 1
-recv RT                   3 5 12 14
-recv RT                   4 7 10 13
-recv RT                   2 8 9  15
-recv RT                   1 6 11 16
+load_recv R  1 0 0 0      3 5 12 14
+load_recv R  0 1 0 0      4 7 10 13
+load_recv R  0 0 1 0      2 8 9  15
+load_recv R  0 0 0 1      1 6 11 16
+load_recv R  1 2 3 4      0 0 0 1
+load_recv R  5 6 7 8      0 0 0 1
+load_recv R  9 10 11 12   0 0 0 1
+load_recv R  13 14 15 16  0 0 0 1
+load_recv T  1 0 0 0      3 4 2 1
+load_recv T  0 1 0 0      5 7 8 6
+load_recv T  0 0 1 0      12 10 9 11
+load_recv T  0 0 0 1      14 13 15 16
+load_recv T  1 2 3 4      1 0 0 0
+load_recv T  5 6 7 8      0 1 0 0
+load_recv T  9 10 11 12   0 0 1 0
+load_recv T  13 14 15 16  0 0 0 1
+load_recv NA 1 0 0 0      1 5 9  13
+load_recv NA 0 1 0 0      2 6 10 14
+load_recv NA 0 0 1 0      3 7 11 15
+load_recv NA 0 0 0 1      4 8 12 16
+load_recv NA 1 2 3 4      1 0 0 0
+load_recv NA 5 6 7 8      0 1 0 0
+load_recv NA 9 10 11 12   0 0 1 0
+load_recv NA 13 14 15 16  0 0 0 1
+recv NA                   1 2 3 4
+recv NA                   5 6 7 8
+recv NA                   9 10 11 12
+recv NA                   13 14 15 16
 end
