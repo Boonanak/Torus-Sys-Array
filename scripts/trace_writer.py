@@ -288,12 +288,12 @@ def parse_TU_2_line(TU_line):
             op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
             numbers = [int(n) for n in TU_line[space_i:].split()]
             trace_line_send += f"# SEND  |  {op}  |  {numbers[:4]}\n"
-            trace_line_send += f"0001__________00_______"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______"
             for n in numbers[:4]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# RECV  |  {numbers[4:]}\n"
-            trace_line_recv += f"0010__________{to_signed_nbit_binary(op, 3)[1:]}_______"
+            trace_line_recv += f"0010__________00_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
