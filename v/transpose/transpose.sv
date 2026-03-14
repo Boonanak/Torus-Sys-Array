@@ -60,7 +60,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Control signals
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
-    logic output_valid, enable, ready, can_read, can_write, read_or_write; //, transpose_r;
+    logic output_valid, enable, ready, can_read, can_write, read_or_write, transpose_r;
     /*
     output_valid: whether the output data is valid, determined by the last bit of the valid shift register
     enable: enable the rows/cols of the transposer to shift data, as well as the valid shift register
@@ -149,11 +149,11 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
             write_counter <= '0;
-            //transpose_r <= 1'b0;
+            transpose_r <= 1'b0;
         end else if (can_write) begin
             // increment if writting
             write_counter <= write_counter + 1'b1;
-            //transpose_r <= transpose;
+            transpose_r <= transpose;
         end
     end
 
@@ -183,13 +183,13 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     // if not transpose, read opposite of direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (direction ~^ transpose) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = (write_counter[DIM_CLOG2_p] ~^ transpose);
+    assign direction = (write_counter[DIM_CLOG2_p] ~^ transpose_r);
     assign count = write_counter[DIM_CLOG2_p-1:0];
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
