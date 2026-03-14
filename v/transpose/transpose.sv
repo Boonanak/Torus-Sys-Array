@@ -150,6 +150,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         if (~rst_n_i) begin
             write_counter <= '0;
             transpose_r <= 1'b0;
+            override_direction <= 1'b0;
         end else begin
             transpose_r <= transpose;
             if (can_write) // increment if writting
