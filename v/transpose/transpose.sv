@@ -8,8 +8,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
-                    input logic rotate,
-                    input logic transpose, 
+                    input logic rotate, // to rotate or not rotate data, assert on write
+                    input logic transpose, // to transpose or not transpose, assert on read
                     ///////////////////////////////////////////////////////////////////////////////
                     output logic valid_o, // if the transposer output is valid
                     output logic ready_o, // if the transposer is ready to accept new input data
@@ -60,14 +60,13 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Control signals
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
-    logic output_valid, enable, ready, can_read, can_write, read_or_write, transpose_r, override_direction;
+    logic output_valid, enable, can_read, can_write, override_direction;
     /*
     output_valid: whether the output data is valid, determined by the last bit of the valid shift register
     enable: enable the rows/cols of the transposer to shift data, as well as the valid shift register
-    ready: whether the transposer can accept data (its not full)
     can_read: whether data can be read out from the transposer
     can_write: whether data can be written into the transposer
-    read_or_write: if we can either read or write data, used to control shifting and enabling
+    override_direction: if transposing is disabled, store the current direction and override andy direction changes to this
     */
 
     `ifdef SYNTHESIS
@@ -149,10 +148,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
             write_counter <= '0;
-            transpose_r <= 1'b0;
             override_direction <= 1'b0;
         end else begin
-            transpose_r <= transpose;
             if (can_write) // increment if writting
                 write_counter <= write_counter + 1'b1;
             if (!transpose)
@@ -183,7 +180,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // If direction = 1 read last row
     // if direction = 0, read last col
-    // if not transpose, read opposite of direction
+    // if not transpose, don't change direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
             assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
@@ -192,14 +189,13 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = (transpose) ? (write_counter[DIM_CLOG2_p]) : override_direction;
+    assign direction = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
     assign count = write_counter[DIM_CLOG2_p-1:0];
-    assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
     assign can_write = valid_i && ready; // able to write if input is valid and we have space
     assign enable = can_read || can_write; // enable shifting if we are either reading or writing
     assign valid_o = output_valid;
-    assign ready_o = ready;
+    assign ready_o = output_valid ? ready_i : 1'b1;
 
     // Assertions to check for valid parameter settings
     initial begin
