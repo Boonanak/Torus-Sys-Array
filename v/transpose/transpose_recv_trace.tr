@@ -6,6 +6,7 @@
 0000__0000000000000000000000000000000000
 0000__0000000000000000000000000000000000
 
+### load matrices with rotate and transpose
 # NOOP for RECV while loading B
 0000__0000000000000000000000000000000000
 
@@ -30,6 +31,7 @@
 # RECV  |  [1, 1, 1, 1]
 0010__________00________00000001_00000001_00000001_00000001
 
+### load matrices with just rotate. transpose must still be asserted for reading from the previous matrices
 # RECV  |  [3, 5, 12, 14]
 0010__________00________00000011_00000101_00001100_00001110
 
@@ -54,6 +56,7 @@
 # RECV  |  [0, 0, 0, 1]
 0010__________00________00000000_00000000_00000000_00000001
 
+### load matrices with just transpose. transpose cannot be asserted for reading from the previous matrices
 # RECV  |  [3, 4, 2, 1]
 0010__________00________00000011_00000100_00000010_00000001
 
@@ -78,6 +81,7 @@
 # RECV  |  [0, 0, 0, 1]
 0010__________00________00000000_00000000_00000000_00000001
 
+### load matrices with neither rotate nor transpose. transpose must be asserted for reading from previous matrices
 # RECV  |  [1, 5, 9, 13]
 0010__________00________00000001_00000101_00001001_00001101
 
