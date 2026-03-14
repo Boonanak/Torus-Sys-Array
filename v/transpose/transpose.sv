@@ -155,7 +155,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
             // increment if writting
             write_counter <= write_counter + 1'b1;
             transpose_r <= transpose;
-            direction <= (write_counter[DIM_CLOG2_p] ~^ transpose);
+            direction <= (write_counter[DIM_CLOG2_p]);
         end
     end
 
@@ -175,8 +175,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            assign col_enable[i] = (direction) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = (direction) ? {enable, selection[i]} : 2'b00;
+            assign col_enable[i] = (direction ~^ transpose) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = (direction ~^ transpose) ? {enable, selection[i]} : 2'b00;
         end
     endgenerate
 
