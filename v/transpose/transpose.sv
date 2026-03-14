@@ -153,6 +153,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         end else if (can_write) begin
             // increment if writting
             write_counter <= write_counter + 1'b1;
+        end else begin
             transpose_r <= transpose;
         end
     end
