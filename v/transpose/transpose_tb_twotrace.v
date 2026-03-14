@@ -21,20 +21,20 @@ module transpose_tb_twotrace;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [31:0] dut_data_lo, dut_data_r;
+  logic [33:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [31:0] tr_data_lo;
+  logic [33:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [35:0] rom_data_lo_send, rom_data_lo_recv;
+  logic [37:0] rom_data_lo_send, rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
   logic valid_i_r;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(32)
+  bsg_fsb_node_trace_replay #(.ring_width_p(34)
                              ,.rom_addr_width_p(32) )
     trace_replay_recv
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -56,7 +56,7 @@ module transpose_tb_twotrace;
       , .error_o()
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(32)
+  bsg_fsb_node_trace_replay #(.ring_width_p(34)
                              ,.rom_addr_width_p(32) )
     trace_replay_send
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -88,12 +88,12 @@ module transpose_tb_twotrace;
     valid_i_r <= tr_v_lo;
   end
 
-  transpose_recv_trace_rom #(.width_p(36),.addr_width_p(32))
+  transpose_recv_trace_rom #(.width_p(38),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
-  transpose_send_trace_rom #(.width_p(36),.addr_width_p(32))
+  transpose_send_trace_rom #(.width_p(38),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
@@ -114,11 +114,13 @@ module transpose_tb_twotrace;
     ,.ready_o ( dut_ready_lo )
     //,.valid_o (  )
     //,.ready_o (  )
-    ,.rotate(1'b1)
-    ,.transpose(1'b1)
+    ,.rotate(tr_data_lo[33])
+    ,.transpose(tr_data_lo[32])
 
     ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
     );
+  
+  assign dut_data_lo[33:32] = 2'b0;
 
   // no handshake logic. all ready/valid signal is 1.
   //assign dut_ready_lo = '1;

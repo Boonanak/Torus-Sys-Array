@@ -260,30 +260,36 @@ def parse_TU_2_line(TU_line):
     trace_line_recv = ''
     match command.casefold():
         case 'load':
+            TU_line = TU_line[space_i+1:]
+            space_i = TU_line.find(' ')
+            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# SEND  |  {numbers}\n"
-            trace_line_send += f"0001_________"
+            trace_line_send += f"# SEND  |  {op}  |  {numbers}\n"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[:2]}_______"
             for n in numbers:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*32}\n"
+            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*34}\n"
         case 'recv':
             numbers = [int(n) for n in TU_line[space_i:].split()]
             trace_line_recv += f"# RECV  |  {numbers}\n"
-            trace_line_recv += f"0010_________"
+            trace_line_recv += f"0010__________00_______"
             for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
-            trace_line_send += f"# NOOP for SEND while loading B\n0000__{'0'*32}\n"
+            trace_line_send += f"# NOOP for SEND while loading B\n0000__{'0'*34}\n"
         case 'load_recv':
+            TU_line = TU_line[space_i+1:]
+            space_i = TU_line.find(' ')
+            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# SEND  |  {numbers[:4]}\n"
-            trace_line_send += f"0001_________"
+            trace_line_send += f"# SEND  |  {op}  |  {numbers[:4]}\n"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[:2]}_______"
             for n in numbers[:4]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# RECV  |  {numbers[4:]}\n"
-            trace_line_recv += f"0010_________"
+            trace_line_recv += f"0010__________00_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
@@ -291,13 +297,13 @@ def parse_TU_2_line(TU_line):
             n = int(TU_line[space_i:])
             trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_send += f"0000__{'0'*32}\n"
+                trace_line_send += f"0000__{'0'*34}\n"
             trace_line_recv += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_recv += f"0000__{'0'*32}\n"
+                trace_line_recv += f"0000__{'0'*34}\n"
         case 'end':
-            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
-            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*32}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
         case '###':
             trace_line_send += TU_line
             trace_line_recv += TU_line

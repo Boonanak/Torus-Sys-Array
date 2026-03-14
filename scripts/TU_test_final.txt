@@ -1,15 +1,15 @@
 TU
 wait 6
-load 1 0 0 0
-load 0 1 0 0
-load 0 0 1 0
-load 0 0 0 1
-load_recv 1 2 3 4      0 0 0 0
-load_recv 5 6 7 8      0 0 0 0
-load_recv 9 10 11 12   0 0 0 0
-load_recv 13 14 15 16  1 1 1 1
-recv                   3 5 12 14
-recv                   4 7 10 13
-recv                   2 8 9  15
-recv                   1 6 11 16
+load RT 1 0 0 0
+load RT 0 1 0 0
+load RT 0 0 1 0
+load RT 0 0 0 1
+load_recv RT 1 2 3 4      0 0 0 0
+load_recv RT 5 6 7 8      0 0 0 0
+load_recv RT 9 10 11 12   0 0 0 0
+load_recv RT 13 14 15 16  1 1 1 1
+recv                      3 5 12 14
+recv                      4 7 10 13
+recv                      2 8 9  15
+recv                      1 6 11 16
 end
