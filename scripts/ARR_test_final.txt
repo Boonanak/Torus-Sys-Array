@@ -118,4 +118,44 @@ recv                                     1137   8985  20381   7105
 recv                                     4425   1830     84   1045
 recv                                   -11958   7197  -5468  -5274
 recv                                     9593 -14944    393   2854
+### Testing loading B during compute, and maximum throughput
+loadB C           0    0    0    0
+loadB C           0    0    0    0
+loadB C           0    0    0    0
+loadB C           1    1    1    1
+compute C         1    2    3    4
+loadB C           9    2   15    8
+loadB C          13   10    7    4
+loadB C           5   14    3   12
+loadB C           1    6   11   16
+compute_recv C    1    2    3    4         1    2    3    4
+compute C         2    3    4    3
+compute C         3    4    3    2
+compute C         4    3    2    1
+wait 1
+recv                                      90  100  110  120
+recv                                      92  104  116  128
+recv                                      76   88  100  112
+recv                                      50   60   70   80
+wait 1
+loadB C           0    0    0    0
+loadB C           0    0    0    0
+loadB C           0    0    0    0
+loadB C           1    1    1    1
+compute C         1    2    3    4
+compute C         2    3    4    3
+compute C         3    4    3    2
+compute C         4    3    2    1
+loadB_recv C      9    2   15    8         1    2    3    4
+loadB_recv C     13   10    7    4         2    3    4    3
+loadB_recv C      5   14    3   12         3    4    3    2
+loadB_recv C      1    6   11   16         4    3    2    1
+compute C         1    2    3    4
+compute C         2    3    4    3
+compute C         3    4    3    2
+compute C         4    3    2    1
+recv                                      90  100  110  120
+recv                                      92  104  116  128
+recv                                      76   88  100  112
+recv                                      50   60   70   80
 end
