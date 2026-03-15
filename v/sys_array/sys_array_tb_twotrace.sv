@@ -149,10 +149,10 @@ module sys_array_tb_twotrace;
       ,.transposer_data ( {>>{tr_data_lo[31:0]}} )
 
       ,.A_out_right     ( A_out_data )
-      ,.PS_out_right    ( {>>{dut_data_lo}} )
+      ,.PS_out_right    ( ps_out_data )
 
       ,.transposer_valid_in  ( tr_v_lo )
-      ,.transposer_ready_out ( ps_out_data )
+      ,.transposer_ready_out ( dut_ready_lo )
       // ,.transposer_ready_out ( )
 
       ,.output_buffer_ready_in  ( tr_ready_lo & dut_v_lo )
