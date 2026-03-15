@@ -55,6 +55,8 @@ module Top_level #(
     logic               transpose_ready_o;
     logic               transpose_valid_o;
     logic               transpose_col_major;
+    logic               transpose_rotate;
+    logic               transpose_do_transpose;
     logic [WIDTH_p-1:0] transpose_out_data [DIM_p-1:0];
 
     // ----------------------------------------------------------------
@@ -85,7 +87,10 @@ module Top_level #(
     // Control mapping
     // We latch controls on each accepted input row.
     // ----------------------------------------------------------------
-    assign transpose_col_major = ~major_mode_r;
+    assign transpose_col_major    = 1'b0;   // temporary forces row-major input
+    assign transpose_rotate       = 1'b0;   // no rotate on write
+    assign transpose_do_transpose = 1'b1;   // do transpose on read
+
     assign sys_row_major       =  major_mode_r;
     assign sys_load_B          =  load_weight_r;
 
@@ -105,6 +110,7 @@ module Top_level #(
     // - transpose cannot accept
     // - systolic cannot accept transpose output path
     // - output register already full and we don't want unchecked overflow
+    
     assign ready_o = en_i
                    & transpose_ready_o
                    & sys_transposer_ready
@@ -182,6 +188,8 @@ module Top_level #(
         .in_data     (transpose_in_data),
         .valid_i     (transpose_valid_i),
         .ready_i     (sys_transposer_ready),
+        .rotate      (transpose_rotate),
+        .transpose   (transpose_do_transpose),
         .valid_o     (transpose_valid_o),
         .ready_o     (transpose_ready_o),
         .out_data    (transpose_out_data)

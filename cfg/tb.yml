@@ -1,6 +1,9 @@
 # Search directories for `include directives in simulations
 sim.inputs.tb_incdir: [
+  "${bsg_root}",
   "${bsg_root}/bsg_misc",
+  "${bsg_root}/bsg_noc",
+  "${bsg_root}/bsg_fsb",
   # TODO: list any additional directories
 ]
 sim.inputs.tb_incdir_meta: [subst]
@@ -84,24 +87,24 @@ sim.inputs.tb_input_files: [
   "${bsg_root}/bsg_test/test_bsg_data_gen.v",
 
   # bsg_guts and IO sources
-  "../common/v/bsg_guts.v",
+  #"../common/v/bsg_guts.v",
 
   # Boards sources
-  "../common/v/boards/bsg_double_trouble_pcb.v",
-  "../common/v/boards/bsg_asic_socket.v",
-  "../common/v/boards/bsg_gateway_socket.v",
+  #"../common/v/boards/bsg_double_trouble_pcb.v",
+  #"../common/v/boards/bsg_asic_socket.v",
+  #"../common/v/boards/bsg_gateway_socket.v",
 
   # Manycore sources
-  "../common/v/manycore/bsg_manycore_spmd_loader.v",
-  "../common/v/manycore/bsg_manycore_vscale_pipeline_trace.v",
-  "../common/v/manycore/bsg_nonsynth_manycore_io_complex.v",
-  "../common/v/manycore/bsg_nonsynth_manycore_monitor.v",
-  "../common/v/manycore/bsg_1hold.v",
-  "../common/v/manycore/bsg_manycore_endpoint.v",
-  "../common/v/manycore/bsg_manycore_endpoint_standard.v",
-  "../common/v/manycore/bsg_manycore_links_to_fsb.v",
-  "../common/v/manycore/bsg_manycore_pkt_decode.v",
-  "../common/v/manycore/bsg_manycore_swap_ctrl.v",
+  #"../common/v/manycore/bsg_manycore_spmd_loader.v",
+  #"../common/v/manycore/bsg_manycore_vscale_pipeline_trace.v",
+  #"../common/v/manycore/bsg_nonsynth_manycore_io_complex.v",
+  #"../common/v/manycore/bsg_nonsynth_manycore_monitor.v",
+  #"../common/v/manycore/bsg_1hold.v",
+  #"../common/v/manycore/bsg_manycore_endpoint.v",
+  #"../common/v/manycore/bsg_manycore_endpoint_standard.v",
+  #"../common/v/manycore/bsg_manycore_links_to_fsb.v",
+  #"../common/v/manycore/bsg_manycore_pkt_decode.v",
+  #"../common/v/manycore/bsg_manycore_swap_ctrl.v",
 ]
 sim.inputs.tb_input_files_meta: [append, subst]
 
