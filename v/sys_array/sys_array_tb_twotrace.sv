@@ -152,7 +152,7 @@ module sys_array_tb_twotrace;
       ,.PS_out_right    ( {>>{dut_data_lo}} )
 
       ,.transposer_valid_in  ( tr_v_lo )
-      ,.transposer_ready_out ( dut_ready_lo )
+      ,.transposer_ready_out ( ps_out_data )
       // ,.transposer_ready_out ( )
 
       ,.output_buffer_ready_in  ( tr_ready_lo & dut_v_lo )
@@ -160,10 +160,10 @@ module sys_array_tb_twotrace;
       // ,.output_buffer_valid_out ()
       );
   // `endif
-  //assign dut_data_lo[63:48] = ps_out_data[0];
-  //assign dut_data_lo[47:32] = ps_out_data[1];
-  //assign dut_data_lo[31:16] = ps_out_data[2];
-  //assign dut_data_lo[15:0]  = ps_out_data[3];
+  assign dut_data_lo[63:48] = ps_out_data[0];
+  assign dut_data_lo[47:32] = ps_out_data[1];
+  assign dut_data_lo[31:16] = ps_out_data[2];
+  assign dut_data_lo[15:0]  = ps_out_data[3];
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
