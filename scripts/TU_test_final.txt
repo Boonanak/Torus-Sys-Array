@@ -41,6 +41,19 @@ recv NA                   5 6 7 8
 recv NA                   9 10 11 12
 recv NA                   13 14 15 16
 wait 1
+### No transpose then transpose
+load R         1  2  3  4
+load R         5  6  7  8
+load R         9 10 11 12
+load R        13 14 15 16
+load_recv R    1  2  3  4       3  4  2  1
+load_recv R    0  1  0  0       5  7  8  6
+load_recv R    0  0  1  0      12 10  9 11
+load_recv R    0  0  0  1      14 13 15 16
+recv T                          3  5 12 14
+recv T                          4  7 10 13
+recv T                          2  8  9 15
+recv T                          1  6 11 16
 ### RANDOM TESTS
 load RT        109   -5   55   41
 load RT          3  -26  -60 -124
