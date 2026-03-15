@@ -194,7 +194,7 @@ module Top_level #(
         .ROWS (DIM_p),
         .COLS (DIM_p)
     ) u_sys_array (
-        .clk                     (clk_i),
+        .clk_i                   (clk_i),
         .reset                   (reset_i),
         .load_B                  (sys_load_B),
         .row_major               (sys_row_major),

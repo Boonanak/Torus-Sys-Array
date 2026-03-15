@@ -4,8 +4,7 @@
 synthesis.inputs.input_files: [
   # TODO: list verilog files
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
-  "v/Top_level/Top_level.sv",
-  "v/Top_level/bsg_test_node_client.sv",
+  "v/Top_level/bsg_test_node_client.v",
   
   "v/PE/PE_pkg.sv",
   "v/PE/PE.sv",
@@ -16,7 +15,7 @@ synthesis.inputs.input_files: [
   "v/transpose/dff_en.v",
   "v/transpose/shift_reg_simple.sv",
   "v/transpose/tp_node.sv",
-  "v/transpose/transpose.v",
+  "v/transpose/transpose.sv",
   "v/sys_array/col_gen.sv",
   "v/sys_array/sys_array.sv",
 
@@ -136,12 +135,14 @@ synthesis.inputs.input_files: [
   "${bsg_root}/bsg_noc/bsg_mesh_router_buffered.v",
   "${bsg_root}/bsg_noc/bsg_mesh_stitch.v",
 
+  "v/Top_level/Top_level.sv",
+
   # bsg_guts and IO sources
-  "../common/v/bsg_guts.v",
-  "../common/v/packaging/bsg_iopad_macros.v",
-  "../common/v/packaging/bsg_iopad_mapping.v",
-  "../common/v/packaging/bsg_iopads.v",
-  "../common/v/packaging/bsg_pinout.v",
+  #"../common/v/bsg_guts.v",
+  #"../common/v/packaging/bsg_iopad_macros.v",
+  #"../common/v/packaging/bsg_iopad_mapping.v",
+  #"../common/v/packaging/bsg_iopads.v",
+  #"../common/v/packaging/bsg_pinout.v",
 ]
 synthesis.inputs.input_files_meta: [append, subst]
 
