@@ -24,13 +24,38 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     // Pre-proccess the data
     // Swap thrid and fourth rows if rotate is enabled
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
+    // 4x4 kept as a comment in case we need them
+    // always_comb begin 
+    //     for (integer i = 0; i < DIM_p; i++) begin 
+    //         if (i == 2) begin 
+    //             processed_in_data[i] = (rotate) ? in_data[3] : in_data[2];
+    //         end else if (i == 3) begin 
+    //             processed_in_data[i] = (rotate) ? in_data[2] : in_data[3];
+    //         end else begin 
+    //             processed_in_data[i] = in_data[i];
+    //         end
+    //     end
+    // end
+
+    // explanations for the dark magic code:
+    // data initially arrives [1 2 3 4 5 6 7 8], and we want to generate same for non rotate
+    // we want to generate all even numbers in ascending, then all odd numbers descending: [2 4 6 8 7 5 3 1] 
+    // we also should shift it by (DIM_p/2 - 1), so we bring DIM_p (8 in this case) to the front
+    // and get [8 7 5 3 1 2 4 6]
+    // same logic applies for 4x4: [1 2 3 4] -> [2 4 3 1] -> [4 3 1 2]
+    // +DIM_p then %DIM_p allows for avoiding modulo on negative number which can be iffy and good to avoid
+    // rest are core logic described above.
+
     always_comb begin 
-        for (integer i = 0; i < DIM_p; i++) begin 
-            if (i == 2) begin 
-                processed_in_data[i] = (rotate) ? in_data[3] : in_data[2];
-            end else if (i == 3) begin 
-                processed_in_data[i] = (rotate) ? in_data[2] : in_data[3];
-            end else begin 
+        if (rotate) begin 
+            for (int i = 0; i < DIM_p / 2; i++) begin 
+                // even numbers, fill from left
+                processed_in_data[(i - DIM_p/2 - 1 + DIM_p) % DIM_p] = in_data[i * 2 + 1];
+                // odd numbers, fill from right
+                processed_in_data[(DIM_p - 1 - i - DIM_p / 2 - 1 + DIM_p) % DIM_p] = in_data[i * 2];
+            end
+        end else begin 
+            for (int i = 0; i < DIM_p; i++) begin 
                 processed_in_data[i] = in_data[i];
             end
         end
@@ -95,13 +120,17 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     generate // Make the array of transposer nodes, magic interconnect logic
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
-                localparam int shift_amount_row = (col == 1) ?  1 :
-                                                 (col == 2) ?  2 :
-                                                 (col == 3) ? -1 : 0;
+                // localparam int shift_amount_row = (col == 1) ?  1 :
+                //                                  (col == 2) ?  -2 :
+                //                                  (col == 3) ? 3 : 0;
 
-                localparam int shift_amount_col = (row == 1) ?  1 :
-                                                 (row == 2) ?  2 :
-                                                 (row == 3) ? -1 : 0;
+                // localparam int shift_amount_col = (row == 1) ?  1 :
+                //                                  (row == 2) ?  -2 :
+                //                                  (row == 3) ? 3 : 0;
+                localparam int shift_amount_row = (col % 2 == 1) ? int'(col) : -int'(col);
+                localparam int shift_amount_col = (row % 2 == 1) ? int'(row) : -int'(row);
+
+                
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
