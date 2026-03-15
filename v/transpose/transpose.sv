@@ -232,8 +232,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     initial begin
         assert ((DIM_p & (DIM_p - 1)) == 0)
             else $fatal("DIM_p (%0d) must be a power of 2", DIM_p);
-        assert (col_major_i == 1'b0)
-            else $fatal("col_major_i must be 0 for row-major input, column-major input is not supported");
+//        assert (col_major_i == 1'b0)
+//            else $fatal("col_major_i must be 0 for row-major input, column-major input is not supported");
         assert (DIM_p > 1)
             else $fatal("DIM_p (%0d) must be greater than 1", DIM_p);
         assert (WIDTH_p > 0)

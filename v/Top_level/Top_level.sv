@@ -41,6 +41,11 @@ module Top_level #(
     assign in_major_mode  = data_i[32];
     assign in_load_weight = data_i[33];
 
+    initial begin
+        $display("DEBUG Top_level edited file!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! is being used");
+        $display("DEBUG transpose_col_major=%b", transpose_col_major);
+    end
+
     // ----------------------------------------------------------------
     // Input handshake
     // Accept a row whenever the pipeline can take it
@@ -87,9 +92,9 @@ module Top_level #(
     // Control mapping
     // We latch controls on each accepted input row.
     // ----------------------------------------------------------------
-    assign transpose_col_major    = 1'b0;   // temporary forces row-major input
-    assign transpose_rotate       = 1'b0;   // no rotate on write
-    assign transpose_do_transpose = 1'b1;   // do transpose on read
+    assign transpose_col_major    = 1'b0;   // temporary forces input
+    assign transpose_rotate       = ~load_weight_r;   // no rotate on write
+    assign transpose_do_transpose = ~load_weight_r;   // do transpose on read
 
     assign sys_row_major       =  major_mode_r;
     assign sys_load_B          =  load_weight_r;
