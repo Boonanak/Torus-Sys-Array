@@ -19,7 +19,7 @@ sim.inputs.tb_input_files: [
   "v/transpose/dff_en_tb.v",
   "v/transpose/shift_reg_tb.v",
   "v/transpose/tp_node_tb.v",
-  "v/transpose/transpose_tb.v",
+  "v/transpose/transpose_tb_twotrace.v",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
@@ -44,5 +44,6 @@ sim.inputs.trace_files: [
   "v/transpose/shift_reg_trace.tr",
   "v/transpose/tp_node_trace.tr",
   "v/transpose/transpose_trace.tr",
-
+  "v/transpose/transpose_recv_trace.tr",
+  "v/transpose/transpose_send_trace.tr",
 ]
