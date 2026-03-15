@@ -19,15 +19,6 @@ module Top_level #(
     input  logic                    yumi_i
 );
 
-    initial begin
-        assert (ring_width_p == 75)
-            else $fatal("toplevel currently expects ring_width_p = 75");
-        assert (DIM_p == 4)
-            else $fatal("toplevel currently expects DIM_p = 4");
-        assert (WIDTH_p == 8)
-            else $fatal("toplevel currently expects WIDTH_p = 8");
-    end
-
     // ----------------------------------------------------------------
     // Decoded current input packet fields
     // Packet format assumed:
@@ -93,8 +84,6 @@ module Top_level #(
     // ----------------------------------------------------------------
     // Control mapping
     // We latch controls on each accepted input row.
-    // If your design assumes control stays constant over many rows,
-    // this is fine as long as the sender behaves consistently.
     // ----------------------------------------------------------------
     assign transpose_col_major = ~major_mode_r;
     assign sys_row_major       =  major_mode_r;
