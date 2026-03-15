@@ -4,16 +4,19 @@
 synthesis.inputs.input_files: [
   # TODO: list verilog files
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
+  "v/Top_level/Top_level.sv",
+  "v/Top_level/bsg_test_node_client.sv",
+  
   "v/PE/PE_pkg.sv",
-  #"v/PE/PE.sv",
-  #"v/PE/PE_combine_B_PS.sv",
-  #"v/PE/PE_shared_B.sv",
+  "v/PE/PE.sv",
+  "v/PE/PE_combine_B_PS.sv",
+  "v/PE/PE_shared_B.sv",
   "v/PE/PE_final.sv",
 
-  #"v/transpose/dff_en.v",
+  "v/transpose/dff_en.v",
   "v/transpose/shift_reg_simple.sv",
   "v/transpose/tp_node.sv",
-  #"v/transpose/transpose.v",
+  "v/transpose/transpose.v",
   "v/sys_array/col_gen.sv",
   "v/sys_array/sys_array.sv",
 
