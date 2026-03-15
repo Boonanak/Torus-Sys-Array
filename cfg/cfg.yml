@@ -1,8 +1,8 @@
 # Main hammer config file
 
 # TODO: Set top levels
-synthesis.inputs.top_module: "sys_array"
-sim.inputs.tb_name: "sys_array_tb_twotrace"
+synthesis.inputs.top_module: "Top_level"
+sim.inputs.tb_name: "Top_level_tb"
 
 # Don't synthesize these gate-level netlist modules
 # TODO: List the names of any modules that don't require synthesis
