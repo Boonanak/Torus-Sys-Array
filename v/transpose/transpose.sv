@@ -8,8 +8,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
-                    input logic rotate,
-                    input logic transpose, 
+                    input logic rotate, // to rotate or not rotate data, assert on write
+                    input logic transpose, // to transpose or not transpose, assert on read
                     ///////////////////////////////////////////////////////////////////////////////
                     output logic valid_o, // if the transposer output is valid
                     output logic ready_o, // if the transposer is ready to accept new input data
@@ -24,27 +24,42 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     // Pre-proccess the data
     // Swap thrid and fourth rows if rotate is enabled
     logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
+    // 4x4 kept as a comment in case we need them
+    // always_comb begin 
+    //     for (integer i = 0; i < DIM_p; i++) begin 
+    //         if (i == 2) begin 
+    //             processed_in_data[i] = (rotate) ? in_data[3] : in_data[2];
+    //         end else if (i == 3) begin 
+    //             processed_in_data[i] = (rotate) ? in_data[2] : in_data[3];
+    //         end else begin 
+    //             processed_in_data[i] = in_data[i];
+    //         end
+    //     end
+    // end
+
+    // explanations for the dark magic code:
+    // data initially arrives [1 2 3 4 5 6 7 8], and we want to generate same for non rotate
+    // we want to generate all even numbers in ascending, then all odd numbers descending: [2 4 6 8 7 5 3 1] 
+    // we also should shift it by (DIM_p/2 - 1), so we bring DIM_p (8 in this case) to the front
+    // and get [8 7 5 3 1 2 4 6]
+    // same logic applies for 4x4: [1 2 3 4] -> [2 4 3 1] -> [4 3 1 2]
+    // +DIM_p then %DIM_p allows for avoiding modulo on negative number which can be iffy and good to avoid
+    // rest are core logic described above.
+
     always_comb begin 
-        for (integer i = 0; i < DIM_p; i++) begin 
-            if (i == 2) begin 
-                processed_in_data[i] = (rotate) ? in_data[3] : in_data[2];
-            end else if (i == 3) begin 
-                processed_in_data[i] = (rotate) ? in_data[2] : in_data[3];
-            end else begin 
+        if (rotate) begin 
+            for (int i = 0; i < DIM_p / 2; i++) begin 
+                // even numbers, fill from left
+                processed_in_data[(i - DIM_p/2 - 1 + DIM_p) % DIM_p] = in_data[i * 2 + 1];
+                // odd numbers, fill from right
+                processed_in_data[(DIM_p - 1 - i - DIM_p / 2 - 1 + DIM_p) % DIM_p] = in_data[i * 2];
+            end
+        end else begin 
+            for (int i = 0; i < DIM_p; i++) begin 
                 processed_in_data[i] = in_data[i];
             end
         end
     end
-
-    /* MARKED FOR REMOVAL 
-    // Flip processed data 
-    logic [WIDTH_p-1:0] flipped_in_data [DIM_p-1:0];
-    always_comb begin
-        for (int i = 0; i < DIM_p; i++) begin
-            flipped_in_data[i] = processed_in_data[DIM_p-1 - i];
-        end
-    end 
-    */
 
     // Counter values
     logic direction; // The current direction of shifting
@@ -70,14 +85,14 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Control signals
     logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
-    logic output_valid, enable, ready, can_read, can_write, read_or_write;
+    logic output_valid, enable, can_read, ready, can_write, override_direction;
     /*
     output_valid: whether the output data is valid, determined by the last bit of the valid shift register
     enable: enable the rows/cols of the transposer to shift data, as well as the valid shift register
-    ready: whether the transposer can accept data (its not full)
     can_read: whether data can be read out from the transposer
+    ready: whether or not we can write data
     can_write: whether data can be written into the transposer
-    read_or_write: if we can either read or write data, used to control shifting and enabling
+    override_direction: if transposing is disabled, store the current direction and override andy direction changes to this
     */
 
     `ifdef SYNTHESIS
@@ -105,13 +120,17 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     generate // Make the array of transposer nodes, magic interconnect logic
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
-                localparam int shift_amount_row = (col == 1) ?  1 :
-                                                 (col == 2) ?  2 :
-                                                 (col == 3) ? -1 : 0;
+                // localparam int shift_amount_row = (col == 1) ?  1 :
+                //                                  (col == 2) ?  -2 :
+                //                                  (col == 3) ? 3 : 0;
 
-                localparam int shift_amount_col = (row == 1) ?  1 :
-                                                 (row == 2) ?  2 :
-                                                 (row == 3) ? -1 : 0;
+                // localparam int shift_amount_col = (row == 1) ?  1 :
+                //                                  (row == 2) ?  -2 :
+                //                                  (row == 3) ? 3 : 0;
+                localparam int shift_amount_row = (col % 2 == 1) ? int'(col) : -int'(col);
+                localparam int shift_amount_col = (row % 2 == 1) ? int'(row) : -int'(row);
+
+                
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
@@ -159,9 +178,12 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     always_ff @(posedge clk_i) begin
         if (~rst_n_i) begin
             write_counter <= '0;
-        end else if (can_write) begin
-            // increment if writting
-            write_counter <= write_counter + 1'b1;
+            override_direction <= 1'b0;
+        end else begin
+            if (can_write) // increment if writting
+                write_counter <= write_counter + 1'b1;
+            if (!transpose)
+                override_direction <= direction;
         end
     end
 
@@ -181,23 +203,23 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : enable_loop
-            assign col_enable[i] = direction ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = direction ? {enable, selection[i]} : 2'b00;
+            assign col_enable[i] = (direction) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
+            assign row_enable[i] = (direction) ? {enable, selection[i]} : 2'b00; // ~^ (transpose_r || transpose)
         end
     endgenerate
 
     // If direction = 1 read last row
     // if direction = 0, read last col
-    // if not transpose, read opposite of direction
+    // if not transpose, don't change direction
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = (direction ~^ transpose) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
         end
     endgenerate
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = write_counter[DIM_CLOG2_p];
+    assign direction = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
     assign count = write_counter[DIM_CLOG2_p-1:0];
     assign ready = output_valid ? ready_i : 1'b1;
     assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
