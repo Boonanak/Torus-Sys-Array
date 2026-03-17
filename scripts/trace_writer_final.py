@@ -89,37 +89,59 @@ def write_trace_final(input_file_name, trace_send, trace_recv):
             trace_send.write(trace_lines[0])
             trace_recv.write(trace_lines[1])
 
-def multiply_trace(A, B, C, op, format, major):
+def multiply_trace(A, B, C, op, major):
     A_binary_rows = matrix_to_binary_rows(A, 8)
     B_binary_rows = matrix_to_binary_rows(B, 8)
     C_binary_rows = matrix_to_binary_rows(C, 16)
-    rotate = format == 'RT' or format == 'R'
-    transpose = format == 'RT' or format == 'T'
     row_major = major == 'row'
     trace_lines_send = ''
     trace_lines_recv = ''
+    SEND_NOOP = f"# NOOP for SEND\n{f'0000__{'0'*64}\n'*4}"
+    RECV_NOOP = f"# NOOP for RECV\n{f'0000__{'0'*64}\n'*4}"
     match op:
         case 'loadA':
-            trace_lines_send += ''
-            trace_lines_recv += ''
+            trace_lines_send += f'# LOADING A into TPU | major = {major} | loadB = 0\n'
+            for row, binary_row in zip(A, A_binary_rows):
+                trace_lines_send += f'# A[i] = {row}\n'
+                trace_lines_send += f'0001________{int(row_major)}______0______{'0'*30}_______{binary_row}\n'
+            trace_lines_recv += RECV_NOOP
         case 'loadB':
-            trace_lines_send += ''
-            trace_lines_recv += ''
+            trace_lines_send += f'# LOADING B into TPU | major = {major} | loadB = 1\n'
+            for row, binary_row in zip(B, B_binary_rows):
+                trace_lines_send += f'# B[i] = {row}\n'
+                trace_lines_send += f'0001________{int(row_major)}______1______{'0'*30}_______{binary_row}\n'
+            trace_lines_recv += RECV_NOOP
         case 'recvC':
-            trace_lines_send += ''
-            trace_lines_recv += ''
+            trace_lines_send += SEND_NOOP
+            trace_lines_recv += '# RECEIVING C'
+            for row, binary_row in zip(C, C_binary_rows):
+                trace_lines_recv += f'# C[i] = {row}\n'
+                trace_lines_recv += f'0010________{binary_row}'
         case 'loadA_recvC':
-            trace_lines_send += ''
-            trace_lines_recv += ''
+            trace_lines_send += f'# LOADING A into TPU | major = {major} | loadB = 0\n'
+            for row, binary_row in zip(A, A_binary_rows):
+                trace_lines_send += f'# A[i] = {row}\n'
+                trace_lines_send += f'0001________{int(row_major)}______0______{'0'*30}_______{binary_row}\n'
+            trace_lines_recv += '# RECEIVING C'
+            for row, binary_row in zip(C, C_binary_rows):
+                trace_lines_recv += f'# C[i] = {row}\n'
+                trace_lines_recv += f'0010________{binary_row}\n'
         case 'loadB_recvC':
-            trace_lines_send += ''
-            trace_lines_recv += ''
+            trace_lines_send += f'# LOADING B into TPU | major = {major} | loadB = 1\n'
+            for row, binary_row in zip(B, B_binary_rows):
+                trace_lines_send += f'# B[i] = {row}\n'
+                trace_lines_send += f'0001________{int(row_major)}______1______{'0'*30}_______{binary_row}\n'
+            trace_lines_recv += '# RECEIVING C'
+            for row, binary_row in zip(C, C_binary_rows):
+                trace_lines_recv += f'# C[i] = {row}\n'
+                trace_lines_recv += f'0010________{binary_row}\n'
         case 'loadA-recvC':
             trace_lines_send += ''
             trace_lines_recv += ''
         case 'loadB-loadA-recvC':
             trace_lines_send += ''
             trace_lines_recv += ''
+    return trace_lines_send + '\n', trace_lines_recv + '\n'
 
 def matrix_to_binary_rows(M, size):
     binary_rows = []
@@ -130,7 +152,8 @@ def matrix_to_binary_rows(M, size):
         binary_rows.append(binary_row)
     return binary_rows
 
-print(matrix_to_binary_rows(identity, 16))
+sendrecv = multiply_trace(identity, identity, identity, 'loadB_recvC', 'row')
+print(sendrecv[0], sendrecv[1])
 
 
 def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
