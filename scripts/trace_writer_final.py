@@ -170,7 +170,7 @@ def matrix_to_binary_rows(M, size):
 
 def write_trace_final(tests, trace_send, trace_recv):
     with open(trace_send, 'w') as trace_send, open(trace_recv, 'w') as trace_recv:
-        trace_recv.write(f"# NOOP\n0000__{'0'*64}\n")
+        #trace_recv.write(f"# NOOP\n0000__{'0'*64}\n")
         for test in tests:
             if test[0] != None:
                 trace_send.write(matrix_trace(test[0][0], test[0][1], test[0][2]))
@@ -180,7 +180,7 @@ def write_trace_final(tests, trace_send, trace_recv):
                 trace_recv.write(matrix_trace(test[1][0], test[1][1], test[1][2]))
             else:
                 trace_recv.write(matrix_trace(None, 'N', None))
-        trace_send.write(f"# NOOP\n0000__{'0'*64}\n")
+        #trace_send.write(f"# NOOP\n0000__{'0'*64}\n")
         trace_send.write(f"# ENDING SIMULATION\n0100__{'0'*64}\n")
         trace_recv.write(f"# ENDING SIMULATION\n0100__{'0'*64}\n")
     return
@@ -218,14 +218,22 @@ C21 = multiply(A2, B1)
 B2 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
 C12 = multiply(A1, B2)
 C22 = multiply(A2, B2)
+# tests = [
+#     [[B1, 'B', 'row'], None],
+#     [[A1, 'A', 'row'], None],
+#     [[A2, 'A', 'row'], [C11, 'C', None]],
+#     [[B2, 'B', 'row'], [C21, 'C', None]],
+#     [[A1, 'A', 'row'], None],
+#     [[A2, 'A', 'row'], [C12, 'C', None]],
+#     [None, [C22, 'C', None]]
+# ]
 tests = [
     [[B1, 'B', 'row'], None],
     [[A1, 'A', 'row'], None],
-    [[A2, 'A', 'row'], [C11, 'C', None]],
-    [[B2, 'B', 'row'], [C21, 'C', None]],
-    [[A1, 'A', 'row'], None],
-    [[A2, 'A', 'row'], [C12, 'C', None]],
-    [None, [C22, 'C', None]]
+    [None, None],
+    [None, None],
+    [None, None],
+    [None, [C11, 'C', None]]
 ]
 
 write_trace_final(tests, 'v/Top_level/Top_level_send_trace.tr', 'v/Top_level/Top_level_recv_trace.tr')
