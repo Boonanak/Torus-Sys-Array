@@ -6,7 +6,7 @@ loadB R 1 1 1 1
 loadB R 1 1 1 1
 loadB R 1 1 1 1
 ### load in 1s for A
-wait 2
+wait 4
 compute R 1 1 1 1
 compute R 1 1 1 1
 compute R 1 1 1 1
