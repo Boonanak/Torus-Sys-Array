@@ -66,7 +66,7 @@ module sys_array #(
 
         load_B_control_next = (transposer_valid_in && transposer_ready_out) ? 
                               (load_B ? {load_B_control[COLS-2:0], load_B} : {COLS{1'b0}}) 
-                              : load_B_control;
+                              : {COLS{1'b0}};
         row_major_control_next = (transposer_valid_in && transposer_ready_out) ? {row_major_control[COLS - 2:0], row_major} : row_major_control;
     end
 

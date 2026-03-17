@@ -221,15 +221,15 @@ module Top_level_tb;
     // Example matrices
     // A = data
     A[0][0] =  1; A[0][1] =  1; A[0][2] =  1; A[0][3] =  1;
-    A[1][0] =  1; A[1][1] =  1; A[1][2] =  1; A[1][3] =  1;
-    A[2][0] =  1; A[2][1] =  1; A[2][2] =  1; A[2][3] =  1;
-    A[3][0] =  1; A[3][1] =  1; A[3][2] =  1; A[3][3] =  1;
+    A[1][0] =  0; A[1][1] =  0; A[1][2] =  0; A[1][3] =  0;
+    A[2][0] =  0; A[2][1] =  0; A[2][2] =  0; A[2][3] =  0;
+    A[3][0] =  0; A[3][1] =  0; A[3][2] =  0; A[3][3] =  0;
 
     // B = weights
-    B[0][0] =  1;  B[0][1] =  1;  B[0][2] =  1;  B[0][3] =  1;
-    B[1][0] =  1;  B[1][1] =  1;  B[1][2] =  1;  B[1][3] =  1;
-    B[2][0] =  1;  B[2][1] = 1;  B[2][2] = 1;  B[2][3] = 1;
-    B[3][0] = 1;  B[3][1] = 1;  B[3][2] = 1;  B[3][3] = 1;
+    B[0][0] =  1;  B[0][1] =  0;  B[0][2] =  0;  B[0][3] =  0;
+    B[1][0] =  0;  B[1][1] =  1;  B[1][2] =  0;  B[1][3] =  0;
+    B[2][0] =  0;  B[2][1] =  0;  B[2][2] =  1;  B[2][3] =  0;
+    B[3][0] =  0;  B[3][1] =  0;  B[3][2] =  0;  B[3][3] =  1;
 
     compute_golden();
 
@@ -257,13 +257,13 @@ module Top_level_tb;
         @(posedge clk_i);
         timeout = timeout + 1;
       end
-
+      
       if (out_count < DIM_p) begin
         $error("Timed out waiting for all outputs. Only received %0d rows.", out_count);
         $finish;
       end
     end
-
+    repeat (50) @(posedge clk_i);
     // Compare results
     print_matrix16("Captured C_got", C_got);
 

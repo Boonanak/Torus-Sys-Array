@@ -34,10 +34,10 @@ module Top_level #(
     // ----------------------------------------------------------------
     logic [WIDTH_p-1:0] in_row_data [DIM_p-1:0];
 
-    assign in_row_data[0] = data_i[7:0];
-    assign in_row_data[1] = data_i[15:8];
-    assign in_row_data[2] = data_i[23:16];
-    assign in_row_data[3] = data_i[31:24];
+    assign in_row_data[3] = data_i[7:0];
+    assign in_row_data[2] = data_i[15:8];
+    assign in_row_data[1] = data_i[23:16];
+    assign in_row_data[0] = data_i[31:24];
 
     // ----------------------------------------------------------------
     // Input handshake
@@ -227,7 +227,7 @@ module Top_level #(
 
     // Replace the ctrl_fifo-based assignments with the armed flags:
     assign transpose_rotate       = in_load_weight;
-    assign transpose_do_transpose = do_transpose_armed_r;
+    //assign transpose_do_transpose = do_transpose_armed_r;
 
 
 
@@ -329,6 +329,31 @@ module Top_level #(
 
         end
     end
+    logic systransreadyfix;
+
+    // logic for counter to control trans
+    logic transpose_handshake_suceeded, sys_array_handshake_suceeded;
+    logic transpose_matrix_1, transpose_matrix_2;
+    logic [1:0] write_counter;
+
+    always_ff @(posedge clk_i) begin
+        if (reset_i) begin
+            transpose_matrix_1 <= 1'b0;
+            transpose_matrix_2 <= 1'b0;
+            write_counter <= '0;
+        end else begin
+            if (write_counter == 2'b00 && v_i)
+                transpose_matrix_2 <= ~in_load_weight; // Store the new transpose signal 
+            if (transpose_handshake_suceeded)
+                write_counter <= write_counter + 1'b1;
+            if (sys_array_handshake_suceeded && write_counter == 2'b00)
+                transpose_matrix_1 <= transpose_matrix_2; // update top matrix with stored tranpose signal
+        end 
+    end 
+
+    assign transpose_do_transpose = transpose_matrix_1; // replace transpose_do_transpose with this signal transpose (feel free to rename)
+    assign transpose_handshake_suceeded = transpose_valid_i && transpose_ready_o;
+    assign sys_array_handshake_suceeded = transpose_valid_o && sys_transposer_ready;    
 
     // ----------------------------------------------------------------
     // Transposer
