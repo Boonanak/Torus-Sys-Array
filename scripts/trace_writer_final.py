@@ -136,11 +136,35 @@ def multiply_trace(A, B, C, op, major):
                 trace_lines_recv += f'# C[i] = {row}\n'
                 trace_lines_recv += f'0010________{binary_row}\n'
         case 'loadA-recvC':
+            # loadA followed by receive C (both in parallel with NOOPs)
+            trace_lines_send += f'# LOADING A into TPU | major = {major} | loadB = 0\n'
+            for row, binary_row in zip(A, A_binary_rows):
+                trace_lines_send += f'# A[i] = {row}\n'
+                trace_lines_send += f'0001________{int(row_major)}______0______{'0'*30}_______{binary_row}\n'
+            trace_lines_recv += RECV_NOOP
+            trace_lines_send += SEND_NOOP
+            trace_lines_recv += '# RECEIVING C'
+            for row, binary_row in zip(C, C_binary_rows):
+                trace_lines_recv += f'# C[i] = {row}\n'
+                trace_lines_recv += f'0010________{binary_row}'
+        case 'loadA-loadB_recvC': 
+            # full throughput case, loads next B while receiving C (cannot receive new C until new A has been loaded)
+            # load A in parallel with NOOP, loadB in parallel with receive C
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadA-loadA_recvC': 
+            # full throughput case, uses B as next A
+            # load B in parallel with **nothing** (so that it can be a noop OR receiving a C), loadA in parallel with receive C
             trace_lines_send += ''
             trace_lines_recv += ''
         case 'loadB-loadA-recvC':
+            # loadB, followed by loadA, followed by receive C, all NOOPs in parallel
             trace_lines_send += ''
             trace_lines_recv += ''
+        case 'sendNOOP':
+            trace_lines_send += SEND_NOOP
+        case 'recvNOOP':
+            trace_lines_recv += RECV_NOOP
     return trace_lines_send + '\n', trace_lines_recv + '\n'
 
 def matrix_to_binary_rows(M, size):
