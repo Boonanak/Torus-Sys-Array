@@ -276,7 +276,7 @@ module Top_level #(
 
             if (input_fire) begin
                 transpose_rotate_r       <= in_load_weight;
-                transpose_do_transpose_r <= ~in_load_weight;
+                transpose_do_transpose_r <= in_load_weight;
             end
         end
     end
