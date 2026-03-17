@@ -12,6 +12,7 @@ sim.inputs.tb_incdir_meta: [subst]
 sim.inputs.tb_input_files: [
   # TODO: list verilog files
   "v/Top_level/Top_level_tb.sv",
+  "v/Top_level/Top_level_tb_twotrace.sv",
   
   "v/PE/PE_tb.sv",
   "v/PE/PE_combine_B_PS_tb.sv",
@@ -126,4 +127,7 @@ sim.inputs.trace_files: [
   "v/transpose/transpose_trace.tr",
   "v/transpose/transpose_recv_trace.tr",
   "v/transpose/transpose_send_trace.tr",
+
+  "v/Top_level/Top_level_recv_trace.tr",
+  "v/Top_level/Top_level_send_trace.tr",
 ]
