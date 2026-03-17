@@ -25,6 +25,7 @@ loadB_recv R 2 8 9 15   -2 -3 -4 -3
 loadB_recv R 1 6 11 16   -3 -4 -3 -2
 ### Compute A1 x B2 = B2, A2 x B2 = C2, A3 x B2 = -C2
 compute_recv R 1 0 0 0   -4 -3 -2 -1
+wait 1
 compute R 0 1 0 0
 compute R 0 0 1 0
 compute R 0 0 0 1
