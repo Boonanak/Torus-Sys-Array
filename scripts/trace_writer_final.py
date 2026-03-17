@@ -26,6 +26,113 @@
 #   6: 0000_110 = deassert reset
 #
 
+import random
+
+def gen_matrix(N, min_val, max_val):
+    return [[random.randint(min_val, max_val) for _ in range(N)] for _ in range(N)]
+
+def print_matrix(M):
+    for row in M:
+        print([f"{v:4d}" for v in row])
+
+def multiply(A, B):
+    N = len(A)
+    C = [[0]*N for _ in range(N)]
+    for i in range(N):
+        for j in range(N):
+            for k in range(N):
+                C[i][j] += A[i][k] * B[k][j]
+    return C
+
+# Example: 4x4, int8 range
+n = 4  # Number of rows and columns in the matrix.
+identity = [[0] * i + [1] + [0] * (n - i - 1) for i in range(n)]
+A1 = identity
+B1 = identity
+#B1 = gen_matrix(4, -128, 127)
+C1 = multiply(A1, B1)
+
+#print("A:"); print_matrix(A1)
+#print("B:"); print_matrix(B1)
+#print("C:"); print_matrix(C1)
+
+def to_signed_nbit_binary(integer, n_bits):
+    """
+    Converts an integer to a signed N-bit binary string (two's complement).
+    """
+    if integer >= 0:
+        # For positive numbers, use standard format and pad with zeros
+        binary_str = format(integer, 'b')
+        if len(binary_str) > n_bits:
+            raise ValueError(f"Positive integer {integer} out of range for {n_bits} bits")
+        return binary_str.zfill(n_bits)
+    else:
+        # For negative numbers, calculate two's complement
+        # Range check: min value for n-bit signed int is -(2**(n-1))
+        min_val = -(2**(n_bits - 1))
+        max_val = (2**(n_bits - 1)) - 1
+        if integer < min_val or integer > max_val:
+            raise ValueError(f"Negative integer {integer} out of range for {n_bits} bits (range: {min_val} to {max_val})")
+
+        # Calculate two's complement
+        # Formula: (2**n_bits) + integer
+        twos_complement_val = (1 << n_bits) + integer 
+        binary_str = format(twos_complement_val, 'b')
+        
+        # This should always be n_bits long if the input is in range, but zfill ensures it
+        return binary_str.zfill(n_bits)
+
+def write_trace_final(input_file_name, trace_send, trace_recv):
+    with open(input_file_name, 'r') as file, open(trace_send, 'w') as trace_send, open(trace_recv, 'w') as trace_recv:
+        for line in file:
+            trace_lines = multiply_trace(line)
+            trace_send.write(trace_lines[0])
+            trace_recv.write(trace_lines[1])
+
+def multiply_trace(A, B, C, op, format, major):
+    A_binary_rows = matrix_to_binary_rows(A, 8)
+    B_binary_rows = matrix_to_binary_rows(B, 8)
+    C_binary_rows = matrix_to_binary_rows(C, 16)
+    rotate = format == 'RT' or format == 'R'
+    transpose = format == 'RT' or format == 'T'
+    row_major = major == 'row'
+    trace_lines_send = ''
+    trace_lines_recv = ''
+    match op:
+        case 'loadA':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadB':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'recvC':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadA_recvC':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadB_recvC':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadA-recvC':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+        case 'loadB-loadA-recvC':
+            trace_lines_send += ''
+            trace_lines_recv += ''
+
+def matrix_to_binary_rows(M, size):
+    binary_rows = []
+    for row in M:
+        binary_row = ''
+        for n in row:
+            binary_row += f'_{to_signed_nbit_binary(n, size)}'
+        binary_rows.append(binary_row)
+    return binary_rows
+
+print(matrix_to_binary_rows(identity, 16))
+
+
 def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
     index = 0
     tb_type = ''
@@ -467,31 +574,7 @@ def parse_ARR_2_line(ARR_line):
 def parse_TPU_line(TPU_line):
     return TPU_line
 
-def to_signed_nbit_binary(integer, n_bits):
-    """
-    Converts an integer to a signed N-bit binary string (two's complement).
-    """
-    if integer >= 0:
-        # For positive numbers, use standard format and pad with zeros
-        binary_str = format(integer, 'b')
-        if len(binary_str) > n_bits:
-            raise ValueError(f"Positive integer {integer} out of range for {n_bits} bits")
-        return binary_str.zfill(n_bits)
-    else:
-        # For negative numbers, calculate two's complement
-        # Range check: min value for n-bit signed int is -(2**(n-1))
-        min_val = -(2**(n_bits - 1))
-        max_val = (2**(n_bits - 1)) - 1
-        if integer < min_val or integer > max_val:
-            raise ValueError(f"Negative integer {integer} out of range for {n_bits} bits (range: {min_val} to {max_val})")
 
-        # Calculate two's complement
-        # Formula: (2**n_bits) + integer
-        twos_complement_val = (1 << n_bits) + integer 
-        binary_str = format(twos_complement_val, 'b')
-        
-        # This should always be n_bits long if the input is in range, but zfill ensures it
-        return binary_str.zfill(n_bits)
 
 
 
