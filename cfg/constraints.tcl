@@ -6,7 +6,7 @@
 #
 
 # Defined Variables
-set clk_period 12
+set clk_period 20
 set half_period [expr {$clk_period / 2}]
 
 # List of feedthough I/O to exclude
