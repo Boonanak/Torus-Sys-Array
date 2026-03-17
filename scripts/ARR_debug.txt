@@ -1,0 +1,17 @@
+ARR
+wait 6 
+### load in 1s for B
+loadB R 1 1 1 1
+loadB R 1 1 1 1
+loadB R 1 1 1 1
+loadB R 1 1 1 1
+### load in 1s for A
+compute R 1 1 1 1
+compute R 1 1 1 1
+compute R 1 1 1 1
+compute R 1 1 1 1
+wait 1
+recv 4 4 4 4
+recv 4 4 4 4
+recv 4 4 4 4
+recv 4 4 4 4
