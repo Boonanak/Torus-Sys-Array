@@ -6,6 +6,7 @@ loadB R 1 1 1 1
 loadB R 1 1 1 1
 loadB R 1 1 1 1
 ### load in 1s for A
+wait 1
 compute R 1 1 1 1
 compute R 1 1 1 1
 compute R 1 1 1 1
@@ -15,3 +16,4 @@ recv 4 4 4 4
 recv 4 4 4 4
 recv 4 4 4 4
 recv 4 4 4 4
+end
