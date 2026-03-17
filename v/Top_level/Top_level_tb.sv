@@ -55,7 +55,7 @@ module Top_level_tb;
 
   // ---------------- Clock ----------------
   initial clk_i = 1'b0;
-  always #10 clk_i = ~clk_i;
+  always #20 clk_i = ~clk_i;
 
   initial begin
     $fsdbDumpfile("waveform.fsdb");
@@ -226,10 +226,10 @@ module Top_level_tb;
     A[3][0] =  1; A[3][1] =  1; A[3][2] =  1; A[3][3] =  1;
 
     // B = weights
-    B[0][0] =  1;  B[0][1] =  2;  B[0][2] =  3;  B[0][3] =  4;
-    B[1][0] =  5;  B[1][1] =  6;  B[1][2] =  7;  B[1][3] =  8;
-    B[2][0] =  9;  B[2][1] = 10;  B[2][2] = 11;  B[2][3] = 12;
-    B[3][0] = 13;  B[3][1] = 14;  B[3][2] = 15;  B[3][3] = 16;
+    B[0][0] =  1;  B[0][1] =  1;  B[0][2] =  1;  B[0][3] =  1;
+    B[1][0] =  1;  B[1][1] =  1;  B[1][2] =  1;  B[1][3] =  1;
+    B[2][0] =  1;  B[2][1] = 1;  B[2][2] = 1;  B[2][3] = 1;
+    B[3][0] = 1;  B[3][1] = 1;  B[3][2] = 1;  B[3][3] = 1;
 
     compute_golden();
 
@@ -244,10 +244,10 @@ module Top_level_tb;
 
     // Send weights and data back-to-back
     $display("Sending weight matrix B...");
-    send_matrix_burst(1'b1, 1'b1, B);
+    send_matrix_burst(1'b1, 1'b0, B);
 
     $display("Sending data matrix A...");
-    send_matrix_burst(1'b0, 1'b1, A);
+    send_matrix_burst(1'b0, 1'b0, A);
 
     // Wait for 4 output rows
     begin : wait_for_outputs

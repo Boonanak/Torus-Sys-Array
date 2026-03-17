@@ -76,18 +76,15 @@ module Top_level #(
     logic [out_width_p-1:0] out_pkt_r, out_pkt_n;
     logic                    out_valid_r, out_valid_n;
 
-    // Control registers to allow controls to persist
-
-    integer k;
-
+    
     // ----------------------------------------------------------------
     // Control mapping
-    // We latch controls on each accepted input row.
     // ----------------------------------------------------------------
     assign transpose_col_major    = 1'b0;   // temporary forces input
 
-    logic transpose_rotate_r;
-    logic transpose_do_transpose_r;
+    // Stream rows directly in when accepted
+    assign transpose_valid_i = v_i & ready_o;
+    assign input_fire        = v_i & ready_o;
 
     //assign transpose_rotate = ctrl_front.rotate;   // no rotate on write
     //assign transpose_do_transpose = ctrl_front.do_transpose;   // no transpose on read
@@ -130,8 +127,11 @@ module Top_level #(
     // Front entry corresponds to current transpose output transaction
     assign ctrl_front = ctrl_fifo[ctrl_rd_ptr_r];
 
-    assign sys_row_major = ctrl_front.major_mode;
-    assign sys_load_B    = ctrl_front.load_weight;
+    //assign sys_row_major = ctrl_front.major_mode;
+    //assign sys_load_B    = ctrl_front.load_weight;
+
+    assign sys_row_major = (!ctrl_fifo_empty) ? ctrl_front.major_mode  : 1'b0;
+    assign sys_load_B    = (!ctrl_fifo_empty) ? ctrl_front.load_weight : 1'b0;
     
 
     always_comb begin
@@ -226,7 +226,7 @@ module Top_level #(
     end
 
     // Replace the ctrl_fifo-based assignments with the armed flags:
-    assign transpose_rotate       = rotate_armed_r;
+    assign transpose_rotate       = in_load_weight;
     assign transpose_do_transpose = do_transpose_armed_r;
 
 
@@ -238,9 +238,6 @@ module Top_level #(
         end
     endgenerate
 
-    // Stream rows directly in when accepted
-    assign transpose_valid_i = v_i & ready_o;
-    assign input_fire        = v_i & ready_o;
 
     // Backpressure input if:
     // - node disabled
@@ -248,10 +245,10 @@ module Top_level #(
     // - systolic cannot accept transpose output path
     // - output register already full and we don't want unchecked overflow
     
-    assign ready_o = transpose_ready_o
-                   & sys_transposer_ready
-                   & (~out_valid_r | ready_i)
-                   & (~ctrl_fifo_full);
+    assign ready_o = transpose_ready_o;
+                //    & sys_transposer_ready
+                //    & (~out_valid_r | ready_i)
+                //    & (~ctrl_fifo_full);
 
     // Output interface to ring
     assign v_o    = out_valid_r;
@@ -313,8 +310,6 @@ module Top_level #(
             ctrl_rd_ptr_r  <= '0;
             ctrl_count_r   <= '0;
 
-            transpose_rotate_r       <= 1'b0;
-            transpose_do_transpose_r <= 1'b0;
         end
         else begin
             out_pkt_r   <= out_pkt_n;
@@ -332,10 +327,6 @@ module Top_level #(
             ctrl_rd_ptr_r <= ctrl_rd_ptr_n;
             ctrl_count_r  <= ctrl_count_n;
 
-            if (input_fire) begin
-                transpose_rotate_r       <= in_load_weight;
-                transpose_do_transpose_r <= ~in_load_weight;
-            end
         end
     end
 
