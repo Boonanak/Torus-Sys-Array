@@ -296,7 +296,7 @@ module Top_level #(
         .valid_i     (transpose_valid_i),
         .ready_i     (sys_transposer_ready),
         .rotate      (transpose_rotate),
-        .transpose   (transpose_do_transpose),
+        .transpose   (transpose_do_transpose_r),
         .valid_o     (transpose_valid_o),
         .ready_o     (transpose_ready_o),
         .out_data    (transpose_out_data)
