@@ -21,19 +21,19 @@ module sys_array_tb_twotrace;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [63:0] dut_data_lo, dut_data_r;
+  logic [127:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [63:0] tr_data_lo;
+  logic [127:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [67:0] rom_data_lo_send, rom_data_lo_recv;
+  logic [121:0] rom_data_lo_send, rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(64)
+  bsg_fsb_node_trace_replay #(.ring_width_p(128)
                              ,.rom_addr_width_p(32) )
     trace_replay_recv
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -55,7 +55,7 @@ module sys_array_tb_twotrace;
       , .error_o()
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(64)
+  bsg_fsb_node_trace_replay #(.ring_width_p(128)
                              ,.rom_addr_width_p(32) )
     trace_replay_send
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -85,21 +85,21 @@ module sys_array_tb_twotrace;
   end
 
   // / 1 bit load_B / 8 bits A / 16 bits B_PS / 4 bits for trace replay
-  sys_array_send_trace_rom #(.width_p(68),.addr_width_p(32))
+  sys_array_send_trace_rom #(.width_p(132),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
       );
 
-  sys_array_recv_trace_rom #(.width_p(68),.addr_width_p(32))
+  sys_array_recv_trace_rom #(.width_p(132),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
 
-  logic [15:0] ps_out_data [3:0];
-  logic [15:0] A_out_data [3:0];
-  logic [7:0] transposer_data_in [3:0];
+  logic [15:0] ps_out_data [7:0];
+  logic [15:0] A_out_data [7:0];
+  logic [7:0] transposer_data_in [7:0];
 
   assign transposer_data_in[3] = tr_data_lo[31:24];
   assign transposer_data_in[2] = tr_data_lo[23:16];

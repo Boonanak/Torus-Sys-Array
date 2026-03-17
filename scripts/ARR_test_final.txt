@@ -100,7 +100,6 @@ wait 6
 ### RANDOM TESTS
 loadB R          55    3 -109   73
 loadB R          41  -60  -48 -116
-wait 1
 loadB R          -5 -124  -64   41
 loadB R         109  -26   80   78
 compute R       117  -49 -115  -92
