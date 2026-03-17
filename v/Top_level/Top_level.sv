@@ -89,8 +89,9 @@ module Top_level #(
     logic transpose_rotate_r;
     logic transpose_do_transpose_r;
 
-    assign transpose_rotate = ctrl_front.rotate;   // no rotate on write
-    assign transpose_do_transpose = ctrl_front.do_transpose;   // no transpose on read
+    //assign transpose_rotate = ctrl_front.rotate;   // no rotate on write
+    //assign transpose_do_transpose = ctrl_front.do_transpose;   // no transpose on read
+
 
     // ----------------------------------------------------------------
     // Control FIFO to keep control bits aligned with rows through
@@ -163,6 +164,73 @@ module Top_level #(
     end
 
 
+    // ----------------------------------------------------------------
+    // Cycle counters for rotate / do_transpose timing
+    // ----------------------------------------------------------------
+    localparam int CNT_W = $clog2(DIM_p + 1);  // 3 bits for DIM_p=4
+
+    logic [CNT_W-1:0] in_cycle_cnt_r,  in_cycle_cnt_n;   // counts accepted input rows
+    logic [CNT_W-1:0] out_cycle_cnt_r, out_cycle_cnt_n;  // counts consumed output rows
+
+    logic rotate_armed_r,       rotate_armed_n;
+    logic do_transpose_armed_r, do_transpose_armed_n;
+
+    always_comb begin
+        in_cycle_cnt_n       = in_cycle_cnt_r;
+        out_cycle_cnt_n      = out_cycle_cnt_r;
+        rotate_armed_n       = rotate_armed_r;
+        do_transpose_armed_n = do_transpose_armed_r;
+
+        // Count input fires; arm rotate after DIM_p inputs received
+        if (input_fire) begin
+            if (in_cycle_cnt_r == CNT_W'(DIM_p)) begin
+                in_cycle_cnt_n = '0;
+                rotate_armed_n = 1'b1;          // assert rotate on the NEXT input
+            end else begin
+                in_cycle_cnt_n = in_cycle_cnt_r + 1'b1;
+            end
+        end
+
+        // Clear rotate once it has been consumed by the transposer
+        if (rotate_armed_r && ctrl_deq)
+            rotate_armed_n = 1'b0;
+
+        // Count output fires (transpose→systolic handshakes);
+        // arm do_transpose after DIM_p outputs consumed
+        if (ctrl_deq) begin
+            if (out_cycle_cnt_r == CNT_W'(DIM_p)) begin
+                out_cycle_cnt_n      = '0;
+                do_transpose_armed_n = 1'b1;    // assert do_transpose on the NEXT output
+            end else begin
+                out_cycle_cnt_n = out_cycle_cnt_r + 1'b1;
+            end
+        end
+
+        // Clear do_transpose once consumed
+        if (do_transpose_armed_r && ctrl_deq)
+            do_transpose_armed_n = 1'b0;
+    end
+
+    always_ff @(posedge clk_i) begin
+        if (reset_i) begin
+            in_cycle_cnt_r       <= '0;
+            out_cycle_cnt_r      <= '0;
+            rotate_armed_r       <= 1'b0;
+            do_transpose_armed_r <= 1'b0;
+        end else begin
+            in_cycle_cnt_r       <= in_cycle_cnt_n;
+            out_cycle_cnt_r      <= out_cycle_cnt_n;
+            rotate_armed_r       <= rotate_armed_n;
+            do_transpose_armed_r <= do_transpose_armed_n;
+        end
+    end
+
+    // Replace the ctrl_fifo-based assignments with the armed flags:
+    assign transpose_rotate       = rotate_armed_r;
+    assign transpose_do_transpose = do_transpose_armed_r;
+
+
+
     generate
         genvar i;
         for (i = 0; i < DIM_p; i++) begin : g_tp_in
@@ -189,16 +257,6 @@ module Top_level #(
     assign v_o    = out_valid_r;
     assign data_o = out_pkt_r;
 
-    /*always_ff @(posedge clk_i) begin
-        if (transpose_valid_o && sys_transposer_ready) begin
-            $display("transpose out @ %0t : [%0d %0d %0d %0d]",
-                    $time,
-                    transpose_out_data[0],
-                    transpose_out_data[1],
-                    transpose_out_data[2],
-                    transpose_out_data[3]);
-        end
-    end*/
 
     always_ff @(posedge clk_i) begin
         if (transpose_valid_o && sys_transposer_ready) begin
