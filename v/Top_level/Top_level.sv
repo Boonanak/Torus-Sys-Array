@@ -89,8 +89,8 @@ module Top_level #(
     logic transpose_rotate_r;
     logic transpose_do_transpose_r;
 
-    assign transpose_rotate       = transpose_rotate_r;   // no rotate on write
-    assign transpose_do_transpose = transpose_do_transpose_r;   // no transpose on write
+    assign transpose_rotate = ctrl_front.rotate;   // no rotate on write
+    assign transpose_do_transpose = ctrl_front.do_transpose;   // no transpose on read
 
     // ----------------------------------------------------------------
     // Control FIFO to keep control bits aligned with rows through
@@ -99,6 +99,8 @@ module Top_level #(
     typedef struct packed {
         logic major_mode;
         logic load_weight;
+        logic rotate;
+        logic do_transpose;
     } ctrl_t;
 
     localparam int CTRL_FIFO_DEPTH = 8;
@@ -200,10 +202,10 @@ module Top_level #(
 
     always_ff @(posedge clk_i) begin
         if (transpose_valid_o && sys_transposer_ready) begin
-            $display("TOP transpose out @ %0t : row_major=%0b load_B=%0b data=[%0d %0d %0d %0d]",
+            $display("TOP transpose out @ %0t : rotate=%0b trans=%0b data=[%0d %0d %0d %0d]",
                     $time,
-                    sys_row_major,
-                    sys_load_B,
+                    ctrl_front.rotate,
+                    ctrl_front.do_transpose,
                     transpose_out_data[0],
                     transpose_out_data[1],
                     transpose_out_data[2],
@@ -214,7 +216,7 @@ module Top_level #(
     // Systolic can present a completed result when output holding reg is free,
     // or when the current packet is being consumed this cycle.
     assign sys_output_ready = sys_output_valid
-                        & (~out_valid_r) | (out_valid_r & ready_i);
+                        & ((~out_valid_r) | (out_valid_r & ready_i));
 
     // ----------------------------------------------------------------
     // Output packet formatting / hold logic
@@ -264,6 +266,8 @@ module Top_level #(
             if (ctrl_enq) begin
                 ctrl_fifo[ctrl_wr_ptr_r].major_mode  <= in_major_mode;
                 ctrl_fifo[ctrl_wr_ptr_r].load_weight <= in_load_weight;
+                ctrl_fifo[ctrl_wr_ptr_r].do_transpose <= ~in_load_weight;
+                ctrl_fifo[ctrl_wr_ptr_r].rotate       <= in_load_weight;
             end
 
             ctrl_wr_ptr_r <= ctrl_wr_ptr_n;
@@ -271,7 +275,7 @@ module Top_level #(
             ctrl_count_r  <= ctrl_count_n;
 
             if (input_fire) begin
-                transpose_rotate_r       <= ~in_load_weight;
+                transpose_rotate_r       <= in_load_weight;
                 transpose_do_transpose_r <= ~in_load_weight;
             end
         end
