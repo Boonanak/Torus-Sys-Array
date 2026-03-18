@@ -228,12 +228,12 @@ C22 = multiply(A2, B2)
 #     [None, [C22, 'C', None]]
 # ]
 tests = [
-    [[B1, 'B', 'row'], None],
+    [[B2, 'B', 'row'], None],
     [[A1, 'A', 'row'], None],
     [None, None],
     [None, None],
     [None, None],
-    [None, [C11, 'C', None]]
+    [None, [C12, 'C', None]]
 ]
 
 write_trace_final(tests, 'v/Top_level/Top_level_send_trace.tr', 'v/Top_level/Top_level_recv_trace.tr')
