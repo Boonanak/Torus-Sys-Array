@@ -34,10 +34,10 @@ module Top_level #(
     // ----------------------------------------------------------------
     logic [WIDTH_p-1:0] in_row_data [DIM_p-1:0];
 
-    assign in_row_data[3] = data_i[7:0];
-    assign in_row_data[2] = data_i[15:8];
-    assign in_row_data[1] = data_i[23:16];
-    assign in_row_data[0] = data_i[31:24];
+    assign in_row_data[0] = data_i[7:0];
+    assign in_row_data[1] = data_i[15:8];
+    assign in_row_data[2] = data_i[23:16];
+    assign in_row_data[3] = data_i[31:24];
 
     // ----------------------------------------------------------------
     // Input handshake
