@@ -244,7 +244,7 @@ module Top_level_tb;
 
     // Send weights and data back-to-back
     $display("Sending weight matrix B...");
-    send_matrix_burst(1'b1, 1'b0, B);
+    send_matrix_burst(1'b1, 1'b1, B);
 
     $display("Sending data matrix A...");
     send_matrix_burst(1'b0, 1'b0, A);
