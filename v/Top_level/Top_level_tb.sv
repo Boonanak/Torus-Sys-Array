@@ -45,8 +45,8 @@ module Top_level_tb;
     .ready_i        (ready_i)
   );
 
-  elem8_t  A [0:DIM_p-1][0:DIM_p-1];
-  elem8_t  B [0:DIM_p-1][0:DIM_p-1];
+  elem8_t  A     [0:DIM_p-1][0:DIM_p-1];
+  elem8_t  B     [0:DIM_p-1][0:DIM_p-1];
   elem16_t C_exp [0:DIM_p-1][0:DIM_p-1];
   elem16_t C_got [0:DIM_p-1][0:DIM_p-1];
 
@@ -56,7 +56,6 @@ module Top_level_tb;
   // ---------------- Clock ----------------
   initial clk_i = 1'b0;
   always #10 clk_i = ~clk_i;
-
 
   initial begin
     $fsdbDumpfile("waveform.fsdb");
@@ -78,36 +77,6 @@ module Top_level_tb;
     end
   endfunction
 
-  task automatic send_row(
-    input logic load_weight,
-    input logic major_mode,
-    input elem8_t r0,
-    input elem8_t r1,
-    input elem8_t r2,
-    input elem8_t r3
-  );
-    logic [31:0] pkt;
-    begin
-      pkt = pack_row(r0, r1, r2, r3);
-
-      @(posedge clk_i);
-      while (!ready_o) @(posedge clk_i);
-
-      v_i            <= 1'b1;
-      data_i         <= pkt;
-      in_load_weight <= load_weight;
-      in_major_mode  <= major_mode;
-
-      @(posedge clk_i);
-      while (!ready_o) @(posedge clk_i);
-
-      v_i            <= 1'b0;
-      data_i         <= '0;
-      in_load_weight <= 1'b0;
-      in_major_mode  <= 1'b0;
-    end
-  endtask
-
   task automatic compute_golden;
     integer r, c, t;
     integer sum;
@@ -124,7 +93,10 @@ module Top_level_tb;
     end
   endtask
 
-  task automatic print_matrix8(input string name, input elem8_t M [0:DIM_p-1][0:DIM_p-1]);
+  task automatic print_matrix8(
+    input string name,
+    input elem8_t M [0:DIM_p-1][0:DIM_p-1]
+  );
     integer r, c;
     begin
       $display("%s =", name);
@@ -138,7 +110,10 @@ module Top_level_tb;
     end
   endtask
 
-  task automatic print_matrix16(input string name, input elem16_t M [0:DIM_p-1][0:DIM_p-1]);
+  task automatic print_matrix16(
+    input string name,
+    input elem16_t M [0:DIM_p-1][0:DIM_p-1]
+  );
     integer r, c;
     begin
       $display("%s =", name);
@@ -149,6 +124,56 @@ module Top_level_tb;
         end
         $write("]\n");
       end
+    end
+  endtask
+
+  // Send an entire 4-row matrix in a contiguous burst.
+  // If ready_o stays high, one row is accepted every clock cycle.
+  task automatic send_matrix_burst(
+    input logic   load_weight,
+    input logic   major_mode,
+    input elem8_t M [0:DIM_p-1][0:DIM_p-1]
+  );
+    integer r;
+    logic [31:0] pkt;
+    begin
+      r = 0;
+
+      // Put first row on the bus before the first handshake edge
+      @(negedge clk_i);
+      pkt             = pack_row(M[r][0], M[r][1], M[r][2], M[r][3]);
+      v_i             <= 1'b1;
+      data_i          <= pkt;
+      in_load_weight  <= load_weight;
+      in_major_mode   <= major_mode;
+
+      while (r < DIM_p) begin
+        @(posedge clk_i);
+
+        if (v_i && ready_o) begin
+          $display("Sent row %0d at time %0t : [%0d %0d %0d %0d]  load_weight=%0b major_mode=%0b",
+                   r, $time,
+                   M[r][0], M[r][1], M[r][2], M[r][3],
+                   load_weight, major_mode);
+
+          r = r + 1;
+
+          if (r < DIM_p) begin
+            @(negedge clk_i);
+            pkt             = pack_row(M[r][0], M[r][1], M[r][2], M[r][3]);
+            v_i             <= 1'b1;
+            data_i          <= pkt;
+            in_load_weight  <= load_weight;
+            in_major_mode   <= major_mode;
+          end
+        end
+      end
+
+      @(negedge clk_i);
+      v_i             <= 1'b0;
+      data_i          <= '0;
+      in_load_weight  <= 1'b0;
+      in_major_mode   <= 1'b0;
     end
   endtask
 
@@ -201,10 +226,10 @@ module Top_level_tb;
     A[3][0] =  1; A[3][1] =  1; A[3][2] =  1; A[3][3] =  1;
 
     // B = weights
-    B[0][0] =  1; B[0][1] =  2; B[0][2] =  3; B[0][3] =  4;
-    B[1][0] =  1; B[1][1] =  2; B[1][2] =  3; B[1][3] =  4;
-    B[2][0] =  1; B[2][1] =  2; B[2][2] =  3; B[2][3] =  4;
-    B[3][0] =  1; B[3][1] =  2; B[3][2] =  3; B[3][3] =  4;
+    B[0][0] =  1;  B[0][1] =  2;  B[0][2] =  3;  B[0][3] =  4;
+    B[1][0] =  5;  B[1][1] =  6;  B[1][2] =  7;  B[1][3] =  8;
+    B[2][0] =  9;  B[2][1] = 10;  B[2][2] = 11;  B[2][3] = 12;
+    B[3][0] = 13;  B[3][1] = 14;  B[3][2] = 15;  B[3][3] = 16;
 
     compute_golden();
 
@@ -217,19 +242,12 @@ module Top_level_tb;
     reset_i = 1'b0;
     repeat (2) @(posedge clk_i);
 
-    // Send 4 rows of weights first
+    // Send weights and data back-to-back
     $display("Sending weight matrix B...");
-    send_row(1'b1, 1'b1, B[0][0], B[0][1], B[0][2], B[0][3]);
-    send_row(1'b1, 1'b1, B[1][0], B[1][1], B[1][2], B[1][3]);
-    send_row(1'b1, 1'b1, B[2][0], B[2][1], B[2][2], B[2][3]);
-    send_row(1'b1, 1'b1, B[3][0], B[3][1], B[3][2], B[3][3]);
+    send_matrix_burst(1'b1, 1'b1, B);
 
-    // Send 4 rows of data second
     $display("Sending data matrix A...");
-    send_row(1'b0, 1'b1, A[0][0], A[0][1], A[0][2], A[0][3]);
-    send_row(1'b0, 1'b1, A[1][0], A[1][1], A[1][2], A[1][3]);
-    send_row(1'b0, 1'b1, A[2][0], A[2][1], A[2][2], A[2][3]);
-    send_row(1'b0, 1'b1, A[3][0], A[3][1], A[3][2], A[3][3]);
+    send_matrix_burst(1'b0, 1'b1, A);
 
     // Wait for 4 output rows
     begin : wait_for_outputs
