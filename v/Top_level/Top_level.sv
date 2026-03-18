@@ -289,10 +289,10 @@ module Top_level #(
             out_pkt_n = '0;
             
             // full 16-bit PS results into [63:0]
-            out_pkt_n[15:0]   = PS_out_right[3];
-            out_pkt_n[31:16]  = PS_out_right[2];
-            out_pkt_n[47:32]  = PS_out_right[1];
-            out_pkt_n[63:48]  = PS_out_right[0];
+            out_pkt_n[15:0]   = PS_out_right[0];
+            out_pkt_n[31:16]  = PS_out_right[1];
+            out_pkt_n[47:32]  = PS_out_right[2];
+            out_pkt_n[63:48]  = PS_out_right[3];
 
             out_valid_n       = 1'b1;
         end
