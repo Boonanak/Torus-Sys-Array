@@ -128,7 +128,7 @@ module Top_level #(
     assign ctrl_front = ctrl_fifo[ctrl_rd_ptr_r];
 
     //assign sys_row_major = ctrl_front.major_mode;
-    //assign sys_load_B    = ctrl_front.load_weight;
+    assign transpose_do_transpose    = ctrl_front.load_weight;
 
     assign sys_row_major = (!ctrl_fifo_empty) ? ctrl_front.major_mode  : 1'b0;
     assign sys_load_B    = (!ctrl_fifo_empty) ? ctrl_front.load_weight : 1'b0;
@@ -343,7 +343,7 @@ module Top_level #(
             write_counter <= '0;
         end else begin
             if (write_counter == 2'b00 && v_i)
-                transpose_matrix_2 <= in_load_weight; // Store the new transpose signal 
+                transpose_matrix_2 <= in_load_weight; // Store the new transpose signal removed~
             if (transpose_handshake_suceeded)
                 write_counter <= write_counter + 1'b1;
             if (sys_array_handshake_suceeded && write_counter == 2'b00)
@@ -351,7 +351,7 @@ module Top_level #(
         end 
     end 
 
-    assign transpose_do_transpose = transpose_matrix_1; // replace transpose_do_transpose with this signal transpose (feel free to rename)
+    //assign transpose_do_transpose = transpose_matrix_1; // replace transpose_do_transpose with this signal transpose (feel free to rename)
     assign transpose_handshake_suceeded = transpose_valid_i && transpose_ready_o;
     assign sys_array_handshake_suceeded = transpose_valid_o && sys_transposer_ready;    
 
