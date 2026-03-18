@@ -54,10 +54,10 @@ recv T                          4  7 10 13
 recv T                          2  8  9 15
 recv T                          1  6 11 16
 ### RANDOM TESTS
-load RT        109   -5   55   41
-load RT          3  -26  -60 -124
-load RT        -64  -48   80 -109
-load RT       -116   73   41   78
+load_recv RT   109   -5   55   41        0    0    0    0
+load_recv RT     3  -26  -60 -124        0    0    0    0
+load_recv RT   -64  -48   80 -109        0    0    0    0
+load_recv RT  -116   73   41   78        0    0    0    0
 load_recv RT    30   36   53  -17       55    3 -109   73
 load_recv RT   -81   78  122   18       41  -60  -48 -116
 load_recv RT    50 -121 -117  -49       -5 -124  -64   41
