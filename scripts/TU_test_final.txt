@@ -40,7 +40,6 @@ recv NA                   1 2 3 4
 recv NA                   5 6 7 8
 recv NA                   9 10 11 12
 recv NA                   13 14 15 16
-wait 1
 ### No transpose then transpose
 load R         1  2  3  4
 load R         5  6  7  8
