@@ -386,7 +386,7 @@ module Top_level #(
         .clk_i                   (clk_i),
         .reset                   (reset_i),
         .load_B                  (sys_load_B),
-        .row_major               (sys_row_major),
+        .row_major               (1'b1), // sys_row_major
         .transposer_data         (transpose_out_data),
         .A_out_right             (A_out_right),
         .PS_out_right            (PS_out_right),
