@@ -343,7 +343,7 @@ module Top_level #(
             write_counter <= '0;
         end else begin
             if (write_counter == 2'b00 && v_i)
-                transpose_matrix_2 <= ~in_load_weight; // Store the new transpose signal 
+                transpose_matrix_2 <= in_load_weight; // Store the new transpose signal 
             if (transpose_handshake_suceeded)
                 write_counter <= write_counter + 1'b1;
             if (sys_array_handshake_suceeded && write_counter == 2'b00)
