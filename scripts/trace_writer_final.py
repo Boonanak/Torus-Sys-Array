@@ -170,7 +170,7 @@ def matrix_to_binary_rows(M, size):
 
 def write_trace_final(tests, trace_send, trace_recv):
     with open(trace_send, 'w') as trace_send, open(trace_recv, 'w') as trace_recv:
-        #trace_recv.write(f"# NOOP\n0000__{'0'*64}\n")
+        trace_recv.write(f"# NOOP\n0000__{'0'*64}\n")
         for test in tests:
             if test[0] != None:
                 trace_send.write(matrix_trace(test[0][0], test[0][1], test[0][2]))
@@ -180,7 +180,7 @@ def write_trace_final(tests, trace_send, trace_recv):
                 trace_recv.write(matrix_trace(test[1][0], test[1][1], test[1][2]))
             else:
                 trace_recv.write(matrix_trace(None, 'N', None))
-        #trace_send.write(f"# NOOP\n0000__{'0'*64}\n")
+        trace_send.write(f"# NOOP\n0000__{'0'*64}\n")
         trace_send.write(f"# ENDING SIMULATION\n0100__{'0'*64}\n")
         trace_recv.write(f"# ENDING SIMULATION\n0100__{'0'*64}\n")
     return
@@ -206,33 +206,74 @@ def print_matrix(M):
     for row in M:
         print([f"{v:4d}" for v in row])
 
+def transpose(M):
+    M_T = [[M[j][i] for j in range(len(M[0]))] for i in range(len(M))]
+    return M_T
+
 # Example: 4x4, int8 range
 n = 4  # Number of rows and columns in the matrix.
 identity = [[0] * i + [1] + [0] * (n - i - 1) for i in range(n)]
 A1 = identity
-B1 = identity
-#B1 = gen_matrix(4, -128, 127)
-C11 = multiply(A1, B1)
 A2 = [[1, 2, 3, 4], [2, 3, 4, 3], [3, 4, 3, 2], [4, 3, 2, 1]]
-C21 = multiply(A2, B1)
+A3 = -1*A2
+A4 = [[127]*n for i in range(n)]
+A5 = -1*A4
+A6 = [[117, -49, -115, -92], [-63, -122, -64, -32], [-128, 91, 41, -27], [29, 122, -31, 53]]
+A7 = [[-12, 33, -83, -80], [29, -67, -52, -7], [75, 38, 27, 120], [-126, 31, 66, -121]]
+B1 = identity
 B2 = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
-C12 = multiply(A1, B2)
-C22 = multiply(A2, B2)
-# tests = [
-#     [[B1, 'B', 'row'], None],
-#     [[A1, 'A', 'row'], None],
-#     [[A2, 'A', 'row'], [C11, 'C', None]],
-#     [[B2, 'B', 'row'], [C21, 'C', None]],
-#     [[A1, 'A', 'row'], None],
-#     [[A2, 'A', 'row'], [C12, 'C', None]],
-#     [None, [C22, 'C', None]]
-# ]
+B3 = A4
+B4 = transpose(B2)
+B5 = [[109, -5, 55, 41], [3, -26, -60, -124], [-64, -48, 80, -109], [-116, 73, 41, 78]]
+B6 = [[30, 36, 53, -17], [-81, 78, 122, 18], [50, -121, -117, -49], [-104, 40, -91, -28]]
+#B1 = gen_matrix(4, -128, 127)
+C11 = multiply(A1, B1) # identity * identity
+C21 = multiply(A2, B1) #  A * identity
+C31 = multiply(A3, B1) # -A * identity
+C12 = multiply(A1, B2) # identity * B --> same result with B4
+C22 = multiply(A2, B2) #  A * B       --> same result with B4
+C32 = multiply(A3, B2) # -A * B       --> same result with B4
+C43 = multiply(A4, B3) # positive overflow
+C53 = multiply(A5, B3) # negative overflow
+C65 = multiply(A6, B5) # random 1
+C76 = multiply(A7, B6) # random 2
 tests = [
-    [[B2, 'B', 'row'], None],
+    [[B1, 'B', 'row'], None],
     [[A1, 'A', 'row'], None],
+    [[A2, 'A', 'row'], None],
+    [[A3, 'A', 'row'], [C11, 'C', None]],
+    [[B2, 'B', 'row'], [C21, 'C', None]],
+    [[A1, 'A', 'row'], [C31, 'C', None]],
+    [[A2, 'A', 'row'], None],
+    [[A3, 'A', 'row'], [C12, 'C', None]],
+    [[B3, 'B', 'row'], [C22, 'C', None]],
+    [[A4, 'A', 'row'], [C32, 'C', None]],
+    [[B1, 'B', 'col'], None],
+    [[A1, 'A', 'col'], [C43, 'C', None]],
+    [[A2, 'A', 'col'], None],
+    [[A3, 'A', 'col'], [C11, 'C', None]],
+    [[B2, 'B', 'col'], [C21, 'C', None]],
+    [[A1, 'A', 'col'], [C31, 'C', None]],
+    [[A2, 'A', 'col'], None],
+    [[A3, 'A', 'col'], [C12, 'C', None]],
+    [[B4, 'B', 'col'], [C22, 'C', None]],
+    [[A5, 'A', 'col'], [C32, 'C', None]],
     [None, None],
-    [None, [C12, 'C', None]]
+    [None, [C53, 'C', None]],
+    [None, None],
+    [[B5, 'B', 'row'], None],
+    [[A6, 'A', 'row'], None],
+    [[B6, 'B', 'row'], None],
+    [[A7, 'A', 'row'], [C65, 'C', None]],
+    [None, None],
+    [None, [C65, 'C', None]]
 ]
+# tests = [
+#     [[B2, 'B', 'row'], None],
+#     [[A1, 'A', 'row'], None],
+#     [None, None],
+#     [None, [C12, 'C', None]]
+# ]
 
 write_trace_final(tests, 'v/Top_level/Top_level_send_trace.tr', 'v/Top_level/Top_level_recv_trace.tr')
 
