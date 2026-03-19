@@ -1,7 +1,7 @@
 # Make file for a Hammer project
 
 # TODO: Make sure this is set to the top level directory containing module_top.mk
-TOP_DIR = /homes/ncausey/EE477/ee477-hammer-cad
+TOP_DIR = ../ee477-hammer-cad
 
 # Build directory location
 OBJ_DIR = build
