@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-import PE_pkg::*;
+//import PE_pkg::*;
 
 module Top_level_tb;
 
