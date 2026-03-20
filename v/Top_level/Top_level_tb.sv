@@ -55,7 +55,7 @@ module Top_level_tb;
 
   // ---------------- Clock ----------------
   initial clk_i = 1'b0;
-  always #20 clk_i = ~clk_i;
+  always #20000 clk_i = ~clk_i;
 
   initial begin
     $fsdbDumpfile("waveform.fsdb");
@@ -177,6 +177,8 @@ module Top_level_tb;
     end
   endtask
 
+  logic sent_input; // If the input matrices have been sent yet.
+
   // ---------------- Output capture ----------------
   always_ff @(posedge clk_i) begin
     if (reset_i) begin
@@ -189,7 +191,7 @@ module Top_level_tb;
     end
     else begin
       if ((v_o === 1'b1) && (ready_i === 1'b1)) begin
-        if (out_count < DIM_p) begin
+        if (out_count < DIM_p && sent_input) begin
           C_got[out_count][0] <= $signed(data_o[15:0]);
           C_got[out_count][1] <= $signed(data_o[31:16]);
           C_got[out_count][2] <= $signed(data_o[47:32]);
@@ -217,6 +219,7 @@ module Top_level_tb;
     in_major_mode  = 1'b0;
     in_load_weight = 1'b0;
     ready_i        = 1'b1;
+    sent_input     = 1'b0;
 
     // Example matrices
     // A = data
@@ -248,6 +251,8 @@ module Top_level_tb;
 
     $display("Sending data matrix A...");
     send_matrix_burst(1'b0, 1'b1, A);
+
+    sent_input = 1'b1;
 
     // Wait for 4 output rows
     begin : wait_for_outputs
