@@ -3,6 +3,8 @@
 module matrix_mem #( parameter WIDTH_p = 64, // Width of the individual vectors
                      parameter DIM_p = 8,   // Grouping of vectors (how many vectors make up a single matrix)
                      parameter ENTRIES_p = 64 // Number of matrices
+                     localparam NUM_ADDRESSES_lp = DIM_p * ENTRIES_p; // Number of address in the memory
+                     localparam ADDRESS_WIDTH_lp = $clog2(NUM_ADDRESSES_lp); // minimum bitwidth required to store NUM_ADDRESSES_lp
                    ) (
                      input logic clk_i,
                      input logic reset_n_i,
@@ -13,9 +15,6 @@ module matrix_mem #( parameter WIDTH_p = 64, // Width of the individual vectors
                      output logic [WIDTH_P-1:0] rd_data
                    );
 
-    localparam NUM_ADDRESSES_lp = DIM_p * ENTRIES_p; // Number of address in the memory
-    localparam ADDRESS_WIDTH_lp = $clog2(NUM_ADDRESSES_lp); // minimum bitwidth required to store NUM_ADDRESSES_lp
-    
     logic [WIDTH_P-1:0] mem [NUM_ADDRESSES_lp-1:0]; // Memory Array
 
     always_ff @(posedge clk_i) begin
