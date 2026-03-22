@@ -1,8 +1,8 @@
 // Implments a 1 read 1 write port memory with async read and sync write
 // Designed to store vectors for sets of matricies
-module matrix_mem #( parameter WIDTH_p, // Width of the individual vectors
-                     parameter DIM_p,   // Grouping of vectors (how many vectors make up a single matrix)
-                     parameter ENTRIES_p // Number of matrices
+module matrix_mem #( parameter WIDTH_p = 64, // Width of the individual vectors
+                     parameter DIM_p = 8,   // Grouping of vectors (how many vectors make up a single matrix)
+                     parameter ENTRIES_p = 64 // Number of matrices
                    ) (
                      input logic clk_i,
                      input logic reset_n_i,
