@@ -11,11 +11,11 @@ module matrix_mem #( parameter WIDTH_p = 64, // Width of the individual vectors
                      input logic wren,
                      input logic  [ADDRESS_WIDTH_lp-1:0] rd_addr,
                      input logic  [ADDRESS_WIDTH_lp-1:0] wr_addr, 
-                     input logic  [WIDTH_P-1:0] wr_data,
-                     output logic [WIDTH_P-1:0] rd_data
+                     input logic  [WIDTH_p-1:0] wr_data,
+                     output logic [WIDTH_p-1:0] rd_data
                    );
 
-    logic [WIDTH_P-1:0] mem [NUM_ADDRESSES_lp-1:0]; // Memory Array
+    logic [WIDTH_p-1:0] mem [NUM_ADDRESSES_lp-1:0]; // Memory Array
 
     always_ff @(posedge clk_i) begin
         if (wren)
