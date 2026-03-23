@@ -25,6 +25,7 @@ module sys_array_pipelined #(
     
     // Data enters from the LEFTmost side of array
     input  int8_t       transposer_data   [ROWS-1:0],
+    input  int8_t       B_data            [ROWS-1:0],
 
     // Data exits from the RIGHTmost side of array
     output logic [15:0]      A_out_right  [ROWS-1:0],
@@ -40,6 +41,7 @@ module sys_array_pipelined #(
     logic [15:0] result_buffer [ROWS-1:0];
     logic [15:0] col_in_A      [COLS-1:0][ROWS-1:0];
     logic [15:0] col_in_PS     [COLS-1:0][ROWS-1:0];
+    logic [7:0]  col_in_B      [COLS-1:0][ROWS-1:0];
 
     // counter to track head.
     logic [$clog2(COLS) - 1 : 0] count;
@@ -67,6 +69,7 @@ module sys_array_pipelined #(
     logic [COLS - 1 : 0] load_B_control, load_B_control_next;
     logic [COLS - 1 : 0] row_major_control, row_major_control_next;
     logic [COLS : 0] enable;
+    logic [COLS : 0] enable_B;  // TODO: figure out enable_B logic
 
     logic fifo_ready_in, fifo_valid_out;
 
@@ -83,15 +86,16 @@ module sys_array_pipelined #(
             head_location_next[i] = enable[i] ? head_location[i - 1] : head_location[i];
         end
         valid_next[0] = enable[0] ? 
-                        ((transposer_valid_in && transposer_ready_out) ? ~load_B : 1'b0)
+                        ((transposer_valid_in && transposer_ready_out) ? 1'b1 : 1'b0)
                         : valid[0];   // TODO: load_B is a signal to deprecate soon with pipelining!! should just be 1
         head_location_next[0] = enable ?
                                 ((transposer_valid_in && transposer_ready_out) ? isHead : 1'b0) 
                                 : head_location[0];
 
-        load_B_control_next = (transposer_valid_in && transposer_ready_out) ? 
-                              (load_B ? {load_B_control[COLS-2:0], load_B} : {COLS{1'b0}}) 
-                              : {COLS{1'b0}};
+        // no longer needed in pipelined version
+        // load_B_control_next = (transposer_valid_in && transposer_ready_out) ? 
+        //                       (load_B ? {load_B_control[COLS-2:0], load_B} : {COLS{1'b0}}) 
+        //                       : {COLS{1'b0}};
         row_major_control_next = (transposer_valid_in && transposer_ready_out) ? {row_major_control[COLS - 2:0], row_major} : row_major_control;
     end
 
@@ -117,21 +121,22 @@ module sys_array_pipelined #(
     genvar i, j, r;
     generate
     for (i = 0; i < COLS; i = i + 1) begin : col_fill
-        assign col_in_A[0][COLS - 1 - i] = load_B ? {8'b0, transposer_data[i]} : (row_major ? {8'b0, transposer_data[i]} : 16'b0);
-        assign col_in_PS[0][COLS - 1 - i] = load_B ? 16'b0 : (row_major ? 16'b0 : {8'b0, transposer_data[i]});
+        assign col_in_A[0][COLS - 1 - i] = row_major ? {8'b0, transposer_data[i]} : 16'b0;
+        assign col_in_PS[0][COLS - 1 - i] = row_major ? 16'b0 : {8'b0, transposer_data[i]};
+        assign col_in_B[0][COLS - 1 - i] = B_data[i];
     end
     endgenerate
     generate 
         for (j = 0; j < COLS; j = j + 1) begin : column_loop
             logic [15:0] col_out_A  [ROWS-1:0];
             logic [15:0] col_out_PS [ROWS-1:0];
-
+            logic [7:0]  col_out_B  [ROWS-1:0];
             col_gen #(.ROWS(ROWS)) column_inst (
                 .clk       (clk_i),
                 .reset     (reset),
-                .load_B    (load_B_control_next[j]),
-                .row_major (row_major_control_next[j] || load_B_control_next[j]), // patchwork logic to make B load through same path always
-                .enable    (enable[j]),
+                .load_B    (load_B_control_next[j]), // TODO: replace with replace_B
+                .row_major (row_major_control_next[j]),
+                .enable    (enable[j]),  // TODO: add enable_B, replace_B, data_in_B
                 .data_in_A (col_in_A[j]),
                 .data_in_PS(col_in_PS[j]),
                 .data_out_A(col_out_A),
@@ -143,10 +148,12 @@ module sys_array_pipelined #(
                     if (((j+1) % 2) != 0) begin : braid_pattern_1
                         // Generalizing Pattern 1: A-logic swaps neighbors on odd rows, PS on even
                         assign col_in_A [j+1][r]     = (r == 0 | r == ROWS - 1) ? col_out_A[r] : ((r % 2 == 0) ? col_out_A[r - 1] : col_out_A[r + 1]);
+                        assign col_in_B [j+1][r]     = (r == 0 | r == ROWS - 1) ? col_out_B[r] : ((r % 2 == 0) ? col_out_B[r - 1] : col_out_B[r + 1]);
                         assign col_in_PS[j+1][r]     = (r % 2 == 0) ? col_out_PS[r + 1] : col_out_PS[r - 1];
                     end else begin : braid_pattern_2
                         // Generalizing Pattern 2: Flipped neighbor swap
                         assign col_in_A [j+1][r]     = (r % 2 == 0) ? col_out_A[r + 1] : col_out_A[r - 1];
+                        assign col_in_B [j+1][r]     = (r % 2 == 0) ? col_out_B[r + 1] : col_out_B[r - 1];
                         assign col_in_PS[j+1][r]     = (r == 0 | r == ROWS - 1) ? col_out_PS[r] : ((r % 2 == 0) ? col_out_PS[r - 1] : col_out_PS[r + 1]);
                     end
                 end
