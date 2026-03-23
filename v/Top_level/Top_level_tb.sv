@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-import PE_pkg::*;
+//import PE_pkg::*;
 
 module Top_level_tb;
 
@@ -55,7 +55,7 @@ module Top_level_tb;
 
   // ---------------- Clock ----------------
   initial clk_i = 1'b0;
-  always #20 clk_i = ~clk_i;
+  always #20000 clk_i = ~clk_i;
 
   initial begin
     $fsdbDumpfile("waveform.fsdb");
@@ -177,6 +177,8 @@ module Top_level_tb;
     end
   endtask
 
+  logic sent_input; // If the input matrices have been sent yet.
+
   // ---------------- Output capture ----------------
   always_ff @(posedge clk_i) begin
     if (reset_i) begin
@@ -189,7 +191,7 @@ module Top_level_tb;
     end
     else begin
       if ((v_o === 1'b1) && (ready_i === 1'b1)) begin
-        if (out_count < DIM_p) begin
+        if (out_count < DIM_p && sent_input) begin
           C_got[out_count][0] <= $signed(data_o[15:0]);
           C_got[out_count][1] <= $signed(data_o[31:16]);
           C_got[out_count][2] <= $signed(data_o[47:32]);
@@ -217,19 +219,20 @@ module Top_level_tb;
     in_major_mode  = 1'b0;
     in_load_weight = 1'b0;
     ready_i        = 1'b1;
+    sent_input     = 1'b0;
 
     // Example matrices
     // A = data
-    A[0][0] =  1; A[0][1] =  1; A[0][2] =  1; A[0][3] =  1;
-    A[1][0] =  1; A[1][1] =  1; A[1][2] =  1; A[1][3] =  1;
-    A[2][0] =  1; A[2][1] =  1; A[2][2] =  1; A[2][3] =  1;
-    A[3][0] =  1; A[3][1] =  1; A[3][2] =  1; A[3][3] =  1;
+    A[0][0] =  1; A[0][1] =  0; A[0][2] =  0; A[0][3] =  0;
+    A[1][0] =  0; A[1][1] =  1; A[1][2] =  0; A[1][3] =  0;
+    A[2][0] =  0; A[2][1] =  0; A[2][2] =  1; A[2][3] =  0;
+    A[3][0] =  0; A[3][1] =  0; A[3][2] =  0; A[3][3] =  1;
 
     // B = weights
-    B[0][0] =  1;  B[0][1] =  1;  B[0][2] =  1;  B[0][3] =  1;
-    B[1][0] =  1;  B[1][1] =  1;  B[1][2] =  1;  B[1][3] =  1;
-    B[2][0] =  1;  B[2][1] =  1;  B[2][2] =  1;  B[2][3] =  1;
-    B[3][0] =  1;  B[3][1] =  1;  B[3][2] =  1;  B[3][3] =  1;
+    B[0][0] =  1;  B[0][1] =  0;  B[0][2] =  0;  B[0][3] =  0;
+    B[1][0] =  0;  B[1][1] =  1;  B[1][2] =  0;  B[1][3] =  0;
+    B[2][0] =  0;  B[2][1] =  0;  B[2][2] =  1;  B[2][3] =  0;
+    B[3][0] =  0;  B[3][1] =  0;  B[3][2] =  0;  B[3][3] =  1;
 
     compute_golden();
 
@@ -247,7 +250,9 @@ module Top_level_tb;
     send_matrix_burst(1'b1, 1'b1, B);
 
     $display("Sending data matrix A...");
-    send_matrix_burst(1'b0, 1'b0, A);
+    send_matrix_burst(1'b0, 1'b1, A);
+
+    sent_input = 1'b1;
 
     // Wait for 4 output rows
     begin : wait_for_outputs
