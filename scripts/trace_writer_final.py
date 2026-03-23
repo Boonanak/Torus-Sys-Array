@@ -59,6 +59,7 @@ def matrix_trace(M, type, major):
         n = 8
     if M != None:
         M_binary_rows = matrix_to_binary_rows(M, n)
+        fill = 8*len(M) - 2
     row_major = major == 'row'
     trace_lines = ''
     match type:
@@ -66,12 +67,12 @@ def matrix_trace(M, type, major):
             trace_lines += f'# LOADING A into TPU | major = {major} | loadB = 0\n'
             for row, binary_row in zip(M, M_binary_rows):
                 trace_lines += f'# A[i] = {row}\n'
-                trace_lines += f'0001________{int(row_major)}______0______{'0'*30}_______{binary_row}\n'
+                trace_lines += f'0001________{int(row_major)}______0______{'0'*fill}_______{binary_row}\n'
         case 'B':
             trace_lines += f'# LOADING B into TPU | major = {major} | loadB = 1\n'
             for row, binary_row in zip(M, M_binary_rows):
                 trace_lines += f'# B[i] = {row}\n'
-                trace_lines += f'0001________{int(row_major)}______1______{'0'*30}_______{binary_row}\n'
+                trace_lines += f'0001________{int(row_major)}______1______{'0'*fill}_______{binary_row}\n'
         case 'C':
             trace_lines += '# RECEIVING C\n'
             for row, binary_row in zip(M, M_binary_rows):
@@ -85,6 +86,7 @@ def multiply_trace(A, B, C, op, major):
     A_binary_rows = matrix_to_binary_rows(A, 8)
     B_binary_rows = matrix_to_binary_rows(B, 8)
     C_binary_rows = matrix_to_binary_rows(C, 16)
+    fill = 8*len(A)
     row_major = major == 'row'
     trace_lines_send = ''
     trace_lines_recv = ''

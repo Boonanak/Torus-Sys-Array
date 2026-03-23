@@ -98,13 +98,13 @@ module sys_array_tb_twotrace;
       );
 
   logic [15:0] ps_out_data [7:0];
-  logic [15:0] A_out_data [7:0];
-  logic [7:0] transposer_data_in [7:0];
+  //logic [15:0] A_out_data [7:0];
+  //logic [7:0] transposer_data_in [7:0];
 
-  assign transposer_data_in[3] = tr_data_lo[31:24];
-  assign transposer_data_in[2] = tr_data_lo[23:16];
-  assign transposer_data_in[1] = tr_data_lo[15:8];
-  assign transposer_data_in[0] = tr_data_lo[7:0];
+  //assign transposer_data_in[3] = tr_data_lo[31:24];
+  //assign transposer_data_in[2] = tr_data_lo[23:16];
+  //assign transposer_data_in[1] = tr_data_lo[15:8];
+  //assign transposer_data_in[0] = tr_data_lo[7:0];
 
   // use this for sim-syn and sim-par
 
@@ -146,7 +146,7 @@ module sys_array_tb_twotrace;
       ,.load_B    ( tr_data_lo[63] )
       ,.row_major ( tr_data_lo[62] )
 
-      ,.transposer_data ( transposer_data_in )
+      ,.transposer_data ( {>>{tr_data_lo[63:0]}} )
 
       ,.A_out_right     ( A_out_data )
       ,.PS_out_right    ( ps_out_data )
@@ -160,10 +160,15 @@ module sys_array_tb_twotrace;
       // ,.output_buffer_valid_out ()
       );
   // `endif
-  assign dut_data_lo[63:48] = ps_out_data[0];
-  assign dut_data_lo[47:32] = ps_out_data[1];
-  assign dut_data_lo[31:16] = ps_out_data[2];
-  assign dut_data_lo[15:0]  = ps_out_data[3];
+
+  assign dut_data_lo[127:112] = ps_out_data[0];
+  assign dut_data_lo[111:96]  = ps_out_data[1];
+  assign dut_data_lo[95:80]   = ps_out_data[2];
+  assign dut_data_lo[79:64]   = ps_out_data[3];
+  assign dut_data_lo[63:48]   = ps_out_data[4];
+  assign dut_data_lo[47:32]   = ps_out_data[5];
+  assign dut_data_lo[31:16]   = ps_out_data[6];
+  assign dut_data_lo[15:0]    = ps_out_data[7];
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
