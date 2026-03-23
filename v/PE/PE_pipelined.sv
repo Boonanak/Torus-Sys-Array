@@ -41,7 +41,9 @@ module PE_pipelined
 
     assign row_major = enable_reg ? row_major_in_reg : row_major_reg; 
 
-    always_comb begin 
+    always_comb begin
+        A = A_reg;
+        PS = PS_reg; 
         B = B_reg;
         if (load_B_reg) begin 
             B = B_next;
@@ -52,6 +54,8 @@ module PE_pipelined
         end
 
         intermediate = A * B + PS;
+
+        // saturate
         alu_result = (intermediate < -32768) ? 16'h8000 :
                      (intermediate > 32767) ? 16'h7FFF : intermediate[15:0];
 
@@ -76,15 +80,14 @@ module PE_pipelined
             A_reg           <= A;
             B_reg           <= B;
             PS_reg          <= PS;
-            B_next          <= (enable_B) ? B_next_in : B_next;
+            B_next          <= (enable_B) ? B_next_in : B_next; // does this happen at right cycle?
             load_B_reg      <= load_B_in;
             A_in_reg        <= A_in;
             PS_in_reg       <= PS_in;
-            enable_reg      <= enable;
+            enable_reg      <= enable_A;
             row_major_in_reg <= B_is_row_major_in;
             row_major_reg   <= row_major;
         end
     end
-
 
 endmodule
