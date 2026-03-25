@@ -14,7 +14,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
-    // Params for row/col enable selection
     localparam DIM_CLOG2_p = $clog2(DIM_p);
 
     // Counter values
@@ -24,12 +23,12 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     logic [DIM_CLOG2_p-1:0] count; // bottom bits of the write counter
     logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
 
-    // 2 bit code for row/col shifting/passing. top bit is enable, bottom bit is 0 for pass, 1 for shift
+    // Enable line for each row or col. Techinally could be a 1 bit signal, but making it individual for each row/col improves timing for synthesis
     logic [DIM_p-1:0] row_enable; 
     logic [DIM_p-1:0] col_enable; 
 
     // Control signals
-    logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
+    logic [DIM_p-1:0] valid; // which row or column has valid data. Shared for both directions
     logic output_valid, enable, can_read, ready, can_write, override_direction;
     /*
     output_valid: whether the output data is valid, determined by the last bit of the valid shift register
@@ -124,14 +123,14 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
-    assign count = write_counter[DIM_CLOG2_p-1:0];
-    assign ready = output_valid ? ready_i : 1'b1;
-    assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
-    assign can_write = valid_i && ready; // able to write if input is valid and we have space
-    assign enable = can_read || can_write; // enable shifting if we are either reading or writing
-    assign valid_o = output_valid;
-    assign ready_o = ready;
+    assign direction    = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
+    assign count        = write_counter[DIM_CLOG2_p-1:0];
+    assign ready        = output_valid ? ready_i : 1'b1;
+    assign can_read     = output_valid && ready_i; // able to read if output is valid and consumer is ready
+    assign can_write    = valid_i && ready; // able to write if input is valid and we have space
+    assign enable       = can_read || can_write; // enable shifting if we are either reading or writing
+    assign valid_o      = output_valid;
+    assign ready_o      = ready;
 
     // Assertions to check for valid parameter settings
     initial begin
