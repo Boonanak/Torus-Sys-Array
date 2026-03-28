@@ -68,7 +68,7 @@ module Pipette_PE # (
         end
         else begin 
             A_reg <= A;
-            PS_reg <= alu_result;
+            PS_reg <= enable_A ? alu_result : PS_reg;
             B_reg <= B;
             Potential_B_reg <= Potential_B;
             // pulse should move with enable_B signal

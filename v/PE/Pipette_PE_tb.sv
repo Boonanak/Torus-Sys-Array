@@ -64,7 +64,7 @@ module Pipette_PE_tb;
 
     // 4 bit tracereplay, 16 bit A, 16 bit PS, 8 bit B, 
     // 4 bits combined for row major, A_en, B_en, ALP 
-    PE_final_trace_rom #(.width_p(48),.addr_width_p(32))
+    Pipette_PE_rom #(.width_p(48),.addr_width_p(32))
         ROM_BPS
         (.addr_i( rom_addr_li )
         ,.data_o( rom_data_lo )
@@ -77,18 +77,18 @@ module Pipette_PE_tb;
         ,.reset( reset )
 
         ,.row_major ( tr_data_lo[43] )
-        ,.enable_A  ( tr_data_lo[2] )
-        ,.enable_B  ( tr_data_lo[1] )
-        ,.active_lock_pulse_in ( tr_data_lo[0] )
-        ,.active_lock_pulse_out( dut_data_lo[0] )
+        ,.enable_A  ( tr_data_lo[42] )
+        ,.enable_B  ( tr_data_lo[41] )
+        ,.active_lock_pulse_in ( tr_data_lo[40] )
+        ,.active_lock_pulse_out( dut_data_lo[40] )
 
-        ,.A_in ( tr_data_lo[42:27] )
-        ,.B_in ( tr_data_lo[26:19] )
-        ,.PS_in( tr_data_lo[18:3] )
+        ,.A_in ( tr_data_lo[39:24] )
+        ,.B_in ( tr_data_lo[23:16] )
+        ,.PS_in( tr_data_lo[15:0] )
 
-        ,.A_out ( dut_data_lo[42:27] )
-        ,.B_out ( dut_data_lo[26:19] )
-        ,.PS_out( dut_data_lo[18:3] )
+        ,.A_out ( dut_data_lo[39:24] )
+        ,.B_out ( dut_data_lo[23:16] )
+        ,.PS_out( dut_data_lo[15:0] )
         );
 
     // no handshake logic. all ready/valid signal is 1 for PE
@@ -96,8 +96,7 @@ module Pipette_PE_tb;
     assign dut_v_lo = '1;
     
     // assign 0 on unused bits
-    assign dut_data_lo[2:0] = '0;
-    assign dut_data_lo[43] = '0;
+    assign dut_data_lo[43:41] = '0;
 
     always_ff @(negedge clk) begin
         dut_yumi_li <= tr_ready_lo & dut_v_lo;

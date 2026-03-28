@@ -56,7 +56,7 @@ def parse_pipette_pe_line(line):
             A_en, B_en, ALP = parts[4], parts[5], parts[6] # 0/1 signals
             
             trace_line += f"# SEND | R={major} | A={A} | B={B} | PS={PS} | Ctrl={A_en}{B_en}{ALP}\n"
-            trace_line += f"0001_____{major}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}_____{A_en}{B_en}{ALP}\n"
+            trace_line += f"0001_____{major}{A_en}{B_en}{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
             
         case 'recv':
             parts = line[space_i:].split()
@@ -66,7 +66,7 @@ def parse_pipette_pe_line(line):
             
             trace_line += f"# RECV | R={major} | A={A} | B={B} | PS={PS} | ALP={ALP}\n"
             # Zero out A_en and B_en (first two control bits) as they aren't cared about in recv
-            trace_line += f"0010_____{major}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}_____00{ALP}\n"
+            trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
             
         case 'wait':
             n = int(line[space_i:])

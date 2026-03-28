@@ -115,7 +115,8 @@ sim.inputs.trace_files: [
   "v/PE/trace_separateBPS.tr",
   "v/PE/shared_B.tr",
   "v/PE/PE_final_trace.tr",
-  
+  "v/PE/Pipette_PE.tr",
+
   "v/sys_array/sys_array_trace.tr",
   "v/sys_array/sys_array_recv_trace.tr",
   "v/sys_array/sys_array_send_trace.tr",
