@@ -1,0 +1,12 @@
+pipette_pe
+wait 6
+###
+load R 0 3 0 0 1 1
+load R 3 7 2 1 1 0
+recv R 3 7 11 0
+load R 4 5 0 1 1 1
+recv R 4 5 20 1
+load R 9 2 3 0 1 1
+recv R 4 2 20 1
+###
+end
