@@ -6,7 +6,7 @@ module Pipette_PE # (
     ,parameter AB_WIDTH = 8
     )
     (input logic clk_i
-    ,input logic rst
+    ,input logic reset
 
     ,input logic row_major
     ,input logic enable_A
@@ -28,6 +28,7 @@ module Pipette_PE # (
     logic signed [PS_WIDTH - 1:0] A, A_reg, PS, PS_reg;
     logic signed [AB_WIDTH - 1:0] B, B_reg, Potential_B, Potential_B_reg;
 
+    logic signed [PS_WIDTH - 1:0] alu_result;
     logic signed [PS_WIDTH : 0]  overflow_safe_computation;
 
     always_comb begin 
@@ -57,8 +58,8 @@ module Pipette_PE # (
     assign A_out = A_reg;
     assign PS_out = PS_reg;
 
-    always_ff @(posedge clk) begin 
-        if (rst) begin 
+    always_ff @(posedge clk_i) begin 
+        if (reset) begin 
             A_reg <= '0;
             PS_reg <= '0;
             B_reg <= '0;

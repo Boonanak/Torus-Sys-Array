@@ -34,9 +34,53 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                         trace.write(parse_ARR_line(line))
                     case "TPU":
                         trace.write(parse_TPU_line(line))
+                    case "pipette_pe":
+                        trace.write(parse_pipette_pe_line(line))
                     case _:
                         trace.write("")
             index = index + 1
+
+def parse_pipette_pe_line(line):
+    space_i = line.find(' ')
+    command = line[:space_i].casefold() if space_i > 0 else line.casefold()
+    trace_line = ''
+    
+    # Define bit-width constants for pipette_pe
+    # Total bits: 4 (opcode) + 1 (R) + 16 (A) + 8 (B) + 16 (PS) + 3 (Control) = 48 bits
+    
+    match command:
+        case 'load':
+            parts = line[space_i:].split()
+            major = 1 if parts[0].upper() == 'R' else 0
+            A, B, PS = int(parts[1]), int(parts[2]), int(parts[3])
+            A_en, B_en, ALP = parts[4], parts[5], parts[6] # 0/1 signals
+            
+            trace_line += f"# SEND | R={major} | A={A} | B={B} | PS={PS} | Ctrl={A_en}{B_en}{ALP}\n"
+            trace_line += f"0001_____{major}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}_____{A_en}{B_en}{ALP}\n"
+            
+        case 'recv':
+            parts = line[space_i:].split()
+            major = 1 if parts[0].upper() == 'R' else 0
+            A, B, PS = int(parts[1]), int(parts[2]), int(parts[3])
+            ALP = parts[4] # Only ActiveLockPulse relevant for recv
+            
+            trace_line += f"# RECV | R={major} | A={A} | B={B} | PS={PS} | ALP={ALP}\n"
+            # Zero out A_en and B_en (first two control bits) as they aren't cared about in recv
+            trace_line += f"0010_____{major}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}_____00{ALP}\n"
+            
+        case 'wait':
+            n = int(line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for _ in range(n):
+                trace_line += f"0000_____{'0'*44}\n"
+                
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100_____{'0'*44}\n"
+            
+        case '###':
+            trace_line += line
+
+    return trace_line + '\n'
 
 def parse_PE_line(PE_line):
     space_i = PE_line.find(' ')
@@ -390,4 +434,4 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/ARR_test_2.txt', 'v/sys_array/sys_array_send_trace.tr', 'v/sys_array/sys_array_recv_trace.tr')
+write_trace('scripts/pipette_pe_test.txt', 'v/PE/Pipette_PE.tr', '')
