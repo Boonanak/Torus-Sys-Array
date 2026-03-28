@@ -71,7 +71,6 @@ module Pipette_PE # (
             PS_reg <= enable_A ? alu_result : PS_reg;
             B_reg <= B;
             Potential_B_reg <= Potential_B;
-            // pulse should move with enable_B signal
             active_lock_pulse_out <= enable_B ? active_lock_pulse_in : active_lock_pulse_out;
         end
     end
