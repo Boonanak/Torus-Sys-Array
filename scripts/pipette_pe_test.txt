@@ -9,6 +9,13 @@ load R -15 1 3 0 0 0
 recv R 5 7 40 0
 load R -15 12 40 1 1 0
 recv R -15 12 -5 0
+### -2 * -17 + -72 = -38, 127 * 127 + 16641 = 32770 --> 32767 (overflow)
+load R 0 -17 0 0 1 1
+recv R 0 -17 0 1
+load R -2 127 -72 1 1 0
+recv R -2 127 -38 0
+load R 127 0 16641 1 0 1
+recv R 127 127 32767 0
 ### old tests
 load R 0 3 0 0 1 1
 load R 3 7 2 1 1 0
