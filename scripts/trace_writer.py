@@ -76,8 +76,10 @@ def parse_pipette_pe_line(line):
             
             trace_line += f"# RECV | R={major} | A={A} | B={B} | PS={PS} | ALP={ALP}\n"
             # Zero out A_en and B_en (first two control bits) as they aren't cared about in recv
-            trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
-            
+            if (major) :
+                trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
+            else:
+                trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(PS, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(A, 16)}\n"
         case 'wait':
             n = int(line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"

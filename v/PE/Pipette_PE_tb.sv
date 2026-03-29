@@ -76,7 +76,7 @@ module Pipette_PE_tb;
         (.clk_i  ( clk )
         ,.reset( reset )
 
-        ,.row_major ( tr_data_lo[43] )
+        ,.row_major_in ( tr_data_lo[43] )
         ,.enable_A  ( tr_data_lo[42] )
         ,.enable_B  ( tr_data_lo[41] )
         ,.active_lock_pulse_in ( tr_data_lo[40] )
