@@ -1,33 +1,52 @@
 pipette_pe
 wait 6
-### format
-###load R A B PS A_EN B_EN ALP
-###recv R A B PS ALP
-### load and receive B = 3 row major
+### 3 * 3 + 2 = 11, 4 * 5 + 0 = 20
 load R 0 3 0 0 1 1
-recv R 0 3 0 1
-### feed A = 5, PS = 25, PS_out = 5 * 3 + 25 = 40 row major
-### B = -17 preemptively 
-load R 5 -17 25 1 1 0
-recv R 5 -17 40 0
-### feed A = -15, PS = 40, PS_out = -15 * 3 + 40 = -5 row major
-load R -15 0 40 1 0 0
-recv R -15 -17 -5 0
-### load and receive B = -17 row major
-### active lock pulse should not be the same here since it should only move with B_EN
-load R 0 0 0 0 0 1
-recv R -15 -17 -5 0
-### route B = 5, A = -2, PS = -72, PS_out = -2 * -17 - 72 = -38
-load R -2 5 -72 1 1 0 
-recv R -2 5 -38 0
-### load and receive B = 127 row major, A_EN to test simultaneous compute
-load R 5 127 10 1 1 1
-recv R 5 127 645 1
-### test overflow 127 * 127 + 16641 = 32770 -> 32767
-### simultaneous load -127 into potential B
-load R 127 -127 16641 1 1 0
-recv R 127 -127 32767 0
-### load -127 into real B and calculate 127 * -127 - 16641 = -32770 -> -32768
-load R 127 0 -16641 1 0 1
-recv R 127 -127 -32768 0
+load R 3 7 2 1 1 0
+recv R 3 7 11 0
+load R 4 5 0 1 1 1
+recv R 4 5 20 1
+load R 9 2 3 0 1 1
+recv R 4 2 20 1
+### 5 * 3 + 25 = 40, -15*3 + 40 = -5
+load R 0 3 0 0 1 1
+recv R 4 3 20 1
+load R 5 7 25 1 1 0
+recv R 5 7 40 0
+load R -15 1 3 0 0 0
+recv R 5 7 40 0
+load R -15 12 40 1 1 0
+recv R -15 12 -5 0
+### -2 * -17 + -72 = -38, 127 * 127 + 16641 = 32770 --> 32767 (overflow)
+load R 0 -17 0 0 1 1
+recv R -15 -17 -5 1
+load R -2 127 -72 1 1 0
+recv R -2 127 -38 0
+load R 127 0 16641 1 0 1
+recv R 127 127 32767 0
+### Now we repeat the whole set with column major (switch A and PS inputs?)
+### 3 * 3 + 2 = 11, 4 * 5 + 0 = 20
+load C 0 3 0 0 1 1
+load C 2 7 3 1 1 0
+recv C 3 7 11 0
+load C 0 5 4 1 1 1
+recv C 4 5 20 1
+load C 3 2 9 0 1 1
+recv C 4 2 20 1
+### 5 * 3 + 25 = 40, -15*3 + 40 = -5
+load C 0 3 0 0 1 1
+recv C 4 3 20 1
+load C 25 7 5 1 1 0
+recv C 5 7 40 0
+load C 3 1 -15 0 0 0
+recv C 5 7 40 0
+load C 40 12 -15 1 1 0
+recv C -15 12 -5 0
+### -2 * -17 + -72 = -38, -127 * 127 + -16641 = -32770 --> -32768 (overflow)
+load C 0 -17 0 0 1 1
+recv C -15 -17 -5 1
+load C -72 127 -2 1 1 0
+recv C -2 127 -38 0
+load C -16641 0 -127 1 0 1
+recv C -127 127 -32768 0
 end

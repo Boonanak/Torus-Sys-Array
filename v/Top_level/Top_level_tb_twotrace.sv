@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module sys_array_tb_twotrace;
+module Top_level_tb_twotrace;
 
     /* Dump Test Waveform To VPD File */
   initial begin
@@ -85,13 +85,13 @@ module sys_array_tb_twotrace;
   end
 
   // / 1 bit load_B / 8 bits A / 16 bits B_PS / 4 bits for trace replay
-  sys_array_send_trace_rom #(.width_p(68),.addr_width_p(32))
+  Top_level_send_trace_rom #(.width_p(68),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
       );
 
-  sys_array_recv_trace_rom #(.width_p(68),.addr_width_p(32))
+  Top_level_recv_trace_rom #(.width_p(68),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
@@ -140,30 +140,21 @@ module sys_array_tb_twotrace;
   // `else
   // use this for sim-rtl 
 
-    sys_array DUT
-      (.clk_i       ( clk )
-      ,.reset     ( reset )
-      ,.load_B    ( tr_data_lo[63] )
-      ,.row_major ( tr_data_lo[62] )
+    Top_level DUT
+      (.clk_i     ( clk )
+      ,.reset_i   ( reset )
 
-      ,.transposer_data ( {>>{tr_data_lo[31:0]}} )
+      ,.v_i ( tr_v_lo )
+      ,.data_i ( tr_data_lo[31:0] )
+      ,.ready_o ( dut_ready_lo )
+      ,.in_major_mode ( tr_data_lo[63] )
+      ,.in_load_weight ( tr_data_lo[62] )
 
-      ,.A_out_right     ( A_out_data )
-      ,.PS_out_right    ( ps_out_data )
-
-      ,.transposer_valid_in  ( tr_v_lo )
-      ,.transposer_ready_out ( dut_ready_lo )
-      // ,.transposer_ready_out ( )
-
-      ,.output_buffer_ready_in  ( tr_ready_lo & dut_v_lo )
-      ,.output_buffer_valid_out ( dut_v_lo )
-      // ,.output_buffer_valid_out ()
+      ,.v_o ( dut_v_lo )
+      ,.data_o ( dut_data_lo[63:0] )
+      ,.ready_i ( dut_yumi_li )
       );
   // `endif
-  assign dut_data_lo[63:48] = ps_out_data[0];
-  assign dut_data_lo[47:32] = ps_out_data[1];
-  assign dut_data_lo[31:16] = ps_out_data[2];
-  assign dut_data_lo[15:0]  = ps_out_data[3];
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;

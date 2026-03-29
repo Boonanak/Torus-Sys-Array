@@ -1,16 +1,26 @@
 # Code to generate trace files
 
 def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
+    index = 0
+    tb_type = ''
+
     if (trace_file_name_2 != ''):
         with open(input_file_name, 'r') as file, open(trace_file_name, 'w') as trace_send, open(trace_file_name_2, 'w') as trace_recv:
             for line in file:
                 line = line.rstrip()
-                trace_lines = parse_ARR_2_line(line)
-                trace_send.write(trace_lines[0])
-                trace_recv.write(trace_lines[1])
+                if(index == 0):
+                    tb_type = line
+                else:
+                    match tb_type:
+                        case "ARR":
+                            trace_lines = parse_ARR_2_line(line)
+                        case "TU":
+                            trace_lines = parse_TU_2_line(line)
+                    trace_send.write(trace_lines[0])
+                    trace_recv.write(trace_lines[1])
+                index = index + 1
             return
-    index = 0
-    tb_type = ''
+
     with open(input_file_name, 'r') as file, open(trace_file_name, 'w') as trace:
         for line in file:
             line = line.rstrip()
@@ -66,8 +76,10 @@ def parse_pipette_pe_line(line):
             
             trace_line += f"# RECV | R={major} | A={A} | B={B} | PS={PS} | ALP={ALP}\n"
             # Zero out A_en and B_en (first two control bits) as they aren't cared about in recv
-            trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
-            
+            if (major) :
+                trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(A, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(PS, 16)}\n"
+            else:
+                trace_line += f"0010_____000{ALP}_____{to_signed_nbit_binary(PS, 16)}_____{to_signed_nbit_binary(B, 8)}_____{to_signed_nbit_binary(A, 16)}\n"
         case 'wait':
             n = int(line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"
@@ -287,6 +299,66 @@ def parse_TU_line(TU_line):
             trace_line += TU_line
     return trace_line + '\n'
 
+def parse_TU_2_line(TU_line):
+    space_i = TU_line.find(' ')
+    command = TU_line[:space_i] if space_i > 0 else TU_line
+    trace_line_send = ''
+    trace_line_recv = ''
+    match command.casefold():
+        case 'load':
+            TU_line = TU_line[space_i+1:]
+            space_i = TU_line.find(' ')
+            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# SEND  |  {op}  |  {numbers}\n"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______"
+            for n in numbers:
+                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_send += '\n'
+            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*34}\n"
+        case 'recv':
+            TU_line = TU_line[space_i+1:]
+            space_i = TU_line.find(' ')
+            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_recv += f"# RECV  |  {numbers}\n"
+            trace_line_recv += f"0010__________00_______"
+            for n in numbers:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
+            trace_line_send += f"# SEND  |  {op}  |  0\n"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______{'0'*32}\n"
+        case 'load_recv':
+            TU_line = TU_line[space_i+1:]
+            space_i = TU_line.find(' ')
+            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# SEND  |  {op}  |  {numbers[:4]}\n"
+            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______"
+            for n in numbers[:4]:
+                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_send += '\n'
+            trace_line_recv += f"# RECV  |  {numbers[4:]}\n"
+            trace_line_recv += f"0010__________00_______"
+            for n in numbers[4:]:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
+        case 'wait':
+            n = int(TU_line[space_i:])
+            trace_line_send += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_send += f"0000__{'0'*34}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000__{'0'*34}\n"
+        case 'end':
+            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
+        case '###':
+            trace_line_send += TU_line
+            trace_line_recv += TU_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
 def parse_ARR_line(ARR_line):
     space_i = ARR_line.find(' ')
     command = ARR_line[:space_i] if space_i > 0 else ARR_line
@@ -303,9 +375,12 @@ def parse_ARR_line(ARR_line):
                 trace_line += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line += '\n'
         case 'compute':
+            ARR_line = ARR_line[space_i+1:]
+            space_i = ARR_line.find(' ')
+            major = True if ARR_line[:space_i] == 'R' else False
             numbers = [int(n) for n in ARR_line[space_i:].split()]
-            trace_line += f"# SEND  |   0   | row maj | A[i] = {numbers}\n"
-            trace_line += f"0001______0______1_____________{'0'*30}_______"
+            trace_line += f"# SEND  |   0   | {'row maj' if major else 'col maj'} | A[i] = {numbers}\n"
+            trace_line += f"0001______0______{int(major)}_____________{'0'*30}_______"
             for n in numbers:
                 trace_line += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line += '\n'
@@ -345,16 +420,19 @@ def parse_ARR_2_line(ARR_line):
             trace_line_send += '\n'
             trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*64}\n"
         case 'compute':
+            ARR_line = ARR_line[space_i+1:]
+            space_i = ARR_line.find(' ')
+            major = True if ARR_line[:space_i] == 'R' else False
             numbers = [int(n) for n in ARR_line[space_i:].split()]
-            trace_line_send += f"# SEND  |   0   | row maj | A[i] = {numbers}\n"
-            trace_line_send += f"0001______0______1_____________{'0'*30}_______"
+            trace_line_send += f"# SEND  |   0   | {'row maj' if major else 'col maj'} | A[i] = {numbers}\n"
+            trace_line_send += f"0001______0______{int(major)}_____________{'0'*30}_______"
             for n in numbers:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*64}\n"
         case 'recv':
             numbers = [int(n) for n in ARR_line[space_i:].split()]
-            trace_line_recv += f"# RECV  |    00    | C[i] = {numbers}\n"
+            trace_line_recv += f"# RECV  | C[i] = {numbers}\n"
             trace_line_recv += f"0010_______"
             for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
@@ -370,19 +448,22 @@ def parse_ARR_2_line(ARR_line):
             for n in numbers[:4]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# RECV  |    00    | C[i] = {numbers[4:]}\n"
+            trace_line_recv += f"# RECV   | C[i] = {numbers[4:]}\n"
             trace_line_recv += f"0010_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
             trace_line_recv += '\n'
         case 'compute_recv':
+            ARR_line = ARR_line[space_i+1:]
+            space_i = ARR_line.find(' ')
+            major = True if ARR_line[:space_i] == 'R' else False
             numbers = [int(n) for n in ARR_line[space_i:].split()]
-            trace_line_send += f"# SEND  |   0   | row maj | A[i] = {numbers[:4]}\n"
-            trace_line_send += f"0001______0______1_____________{'0'*30}_______"
+            trace_line_send += f"# SEND  |   0   | {'row maj' if major else 'col maj'} | A[i] = {numbers[:4]}\n"
+            trace_line_send += f"0001______0______{int(major)}_____________{'0'*30}_______"
             for n in numbers[:4]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# RECV  |    00    | C[i] = {numbers[4:]}\n"
+            trace_line_recv += f"# RECV  | C[i] = {numbers[4:]}\n"
             trace_line_recv += f"0010_______"
             for n in numbers[4:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 16)}"
