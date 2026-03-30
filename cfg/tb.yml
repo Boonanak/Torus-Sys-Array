@@ -14,19 +14,19 @@ sim.inputs.tb_input_files: [
   "v/Top_level/Top_level_tb.sv",
   "v/Top_level/Top_level_tb_twotrace.sv",
   
-  "v/PE/PE_tb.sv",
-  "v/PE/PE_combine_B_PS_tb.sv",
-  "v/PE/PE_shared_B_tb.sv",
-  "v/PE/PE_final_tb.sv",
+  #"v/PE/PE_tb.sv",
+  #"v/PE/PE_combine_B_PS_tb.sv",
+  #"v/PE/PE_shared_B_tb.sv",
+  #"v/PE/PE_final_tb.sv",
   "v/PE/Pipette_PE_tb.sv",
 
-  "v/sys_array/sys_array_tb.sv",
-  "v/sys_array/sys_array_tb_twotrace.sv",
+  #"v/sys_array/sys_array_tb.sv",
+  #"v/sys_array/sys_array_tb_twotrace.sv",
 
-  "v/transpose/dff_en_tb.v",
-  "v/transpose/shift_reg_tb.v",
+  #"v/transpose/dff_en_tb.v",
+  #"v/transpose/shift_reg_tb.v",
   "v/transpose/tp_node_tb.v",
-  "v/transpose/transpose_tb.v",
+  #"v/transpose/transpose_tb.v",
   "v/transpose/transpose_tb_twotrace.v",
 
     # BSG utilities
@@ -113,20 +113,20 @@ sim.inputs.tb_input_files_meta: [append, subst]
 
 # List of trace files for the simulation
 sim.inputs.trace_files: [
-  "v/PE/trace.tr",
-  "v/PE/trace_separateBPS.tr",
-  "v/PE/shared_B.tr",
-  "v/PE/PE_final_trace.tr",
+  #"v/PE/trace.tr",
+  #"v/PE/trace_separateBPS.tr",
+  #"v/PE/shared_B.tr",
+  #"v/PE/PE_final_trace.tr",
   "v/PE/Pipette_PE.tr",
 
-  "v/sys_array/sys_array_trace.tr",
-  "v/sys_array/sys_array_recv_trace.tr",
-  "v/sys_array/sys_array_send_trace.tr",
+  #"v/sys_array/sys_array_trace.tr",
+  #"v/sys_array/sys_array_recv_trace.tr",
+  #"v/sys_array/sys_array_send_trace.tr",
 
-  "v/transpose/dff_en_trace.tr",
-  "v/transpose/shift_reg_trace.tr",
+  #"v/transpose/dff_en_trace.tr",
+  #"v/transpose/shift_reg_trace.tr",
   "v/transpose/tp_node_trace.tr",
-  "v/transpose/transpose_trace.tr",
+  #"v/transpose/transpose_trace.tr",
   "v/transpose/transpose_recv_trace.tr",
   "v/transpose/transpose_send_trace.tr",
 
