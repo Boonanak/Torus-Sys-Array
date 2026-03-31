@@ -24,7 +24,7 @@ sim.inputs.tb_input_files: [
   #"v/sys_array/sys_array_tb_twotrace.sv",
 
   #"v/transpose/dff_en_tb.v",
-  #"v/transpose/shift_reg_tb.v",
+  "v/transpose/shift_reg_tb.v",
   "v/transpose/tp_node_tb.v",
   #"v/transpose/transpose_tb.v",
   "v/transpose/transpose_tb_twotrace.v",
@@ -124,7 +124,7 @@ sim.inputs.trace_files: [
   #"v/sys_array/sys_array_send_trace.tr",
 
   #"v/transpose/dff_en_trace.tr",
-  #"v/transpose/shift_reg_trace.tr",
+  "v/transpose/shift_reg_trace.tr",
   "v/transpose/tp_node_trace.tr",
   #"v/transpose/transpose_trace.tr",
   "v/transpose/transpose_recv_trace.tr",
