@@ -8,6 +8,10 @@ module sys_array_tb;
     $fsdbDumpvars("+all");
   end
 
+  localparam int DIM_p = 4;
+  localparam int A_size = DIM_p*8;
+  localparam int C_size = DIM_p*16;
+
   /* Non-synth clock generator */
   logic clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen (clk);
@@ -19,31 +23,32 @@ module sys_array_tb;
       (.clk_i        ( clk )
       ,.async_reset_o( reset )
       );
+  
 
   logic dut_v_lo, dut_v_r;
-  logic [63:0] dut_data_lo, dut_data_r;
+  logic [C_size-1:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [67:0] tr_data_lo;
+  logic [A_size+A_size-1+4:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [71:0] rom_data_lo_send
-  logic [67:0] rom_data_lo_recv;
+  logic [A_size+A_size-1+4+4:0] rom_data_lo_send
+  logic [C_size-1+4:0] rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
 
   // SEND DATA (68 bits)
   // A_maj, A_en, B_maj, B_en, A[31:0], B[31:0]
 
-  sys_array_send_trace_rom #(.width_p(68),.addr_width_p(32))
+  sys_array_send_trace_rom #(.width_p(A_size+A_size+8),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(72)
+  bsg_fsb_node_trace_replay #(.ring_width_p(A_size+A_size+4)
                              ,.rom_addr_width_p(32) )
     trace_replay_send
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -68,13 +73,13 @@ module sys_array_tb;
   // RECV DATA (64 bits)
   // C[63:0]
 
-  sys_array_recv_trace_rom #(.width_p(68),.addr_width_p(32))
+  sys_array_recv_trace_rom #(.width_p(C_size+4),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(64)
+  bsg_fsb_node_trace_replay #(.ring_width_p(C_size)
                              ,.rom_addr_width_p(32) )
     trace_replay_recv
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -104,7 +109,7 @@ module sys_array_tb;
   end
 
 
-  logic [15:0] output_data [3:0];
+  logic [15:0] output_data [DIM_p-1:0];
 
   // use this for sim-syn and sim-par
 
@@ -140,18 +145,18 @@ module sys_array_tb;
   // `else
   // use this for sim-rtl 
 
-    sys_array DUT
+    sys_array #(DIM_p) DUT
       (.clk_i     ( clk )
       ,.reset     ( reset )
 
-      ,.A_in      ( {>>{tr_data_lo[63:32]}})
-      ,.B_in      ( {>>{tr_data_lo[31:0]}})
+      ,.A_in      ( {>>{tr_data_lo[A_size+A_size-1:A_size]}})
+      ,.B_in      ( {>>{tr_data_lo[A_size-1:0]}})
 
-      ,.A_valid   ( tr_data_lo[66] )
-      ,.B_valid   ( tr_data_lo[64] )
+      ,.A_valid   ( tr_data_lo[A_size+A_size+2] )
+      ,.B_valid   ( tr_data_lo[A_size+A_size] )
 
-      ,.A_row_maj ( tr_data_lo[67] )
-      ,.B_row_maj ( tr_data_lo[65] )
+      ,.A_row_maj ( tr_data_lo[A_size+A_size+3] )
+      ,.B_row_maj ( tr_data_lo[A_size+A_size+1] )
 
       ,.transposer_valid_in  ( tr_v_lo )
       ,.transposer_ready_out ( dut_ready_lo )
@@ -163,10 +168,14 @@ module sys_array_tb;
       // ,.output_buffer_valid_out ()
       );
   // `endif
-  assign dut_data_lo[63:48] = output_data[0];
-  assign dut_data_lo[47:32] = output_data[1];
-  assign dut_data_lo[31:16] = output_data[2];
-  assign dut_data_lo[15:0]  = output_data[3];
+
+  // not sure if this will work but i hope so
+  assign dut_data_lo = {>>(output_data)};
+
+  // assign dut_data_lo[63:48] = output_data[0];
+  // assign dut_data_lo[47:32] = output_data[1];
+  // assign dut_data_lo[31:16] = output_data[2];
+  // assign dut_data_lo[15:0]  = output_data[3];
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
