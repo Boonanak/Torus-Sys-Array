@@ -12,7 +12,7 @@ module TwistMesh_tb;
     // Waveform dump
     // ================================================================
     initial begin
-        $fsdbDumpfile("TwistMesh_tb.fsdb");
+        $fsdbDumpfile("waveform.fsdb");
         $fsdbDumpvars("+all");
     end
 

@@ -11,7 +11,8 @@ synthesis.inputs.input_files: [
   #"v/PE/PE_combine_B_PS.sv",
   #"v/PE/PE_shared_B.sv",
   #"v/PE/PE_final.sv",
-  "v/PE/Pipette_PE.sv",
+  #"v/PE/Pipette_PE.sv",
+  "v/PE/TwistPE.sv",
 
   #"v/transpose/dff_en.v",
   "v/transpose/shift_reg_simple.sv",
@@ -19,6 +20,7 @@ synthesis.inputs.input_files: [
   "v/transpose/transpose.sv",
   #"v/sys_array/col_gen.sv",
   #"v/sys_array/sys_array.sv",
+  "v/sys_array/TwistMesh.sv",
 
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_hardened.v",

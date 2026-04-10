@@ -14,7 +14,7 @@ module TwistPE_tb;
     // Waveform dump
     // ================================================================
     initial begin
-        $fsdbDumpfile("TwistPE_tb.fsdb");
+        $fsdbDumpfile("waveform.fsdb");
         $fsdbDumpvars("+all");
     end
 
