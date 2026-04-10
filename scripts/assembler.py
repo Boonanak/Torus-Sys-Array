@@ -53,7 +53,7 @@ def to_machine_code(instruction):
             for bit in data_string:
                 if bit == '1':
                     parity = not parity
-            return f'{opcode}_{Addr}_{int(parity)}{data_string}'
+            return f'{opcode}_{Addr}_{int(parity)}{data_string}\n'
         case "READM":
             opcode = '00010'
             instruction_data = instruction_data.split()
@@ -62,18 +62,18 @@ def to_machine_code(instruction):
             BaseAddr = f'{to_signed_nbit_binary(int(BaseAddr), 6)}'
             length = instruction_data[2]
             length = f'{to_signed_nbit_binary(int(length), 4)}'
-            return f'{opcode}_{int(type)}_{BaseAddr}_{length}'
+            return f'{opcode}_{int(type)}_{BaseAddr}_{length}\n'
         case "READV":
             opcode = '00011'
             Addr = to_signed_nbit_binary(int(instruction_data), 10)
-            return f'{opcode}_{Addr}_0'
+            return f'{opcode}_{Addr}_0\n'
         case "LOADB":
             opcode = '00100'
             instruction_data = instruction_data.split()
             type = instruction_data[0] == 'R'
             BaseAddr = instruction_data[1]
             BaseAddr = f'{to_signed_nbit_binary(int(BaseAddr), 6)}'
-            return f'{opcode}_{int(type)}_{BaseAddr}_0000'
+            return f'{opcode}_{int(type)}_{BaseAddr}_0000\n'
         case "COMPUTE":
             opcode = '00101'
             instruction_data = instruction_data.split()
@@ -85,7 +85,7 @@ def to_machine_code(instruction):
             AccAddr = instruction_data[3]
             AccAddr = f'{to_signed_nbit_binary(int(AccAddr), 6)}'
             UseAcc = instruction_data[4]
-            return f'{opcode}_{int(type)}_{BaseAddr}_{DestAddr}_{AccAddr}_{UseAcc}_0000000'
+            return f'{opcode}_{int(type)}_{BaseAddr}_{DestAddr}_{AccAddr}_{UseAcc}_0000000\n'
         case "WRITET":
             opcode = '00111'
             instruction_data = instruction_data.split()
@@ -93,13 +93,13 @@ def to_machine_code(instruction):
             BaseAddr = f'{to_signed_nbit_binary(int(BaseAddr), 6)}'
             DestAddr = instruction_data[1]
             DestAddr = f'{to_signed_nbit_binary(int(DestAddr), 6)}'
-            return f'{opcode}_{BaseAddr}_{DestAddr}_000000000000000'
+            return f'{opcode}_{BaseAddr}_{DestAddr}_000000000000000\n'
         case "ERROR":
             opcode = '11111'
-            return f'{opcode}_00000000000'
+            return f'{opcode}_00000000000\n'
         case "NOOP":
             opcode = '00000'
-            return f'{opcode}_00000000000'
+            return f'{opcode}_00000000000\n'
 
 
 print(to_machine_code("WRITE 1 [2, 4, 6, 8]"))
@@ -110,3 +110,27 @@ print(to_machine_code("COMPUTE R 2 4 3 1"))
 print(to_machine_code("WRITET 5 6"))
 print(to_machine_code("ERROR"))
 print(to_machine_code("NOOP"))
+
+### Some helper methods to convert instructions with matrices into larger instructions'
+def WRITEM(M, Addr):
+    instructions = ''
+    for row in M:
+        m_string = f'[{int(row[0])}'
+        for n in row[1:]:
+            m_string += f', {int(n)}'
+        m_string += ']'
+        instructions += to_machine_code(f"WRITE {Addr} {m_string}")
+        Addr = Addr + 1
+    return instructions
+
+import random
+import numpy as np
+print(WRITEM(np.identity(8), 8))
+
+with open('scripts/tpu_benchmark1.txt', 'w') as instruction_file:
+    instruction_file.write(WRITEM(np.identity(8), 0))
+    instruction_file.write(WRITEM(np.identity(8), 8))
+    instruction_file.write(WRITEM(np.zeros((8,8)), 16))
+    instruction_file.write(to_machine_code("LOADB R 8"))
+    instruction_file.write(to_machine_code("COMPUTE R 0 24 16 0"))
+    instruction_file.write(to_machine_code("READM R 24 8"))
