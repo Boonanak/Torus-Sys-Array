@@ -56,101 +56,127 @@ def to_signed_nbit_binary(integer, n_bits):
 # 110100 = 52: LCCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 
 def to_machine_code(instruction):
+    machine_code = ''
+    expected_output = ''
     instruction_data = instruction.split()
     op = instruction_data[0]
     match op:
         case "NOOP":
             opcode = '000000'
-            return f'0000000000_{opcode}\n'
+            machine_code = f'{'0'*26}_{opcode}\n'
+            expected_output = f'{'0'*26}_{opcode}\n'
         case "ERROR_CSR":
             opcode = '011100'
-            return f'0000000000_{opcode}\n'
+            machine_code = f'{'0'*26}_{opcode}\n'
+            expected_output = f'{'0'*26}_{opcode}\n'
         case "WRITE":
             opcode = '010000'
-            Addr = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
+            Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
             bracket_i = instruction.find('[')
             data = instruction[bracket_i+1:len(instruction)-1].split(sep=', ')
             data = [f'_{to_signed_nbit_binary(int(n), 8)}' for n in data]
             data_string = ''
             for n in data:
                 data_string += n
-            return f'{Addr}_0_{opcode}_{data_string}\n'
+            machine_code = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}___{data_string}\n'
+            expected_output = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}\n'
         case "TRANSPOSE":
             opcode = '011001'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
         case "WRITE_CSR":
             opcode = '010100'
             data_string = instruction_data[1]
-            return f'0000000000_{opcode}_{data_string}\n'
+            machine_code = f'{'0'*26}_{opcode}___{data_string}\n'
+            expected_output = f'{'0'*26}_{opcode}\n'
         case "READ_CSR":
             opcode = '001100'
-            return f'0000000000_{opcode}\n'
+            machine_code = f'{'0'*26}_{opcode}\n'
+            expected_output = f'{'0'*26}_{opcode}___{'x'*64}\n'
         case "READM8":
             opcode = '001001'
-            BaseAddr = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            return f'{BaseAddr}_0000_{opcode}\n'
+            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*512}\n'
         case "READM16":
             opcode = '001011'
-            BaseAddr = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            return f'{BaseAddr}_0000_{opcode}\n'
+            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*512}\n'
         case "READV8":
             opcode = '001000'
-            Addr = to_signed_nbit_binary(int(instruction_data[1]), 9)
-            return f'{Addr}_0_{opcode}\n'
+            Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
+            machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*64}\n'
         case "READV16":
             opcode = '001010'
-            Addr = to_signed_nbit_binary(int(instruction_data[1]), 9)
-            return f'{Addr}_0_{opcode}\n'
+            Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
+            machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*128}\n'
         case "LR":
             opcode = '111000'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            return f'{BaseAddr_weight}_0000_{opcode}\n'
+            machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
+            expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
         case "LC":
             opcode = '110000'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            return f'{BaseAddr_weight}_0000_{opcode}\n'
+            machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
+            expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
         case "CR":
             opcode = '100110'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            if int(instruction_data[1]) % 2 == 1:
+                print(f"WARNING: Destination address is not aligned to 16 bit matrix address.\n" \
+                f"Matrix will be written to {int(instruction_data[1]) - 1}")
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
         case "CC":
             opcode = '100100'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
         case "LRCR":
             opcode = '111110'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000_{BaseAddr_weight}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
         case "LCCR":
             opcode = '110110'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000_{BaseAddr_weight}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
         case "LRCC":
             opcode = '111100'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000_{BaseAddr_weight}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
         case "LCCC":
             opcode = '110100'
             BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
             BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            return f'{BaseAddr_dest}_0000_{opcode}_{BaseAddr_source}_0000000000_{BaseAddr_acc}_0000000000_{BaseAddr_weight}_0000000000\n'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+        case _:
+            machine_code = ''
+    return machine_code
 
 # print(to_machine_code("NOOP"))
 # print(to_machine_code("WRITE 1 [1, 2, 3, 4, 5, 6, 7, 8]"))
