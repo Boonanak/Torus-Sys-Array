@@ -4,11 +4,9 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     parameter WIDTH_p = 8) // Width of data
                   ( input logic clk_i, 
                     input logic rst_n_i, // Active low reset
-                    input logic col_major_i, // input is in column-major order (NONFUNCTIONAL)
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
                     input logic valid_i, // if the input data is valid 
                     input logic ready_i, // the output module is ready to consume data
-                    input logic rotate, // to rotate or not rotate data, assert on write
                     input logic transpose, // to transpose or not transpose, assert on read
                     ///////////////////////////////////////////////////////////////////////////////
                     output logic valid_o, // if the transposer output is valid
@@ -16,50 +14,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
-    // Params for row/col enable selection
     localparam DIM_CLOG2_p = $clog2(DIM_p);
-    localparam logic PASS = 1'b0;
-    localparam logic SHIFT = 1'b1;
-
-    // Pre-proccess the data
-    // Swap thrid and fourth rows if rotate is enabled
-    logic [WIDTH_p-1:0] processed_in_data [DIM_p-1:0];
-    // 4x4 kept as a comment in case we need them
-    // always_comb begin 
-    //     for (integer i = 0; i < DIM_p; i++) begin 
-    //         if (i == 2) begin 
-    //             processed_in_data[i] = (rotate) ? in_data[3] : in_data[2];
-    //         end else if (i == 3) begin 
-    //             processed_in_data[i] = (rotate) ? in_data[2] : in_data[3];
-    //         end else begin 
-    //             processed_in_data[i] = in_data[i];
-    //         end
-    //     end
-    // end
-
-    // explanations for the dark magic code:
-    // data initially arrives [1 2 3 4 5 6 7 8], and we want to generate same for non rotate
-    // we want to generate all even numbers in ascending, then all odd numbers descending: [2 4 6 8 7 5 3 1] 
-    // we also should shift it by (DIM_p/2 - 1), so we bring DIM_p (8 in this case) to the front
-    // and get [8 7 5 3 1 2 4 6]
-    // same logic applies for 4x4: [1 2 3 4] -> [2 4 3 1] -> [4 3 1 2]
-    // +DIM_p then %DIM_p allows for avoiding modulo on negative number which can be iffy and good to avoid
-    // rest are core logic described above.
-
-    always_comb begin 
-        if (rotate) begin 
-            for (int i = 0; i < DIM_p / 2; i++) begin 
-                // even numbers, fill from left
-                processed_in_data[(i - DIM_p/2 - 1 + DIM_p) % DIM_p] = in_data[i * 2 + 1];
-                // odd numbers, fill from right
-                processed_in_data[(DIM_p - 1 - i - DIM_p / 2 - 1 + DIM_p) % DIM_p] = in_data[i * 2];
-            end
-        end else begin 
-            for (int i = 0; i < DIM_p; i++) begin 
-                processed_in_data[i] = in_data[i];
-            end
-        end
-    end
 
     // Counter values
     logic direction; // The current direction of shifting
@@ -68,23 +23,12 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     logic [DIM_CLOG2_p-1:0] count; // bottom bits of the write counter
     logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
 
-    // 2 bit code for row/col shifting/passing. top bit is enable, bottom bit is 0 for pass, 1 for shift
-    `ifdef SYNTHESIS
-        // ============================================================
-        // Synthesis-only version (unpacked arrays)
-        // ============================================================
-        logic [1:0] row_enable [DIM_p-1:0]; 
-        logic [1:0] col_enable [DIM_p-1:0];
-    `else
-        // ============================================================
-        // Simulation-only version (fully packed arrays)
-        // ============================================================
-        logic [DIM_p-1:0][1:0] row_enable; 
-        logic [DIM_p-1:0][1:0] col_enable; 
-    `endif
+    // Enable line for each row or col. Techinally could be a 1 bit signal, but making it individual for each row/col improves timing for synthesis
+    logic [DIM_p-1:0] row_enable; 
+    logic [DIM_p-1:0] col_enable; 
 
     // Control signals
-    logic [DIM_p-1:0] valid; // which row or column is valid. Shared based on direction
+    logic [DIM_p-1:0] valid; // which row or column has valid data. Shared for both directions
     logic output_valid, enable, can_read, ready, can_write, override_direction;
     /*
     output_valid: whether the output data is valid, determined by the last bit of the valid shift register
@@ -102,8 +46,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         logic [WIDTH_p-1:0] tp_bus       [DIM_p-1:0][DIM_p-1:0];
         logic [WIDTH_p-1:0] data_pass_0  [DIM_p][DIM_p];
         logic [WIDTH_p-1:0] data_pass_1  [DIM_p][DIM_p];
-        logic [WIDTH_p-1:0] data_shift_0 [DIM_p][DIM_p];
-        logic [WIDTH_p-1:0] data_shift_1 [DIM_p][DIM_p];
     `else
         // ============================================================
         // Simulation-only version (fully packed arrays)
@@ -111,8 +53,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
         logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] tp_bus;
         logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_0;
         logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_pass_1;
-        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_0;
-        logic [DIM_p-1:0][DIM_p-1:0][WIDTH_p-1:0] data_shift_1;
     `endif
 
     genvar row;
@@ -120,31 +60,14 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     generate // Make the array of transposer nodes, magic interconnect logic
         for (row = 0; row < DIM_p; row++) begin : row_loop
             for (col = 0; col < DIM_p; col++) begin : col_loop // Iterate through each column first
-                // localparam int shift_amount_row = (col == 1) ?  1 :
-                //                                  (col == 2) ?  -2 :
-                //                                  (col == 3) ? 3 : 0;
-
-                // localparam int shift_amount_col = (row == 1) ?  1 :
-                //                                  (row == 2) ?  -2 :
-                //                                  (row == 3) ? 3 : 0;
-                localparam int shift_amount_row = (col % 2 == 1) ? int'(col) : -int'(col);
-                localparam int shift_amount_col = (row % 2 == 1) ? int'(row) : -int'(row);
-
-                
                 // Pass-through data stream
                 //if row = 0 pass1 = in[col]
                 //if col = 0 pass0 = in[row]
                 //if col > 0 pass0 = bus[row][col-1]
                 //if row > 0 pass1 = bus[row-1][col]
 
-                assign data_pass_1[row][col] = (row == 0) ? (processed_in_data[col]) : tp_bus[row-1][col];
-                assign data_pass_0[row][col] = (col == 0) ? (processed_in_data[row]) : tp_bus[row][col-1];
-
-                assign data_shift_0[row][col] = (col == 0) ? 'X : tp_bus[(row + shift_amount_row + DIM_p) % DIM_p][col - 1];
-                assign data_shift_1[row][col] = (row == 0) ? 'X : tp_bus[row - 1][(col + shift_amount_col + DIM_p) % DIM_p];
-
-                //assign data_shift_0[row][col] = (col == 0) ? 'X : ((row == 0) ? tp_bus[DIM_p-1][col-1] : tp_bus[row-1][col-1]);
-                //assign data_shift_1[row][col] = (row == 0) ? 'X : ((col == 0) ? tp_bus[row-1][DIM_p-1] : tp_bus[row-1][col-1]);
+                assign data_pass_1[row][col] = (row == 0) ? (in_data[col]) : tp_bus[row-1][col];
+                assign data_pass_0[row][col] = (col == 0) ? (in_data[row]) : tp_bus[row][col-1];
 
                 // Transposer node instantiation
                 tp_node #(.WIDTH_p(WIDTH_p)
@@ -153,8 +76,6 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                          ,.rst_n_i(rst_n_i)
                          ,.data_pass_0_i(data_pass_0[row][col])
                          ,.data_pass_1_i(data_pass_1[row][col])
-                         ,.data_shift_0_i(data_shift_0[row][col])
-                         ,.data_shift_1_i(data_shift_1[row][col])
                          ,.row_en_i(row_enable[row])
                          ,.col_en_i(col_enable[col])
                          ,.data_out(tp_bus[row][col])
@@ -180,37 +101,20 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
             write_counter <= '0;
             override_direction <= 1'b0;
         end else begin
+            override_direction <= direction;
             if (can_write) // increment if writting
                 write_counter <= write_counter + 1'b1;
-            //if (!transpose)
-                override_direction <= direction;
         end
     end
 
-    // Selection logic bus for whether each row/col should shift or pass based on the current count and direction.
-    logic [DIM_p-1:0] selection;
-    genvar j;
-    generate 
-        for (j = 0; j < DIM_p; j++) begin : selection_loop
-            // first line always passes, then we shift more and more lines as count increases, then we go back to passing after count exceeds the index
-            assign selection[j] = (j == 0 || ~rotate) ? PASS : (j <= count) ? SHIFT : PASS; 
-        end
-    endgenerate
-
-    // Set the row and column enable lines
-    // Has to be a generate because col and row enable are unpacked arrays.
-    // 2 bit code for whether to shift or pass for this row/col, shared between row and col enables since only one is active at a time
-    genvar i;
-    generate
-        for (i = 0; i < DIM_p; i++) begin : enable_loop
-            assign col_enable[i] = (direction) ? 2'b00 : {enable, selection[i]}; // enable cols if direction is 0, otherwise enable rows
-            assign row_enable[i] = (direction) ? {enable, selection[i]} : 2'b00; // ~^ (transpose_r || transpose)
-        end
-    endgenerate
+    // Set the row and column enable lines, either all rows are enabled or all columns
+    assign col_enable = direction ? '0 : {DIM_p{enable}};
+    assign row_enable = direction ? {DIM_p{enable}} : '0;
 
     // If direction = 1 read last row
     // if direction = 0, read last col
     // if not transpose, don't change direction
+    genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
             assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
@@ -219,21 +123,19 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
 
     // Constant assignments for control signals
     assign output_valid = valid[DIM_p-1]; // The last bit of the valid shift register indicates if the output data is valid
-    assign direction = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
-    assign count = write_counter[DIM_CLOG2_p-1:0];
-    assign ready = output_valid ? ready_i : 1'b1;
-    assign can_read = output_valid && ready_i; // able to read if output is valid and consumer is ready
-    assign can_write = valid_i && ready; // able to write if input is valid and we have space
-    assign enable = can_read || can_write; // enable shifting if we are either reading or writing
-    assign valid_o = output_valid;
-    assign ready_o = ready;
+    assign direction    = transpose ? (write_counter[DIM_CLOG2_p]) : override_direction;
+    assign count        = write_counter[DIM_CLOG2_p-1:0];
+    assign ready        = output_valid ? ready_i : 1'b1;
+    assign can_read     = output_valid && ready_i; // able to read if output is valid and consumer is ready
+    assign can_write    = valid_i && ready; // able to write if input is valid and we have space
+    assign enable       = can_read || can_write; // enable shifting if we are either reading or writing
+    assign valid_o      = output_valid;
+    assign ready_o      = ready;
 
     // Assertions to check for valid parameter settings
     initial begin
         assert ((DIM_p & (DIM_p - 1)) == 0)
             else $fatal("DIM_p (%0d) must be a power of 2", DIM_p);
-//        assert (col_major_i == 1'b0)
-//            else $fatal("col_major_i must be 0 for row-major input, column-major input is not supported");
         assert (DIM_p > 1)
             else $fatal("DIM_p (%0d) must be greater than 1", DIM_p);
         assert (WIDTH_p > 0)
