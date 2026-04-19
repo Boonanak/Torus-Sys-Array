@@ -13,6 +13,8 @@ sim.inputs.tb_input_files: [
   # TODO: list verilog files
   "v/Top_level/Top_level_tb.sv",
   
+  "v/memory/banked_mem_tb.sv",
+  
   "v/PE/PE_tb.sv",
   "v/PE/PE_combine_B_PS_tb.sv",
   "v/PE/PE_shared_B_tb.sv",

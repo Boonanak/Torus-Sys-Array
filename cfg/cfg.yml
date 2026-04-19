@@ -2,7 +2,7 @@
 
 # TODO: Set top levels
 synthesis.inputs.top_module: "banked_mem"
-sim.inputs.tb_name: "Top_level_tb"
+sim.inputs.tb_name: "banked_mem_tb"
 
 # Don't synthesize these gate-level netlist modules
 # TODO: List the names of any modules that don't require synthesis

@@ -27,6 +27,7 @@ module banked_mem #(
 
     // tag to route bank outputs to output ports.
     logic [$clog2(NUM_BANKS) - 1 : 0] bank_read_tag     [0 : NUM_BANKS - 1];
+    logic [$clog2(NUM_BANKS) - 1 : 0] bank_read_tag_next [0 : NUM_BANKS - 1];
 
     // successful read/write at each port
     logic port_read_success         [0 : NUM_BANKS - 1];
@@ -37,20 +38,24 @@ module banked_mem #(
     // assign input read port requests into banks. conflicted request fails
     // read
     always_comb begin
-        for (int i = 0; i < NUM_BANKS; i++) begin 
+        int i;
+        logic [1:0] bank [0 : NUM_BANKS - 1];
+
+        for (i = 0; i < NUM_BANKS; i++) begin
+            bank[i] = '0; 
             bank_read_busy[i] = '0;
             bank_read_addr[i] = '0;
-            bank_read_tag[i] = '0;
+            bank_read_tag_next[i] = '0;
             port_read_success_next[i] = '0;
         end
-        for (int i = 0; i < NUM_BANKS; i++) begin 
-            logic [1:0] bank = read_request[i].addr.fields.bank;
-            if (~bank_read_busy[bank] && read_request[i].valid) begin 
-                bank_read_busy[bank] = 1'b1;
-                bank_read_addr[bank] = {read_request[i].addr.fields.block_idx, 
+        for (i = 0; i < NUM_BANKS; i++) begin 
+            bank[i] = read_request[i].addr.fields.bank;
+            if (~bank_read_busy[bank[i]] && read_request[i].valid) begin 
+                bank_read_busy[bank[i]] = 1'b1;
+                bank_read_addr[bank[i]] = {read_request[i].addr.fields.block_idx, 
                                         read_request[i].addr.fields.wl_offset,
                                         read_request[i].addr.fields.seg_sel};
-                bank_read_tag[bank] = i;
+                bank_read_tag_next[bank[i]] = TAG_LENGTH'(i);
                 port_read_success_next[i] = 1'b1;
             end
             else begin 
@@ -59,23 +64,26 @@ module banked_mem #(
         end
     end
     // write
-    always_comb begin 
-        for (int i = 0; i < NUM_BANKS; i++) begin 
+    always_comb begin
+        int i; 
+        logic [1:0] bank [0 : NUM_BANKS - 1];
+        for (i = 0; i < NUM_BANKS; i++) begin 
+            bank[i] = '0;
             bank_write_busy[i] = '0;
             bank_wren[i] = '0;
             bank_write_data[i] = '0;
             bank_write_addr[i] = '0;
             port_write_success_next[i] = '0;
         end
-        for (int i = 0; i < NUM_BANKS; i++) begin 
-            logic [1:0] bank = write_request[i].addr.fields.bank;
-            if (~bank_write_busy[bank] && write_request[i].valid) begin 
-                bank_write_busy[bank] = 1'b1;
-                bank_write_addr[bank] = {write_request[i].addr.fields.block_idx, 
+        for (i = 0; i < NUM_BANKS; i++) begin 
+            bank[i] = write_request[i].addr.fields.bank;
+            if (~bank_write_busy[bank[i]] && write_request[i].valid) begin 
+                bank_write_busy[bank[i]] = 1'b1;
+                bank_write_addr[bank[i]] = {write_request[i].addr.fields.block_idx, 
                                          write_request[i].addr.fields.wl_offset,
                                          write_request[i].addr.fields.seg_sel};
-                bank_wren[bank] = write_request[i].wren;
-                bank_write_data[bank] = write_request[i].data;
+                bank_wren[bank[i]] = write_request[i].wren;
+                bank_write_data[bank[i]] = write_request[i].data;
                 port_write_success_next[i] = 1'b1;
             end
             else begin 
@@ -90,10 +98,12 @@ module banked_mem #(
             for (int i = 0; i < NUM_BANKS; i++) begin 
                 port_read_success[i] <= '0;
                 port_write_success[i] <= '0;
+                bank_read_tag[i] <= '0;
             end
         end else begin 
             port_read_success <= port_read_success_next;
             port_write_success <= port_write_success_next;
+            bank_read_tag <= bank_read_tag_next;
         end
     end
 
@@ -106,7 +116,10 @@ module banked_mem #(
             read_response[i].valid = port_read_success[i];
             write_response[i].valid = port_write_success[i];
             for (int j = 0; j < NUM_BANKS; j++) begin 
-                if (bank_read_tag[j] == i) read_response[i].data = bank_read_data[j];
+                if (bank_read_tag[j] == i) begin 
+                    read_response[i].data = bank_read_data[j];
+                    break;
+                end
             end
         end
     end
