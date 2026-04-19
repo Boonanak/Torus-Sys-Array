@@ -1,7 +1,7 @@
 # Main hammer config file
 
 # TODO: Set top levels
-synthesis.inputs.top_module: "Top_level"
+synthesis.inputs.top_module: "banked_mem"
 sim.inputs.tb_name: "Top_level_tb"
 
 # Don't synthesize these gate-level netlist modules

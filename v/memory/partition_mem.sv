@@ -4,11 +4,12 @@
 // Synchronous read and write.
 module partition_mem #(parameter VECTOR_WIDTH_p = 64, // Default is 128 bit vectors split into 2 chunks, with 256 vectors (4KB total)
                     parameter VECTORS_PER_ROW_p = 2,
-                    parameter NUM_VECTORS_p = 256
+                    parameter NUM_VECTORS_p = 64,
                     localparam ROW_WIDTH_lp = VECTOR_WIDTH_p * VECTORS_PER_ROW_p,
                     localparam ADDRESS_BIT_WIDTH_lp = $clog2(NUM_VECTORS_p)
                    ) (
                     input logic clk_i,
+                    input logic reset,
                     input logic [ADDRESS_BIT_WIDTH_lp-1:0] read_addr_i,
                     input logic [ADDRESS_BIT_WIDTH_lp-1:0] write_addr_i,
                     input [VECTORS_PER_ROW_p-1:0] wren_i, // multi-bit wren for write-masking
@@ -20,6 +21,12 @@ module partition_mem #(parameter VECTOR_WIDTH_p = 64, // Default is 128 bit vect
     logic [ROW_WIDTH_lp-1:0] mem_array [NUM_VECTORS_p-1:0];
 
     always_ff @(posedge clk_i) begin
+        if (reset) begin 
+            for (int i = 0; i < VECTORS_PER_ROW_p; i++) begin 
+                mem_array[i] <= '0;
+            end
+        end
+
         for (int i = 0; i < VECTORS_PER_ROW_p; i++) begin
             if (wren_i[i]) begin
                 // Magic bit masking
