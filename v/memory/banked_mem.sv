@@ -29,12 +29,15 @@ module banked_mem #(
     logic [$clog2(NUM_BANKS) - 1 : 0] bank_read_tag     [0 : NUM_BANKS - 1];
     logic [$clog2(NUM_BANKS) - 1 : 0] bank_read_tag_next [0 : NUM_BANKS - 1];
 
+    logic bank_read_valid [0 : NUM_BANKS - 1];
+    logic bank_read_valid_next [0 : NUM_BANKS - 1];
+
     // successful read/write at each port
     logic port_read_success         [0 : NUM_BANKS - 1];
     logic port_read_success_next    [0 : NUM_BANKS - 1];
     logic port_write_success        [0 : NUM_BANKS - 1];
     logic port_write_success_next   [0 : NUM_BANKS - 1];
-    
+
     // assign input read port requests into banks. conflicted request fails
     // read
     always_comb begin
@@ -47,6 +50,7 @@ module banked_mem #(
             bank_read_addr[i] = '0;
             bank_read_tag_next[i] = '0;
             port_read_success_next[i] = '0;
+            bank_read_valid_next[i] = '0;
         end
         for (i = 0; i < NUM_BANKS; i++) begin 
             bank[i] = read_request[i].addr.fields.bank;
@@ -55,6 +59,7 @@ module banked_mem #(
                 bank_read_addr[bank[i]] = {read_request[i].addr.fields.block_idx, 
                                             read_request[i].addr.fields.wl_offset};
                 bank_read_tag_next[bank[i]] = TAG_LENGTH'(i);
+                bank_read_valid_next[bank[i]] = 1'b1;
                 port_read_success_next[i] = 1'b1;
             end
             else begin 
@@ -97,11 +102,13 @@ module banked_mem #(
                 port_read_success[i] <= '0;
                 port_write_success[i] <= '0;
                 bank_read_tag[i] <= '0;
+                bank_read_valid[i] <= '0;
             end
         end else begin 
             port_read_success <= port_read_success_next;
             port_write_success <= port_write_success_next;
             bank_read_tag <= bank_read_tag_next;
+            bank_read_valid <= bank_read_valid_next;
         end
     end
 
@@ -114,7 +121,7 @@ module banked_mem #(
             read_response[i].valid = port_read_success[i];
             write_response[i].valid = port_write_success[i];
             for (int j = 0; j < NUM_BANKS; j++) begin 
-                if (bank_read_tag[j] == i) begin 
+                if (bank_read_tag[j] == i && bank_read_valid[j]) begin 
                     read_response[i].data = bank_read_data[j];
                     break;
                 end

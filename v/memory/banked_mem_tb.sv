@@ -143,8 +143,6 @@ module banked_mem_tb;
         read_req[0].addr.fields.seg_sel = 1'b1;
 
         @(posedge clk);
-        clear_reqs();
-        @(posedge clk);
         #1;
 
         if (read_rsp[0].data == 128'hFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF) begin
