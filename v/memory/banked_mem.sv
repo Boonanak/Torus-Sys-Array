@@ -53,8 +53,7 @@ module banked_mem #(
             if (~bank_read_busy[bank[i]] && read_request[i].valid) begin 
                 bank_read_busy[bank[i]] = 1'b1;
                 bank_read_addr[bank[i]] = {read_request[i].addr.fields.block_idx, 
-                                        read_request[i].addr.fields.wl_offset,
-                                        read_request[i].addr.fields.seg_sel};
+                                            read_request[i].addr.fields.wl_offset};
                 bank_read_tag_next[bank[i]] = TAG_LENGTH'(i);
                 port_read_success_next[i] = 1'b1;
             end
@@ -80,8 +79,7 @@ module banked_mem #(
             if (~bank_write_busy[bank[i]] && write_request[i].valid) begin 
                 bank_write_busy[bank[i]] = 1'b1;
                 bank_write_addr[bank[i]] = {write_request[i].addr.fields.block_idx, 
-                                         write_request[i].addr.fields.wl_offset,
-                                         write_request[i].addr.fields.seg_sel};
+                                            write_request[i].addr.fields.wl_offset};
                 bank_wren[bank[i]] = write_request[i].wren;
                 bank_write_data[bank[i]] = write_request[i].data;
                 port_write_success_next[i] = 1'b1;
@@ -126,16 +124,43 @@ module banked_mem #(
     
     // instantiate banks
     generate 
-        for (genvar i = 0; i < NUM_BANKS; i++) begin 
-            partition_mem banks (
-                 .clk_i(clk_i)
-                ,.reset(reset)
-                ,.read_addr_i(bank_read_addr[i][5:0])  // bottom bit ignored by partition_mem
-                ,.write_addr_i(bank_write_addr[i][5:0]) // bottom bit ignored by partition_mem
-                ,.wren_i(bank_wren[i])
-                ,.write_data_i(bank_write_data[i])
-                ,.read_data_o(bank_read_data[i])
-            );
+        for (genvar i = 0; i < NUM_BANKS; i++) begin
+            if (i == 2) begin 
+                partition_mem #(
+                    .HARD_CODE_ZERO(1)
+                ) bank_2 (
+                    .clk_i(clk_i)
+                    ,.reset(reset)
+                    ,.read_addr_i(bank_read_addr[i])
+                    ,.write_addr_i(bank_write_addr[i])
+                    ,.wren_i(bank_wren[i])
+                    ,.write_data_i(bank_write_data[i])
+                    ,.read_data_o(bank_read_data[i])
+                );
+            end else if (i == 3) begin 
+                partition_mem #(
+                    .HARD_CODE_IDENTITY(1)
+                ) bank_3 (
+                    .clk_i(clk_i)
+                    ,.reset(reset)
+                    ,.read_addr_i(bank_read_addr[i])
+                    ,.write_addr_i(bank_write_addr[i])
+                    ,.wren_i(bank_wren[i])
+                    ,.write_data_i(bank_write_data[i])
+                    ,.read_data_o(bank_read_data[i])
+                );
+            end else begin 
+                partition_mem banks_01 (
+                    .clk_i(clk_i)
+                    ,.reset(reset)
+                    ,.read_addr_i(bank_read_addr[i])
+                    ,.write_addr_i(bank_write_addr[i])
+                    ,.wren_i(bank_wren[i])
+                    ,.write_data_i(bank_write_data[i])
+                    ,.read_data_o(bank_read_data[i])
+                );
+            end
+
         end
     endgenerate
 

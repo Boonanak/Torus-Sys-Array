@@ -42,7 +42,8 @@ module banked_mem_tb;
             write_req[i] = '0;
         end
     endtask
-
+    
+    logic [8:0] MATRIX_BASE_ADDR = 10'h1F0; 
     initial begin
         // --- Initialization ---
         reset = 1;
@@ -116,6 +117,42 @@ module banked_mem_tb;
         
         $display("Masked Read Result: %h", read_rsp[0].data);
         // Expecting top 64 bits to be DEAD...BABE and bottom 64 bits to be from previous write
+        @(posedge clk);
+        clear_reqs();
+        @(posedge clk);
+
+        // --- 5. READ-ONLY PROTECTION TEST ---
+        $display("Testing Write Protection on Hard-Coded Rows...");
+        
+        // Attempt to overwrite the first row of the hard-coded matrix
+        write_req[0].valid = 1'b1;
+        write_req[0].wren  = 2'b11;
+        write_req[0].addr.fields.bank = 2'd3;
+        write_req[0].addr.fields.block_idx = 3'b111;
+        write_req[0].addr.fields.seg_sel = 1'b1;
+        write_req[0].data = 128'hFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+        
+        @(posedge clk);
+        clear_reqs();
+        @(posedge clk);
+
+        // Read back the same address to verify the original hard-coded value is still there
+        read_req[0].valid = 1'b1;
+        read_req[0].addr.fields.bank = 2'd3;
+        read_req[0].addr.fields.block_idx = 3'b111;
+        read_req[0].addr.fields.seg_sel = 1'b1;
+
+        @(posedge clk);
+        clear_reqs();
+        @(posedge clk);
+        #1;
+
+        if (read_rsp[0].data == 128'hFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF) begin
+            $warning("Security Alert: Hard-coded matrix was successfully overwritten!");
+        end else begin
+            $display("Success: Hard-coded matrix is read-only. Data: %h", read_rsp[0].data);
+        end
+
 
         $display("Simulation Finished.");
         $finish;
