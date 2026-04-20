@@ -300,70 +300,72 @@ def parse_TU_line(TU_line):
     return trace_line + '\n'
 
 def parse_TU_2_line(TU_line):
+    MATRIX_SIZE = 8
     space_i = TU_line.find(' ')
     command = TU_line[:space_i] if space_i > 0 else TU_line
     trace_line_send = ''
     trace_line_recv = ''
+    #print(f'_{command.casefold()}_')
     match command.casefold():
-        case 'tranpose':
+        case 'load':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# TRANSPOSE  |  {numbers}\n"
-            trace_line_send += f"0001_______1___"
-            for n in numbers:
-                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
-            trace_line_send += '\n'
-            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*65}\n"
-        case 'pass':
-            numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# PASS  |  {numbers}\n"
+            trace_line_send += f"# LOAD  |  {numbers}\n"
             trace_line_send += f"0001_______0___"
             for n in numbers:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*65}\n"
+            trace_line_recv += f"# NOOP for RECV while loading B\n0000_______0____{'0'*8*MATRIX_SIZE}\n"
         case 'recv':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_recv += f"# RECV  |  {numbers}\n"
+            trace_line_recv += f"# RECV (passed)  |  {numbers}\n"
             trace_line_recv += f"0010_______0___"
             for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
-            trace_line_send += f"# NOOP for RECV while loading B\n0000__{'0'*65}\n"
-        case 'transpose_recv':
+            trace_line_send += f"# Receiving with no transpose; T = 0\n0000_______0____{'0'*8*MATRIX_SIZE}\n"
+        case 'recvt':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# TRANSPOSE  |  {numbers[:8]}\n"
-            trace_line_send += f"0001_______1___"
-            for n in numbers[:8]:
-                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
-            trace_line_send += '\n'
-            trace_line_recv += f"# RECV  |  {numbers[8:]}\n"
+            trace_line_recv += f"# RECV (transposed)  |  {numbers}\n"
             trace_line_recv += f"0010_______0___"
-            for n in numbers[8:]:
+            for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
-        case 'pass_recv':
+            trace_line_send += f"# Receiving with transpose; T = 1\n0000_______1____{'0'*8*MATRIX_SIZE}\n"
+        case 'load_recv':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# PASS  |  {numbers[:8]}\n"
+            trace_line_send += f"# LOAD  |  {numbers[:8]}  |  Receiving with no transpose; T = 0\n"
             trace_line_send += f"0001_______0___"
-            for n in numbers[:8]:
+            for n in numbers[:MATRIX_SIZE]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
             trace_line_recv += f"# RECV  |  {numbers[8:]}\n"
             trace_line_recv += f"0010_______0___"
-            for n in numbers[8:]:
+            for n in numbers[MATRIX_SIZE:]:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
+        case 'load_recvt':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# LOAD  |  {numbers[:8]}  |  Receiving with transpose; T = 1\n"
+            trace_line_send += f"0001_______1___"
+            for n in numbers[:MATRIX_SIZE]:
+                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_send += '\n'
+            trace_line_recv += f"# RECV  |  {numbers[8:]}\n"
+            trace_line_recv += f"0010_______0___"
+            for n in numbers[MATRIX_SIZE:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
         case 'wait':
             n = int(TU_line[space_i:])
             trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_send += f"0000__{'0'*65}\n"
+                trace_line_send += f"0000_______0____{'0'*8*MATRIX_SIZE}\n"
             trace_line_recv += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_recv += f"0000__{'0'*65}\n"
+                trace_line_recv += f"0000_______0____{'0'*8*MATRIX_SIZE}\n"
         case 'end':
-            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*65}\n"
-            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*65}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100_______0____{'0'*8*MATRIX_SIZE}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100_______0____{'0'*8*MATRIX_SIZE}\n"
         case '###':
             trace_line_send += TU_line
             trace_line_recv += TU_line
@@ -525,4 +527,9 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/pipette_pe_test.txt', 'v/PE/Pipette_PE.tr', '')
+write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
+# for i in range(1, 65):
+#     print(f'{-1*i} ', end = '')
+# print('\n')
+# import numpy as np
+# print((np.arange(64).reshape(8, 8).T + 1))
