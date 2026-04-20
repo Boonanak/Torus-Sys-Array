@@ -99,12 +99,13 @@ module transpose_tb_twotrace;
       ,.data_o( rom_data_lo_send )
       );
 
-  transpose #(.WIDTH_P(8), .DIM_p(4))
+  transpose #(.WIDTH_P(8), .DIM_p(8))
     DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
-    ,.in_data ( {>>{tr_data_lo[63:0]}} )
+    ,.in_data ( {tr_data_lo[63:56], tr_data_lo[55:48], tr_data_lo[47:40], tr_data_lo[39:32],
+                 tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8],  tr_data_lo[7:0]} )
     //,.\in_data[3] ( {tr_data_lo[31:24]} )
     //,.\in_data[2] ( {tr_data_lo[23:16]} )
     //,.\in_data[1] ( {tr_data_lo[15:8]} )
