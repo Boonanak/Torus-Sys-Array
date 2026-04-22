@@ -68,7 +68,7 @@ module csr_tb;
       ,.data_o( rom_data_lo )
       );
 
-  shift_reg DUT
+  csr DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
