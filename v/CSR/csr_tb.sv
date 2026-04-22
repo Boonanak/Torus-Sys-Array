@@ -78,6 +78,8 @@ module csr_tb;
     ,.data_o   ( dut_data_lo[63:0] )
     );
 
+  assign dut_data_lo[65:64] = 00;
+
   // no handshake logic. all ready/valid signal is 1.
   assign dut_ready_lo = '1;
   assign dut_v_lo = '1;
