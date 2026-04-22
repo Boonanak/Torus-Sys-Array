@@ -36,6 +36,8 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                         trace.write(parse_DFF_line(line))
                     case "SR":
                         trace.write(parse_SR_line(line))
+                    case "CSR":
+                        trace.write(parse_CSR_line(line))
                     case "TP_node":
                         trace.write(parse_TP_node_line(line))
                     case "TU":
@@ -224,6 +226,52 @@ def parse_SR_line(SR_line):
             for n in numbers:
                 trace_line += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line += '\n'
+        case 'wait':
+            n = int(SR_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*66}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*66}\n"
+        case '###':
+            trace_line += SR_line
+    return trace_line + '\n'
+
+def parse_CSR_line(SR_line):
+    space_i = SR_line.find(' ')
+    command = SR_line[:space_i] if space_i > 0 else SR_line
+    trace_line = ''
+    match command.casefold():
+        case 'read':
+            data = SR_line[space_i+1:]
+            trace_line += f"# RECV | data = {data}\n"
+            trace_line += f"0010________00____{data}\n"
+        case 'set':
+            bits = [int(n) for n in SR_line[space_i:].split()]
+            mask = f'{'0'*64}'
+            for bit in bits:
+                mask = list(mask)
+                mask[63-bit] = '1'
+                mask = "".join(mask)
+            trace_line += f"# SEND | mode = SET | bits = {bits}\n"
+            trace_line += f"0001________01____{mask}\n"
+        case 'clear':
+            bits = [int(n) for n in SR_line[space_i:].split()]
+            mask = f'{'0'*64}'
+            for bit in bits:
+                mask = list(mask)
+                mask[bit] = '1'
+                mask = "".join(mask)
+            trace_line += f"# SEND | mode = CLEAR | bits = {bits}\n"
+            trace_line += f"0001________10____{mask}\n"
+        case 'clearall':
+            mask = f'{'1'*64}'
+            trace_line += f"# SEND | mode = CLEAR | bits = [63:0]\n"
+            trace_line += f"0001________10____{mask}\n"
+        case 'assign':
+            data = SR_line[space_i+1:]
+            trace_line += f"# SEND | data = {data}\n"
+            trace_line += f"0010________11____{data}\n"
         case 'wait':
             n = int(SR_line[space_i:])
             trace_line += f"# WAIT for {n} cycles\n"
@@ -527,7 +575,7 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/TU_test_final.txt', 'v/transpose/transpose_send_trace.tr', 'v/transpose/transpose_recv_trace.tr')
+write_trace('scripts/CSR_test_final.txt', 'v/CSR/csr_trace.tr')
 # for i in range(1, 65):
 #     print(f'{-1*i} ', end = '')
 # print('\n')
