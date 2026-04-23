@@ -260,7 +260,7 @@ def parse_CSR_line(SR_line):
             mask = f'{'0'*64}'
             for bit in bits:
                 mask = list(mask)
-                mask[bit] = '1'
+                mask[63-bit] = '1'
                 mask = "".join(mask)
             trace_line += f"# SEND | mode = CLEAR | bits = {bits}\n"
             trace_line += f"0001________10____{mask}\n"
