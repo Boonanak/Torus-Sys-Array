@@ -20,6 +20,7 @@ module upstream_wrapper
   
   , input [packet_width_p-1:0]     packet_i
   , input                          valid_i
+  , input [1:0]                    packet_size_i                     
   , output                         ready_o
 
   // IO
@@ -49,6 +50,7 @@ module upstream_wrapper
 
     ,.packet_i   (packet_i)
     ,.valid_i    (valid_i)
+    ,.packet_size_i (packet_size_i)
     ,.ready_o    (ready_o)
 
     ,.flit_o     (flit_lo)
