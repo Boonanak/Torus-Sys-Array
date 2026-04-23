@@ -6,12 +6,18 @@ synthesis.inputs.input_files: [
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
   "v/Top_level/bsg_test_node_client.v",
   
+  "v/memory/lvt_mem.sv",
+  "v/memory/partition_mem.sv",
+  "v/memory/mem_pkg.sv",
+  "v/memory/banked_mem.sv",
+
   "v/PE/PE_pkg.sv",
   #"v/PE/PE.sv",
   #"v/PE/PE_combine_B_PS.sv",
   #"v/PE/PE_shared_B.sv",
   #"v/PE/PE_final.sv",
-  "v/PE/Pipette_PE.sv",
+  #"v/PE/Pipette_PE.sv",
+  "v/PE/TwistPE.sv",
 
   #"v/transpose/dff_en.v",
   "v/transpose/shift_reg_simple.sv",
@@ -19,6 +25,7 @@ synthesis.inputs.input_files: [
   "v/transpose/transpose.sv",
   #"v/sys_array/col_gen.sv",
   #"v/sys_array/sys_array.sv",
+  "v/sys_array/TwistMesh.sv",
 
   "v/CSR/csr.sv",
 

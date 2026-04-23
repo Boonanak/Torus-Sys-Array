@@ -1,0 +1,3 @@
+[submodule "lib/bsg_stl"]
+	path = lib/bsg_stl
+	url = https://github.com/bespoke-silicon-group/basejump_stl.git
