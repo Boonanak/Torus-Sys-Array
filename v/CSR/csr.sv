@@ -27,8 +27,10 @@ module csr #(   parameter WIDTH_p = 64,
                 2'b11: csr_reg <= data_i;               // Assign mode: directly assign the csr_reg to data_i
                 default: csr_reg <= csr_reg;            // No change to csr_reg
             endcase
-            data_o <= csr_reg; // Output the current value of the CSR register synchronously (not write-through)
+            // data_o <= csr_reg; // Output the current value of the CSR register synchronously (not write-through)
         end
     end
+    
+    assign data_o = csr_reg;
 
 endmodule
