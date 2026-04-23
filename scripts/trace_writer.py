@@ -270,7 +270,7 @@ def parse_CSR_line(SR_line):
             trace_line += f"0001________10____{mask}\n"
         case 'assign':
             data = SR_line[space_i+1:]
-            trace_line += f"# SEND | data = {data}\n"
+            trace_line += f"# SEND | mode = ASSIGN | data = {data}\n"
             trace_line += f"0010________11____{data}\n"
         case 'wait':
             n = int(SR_line[space_i:])
