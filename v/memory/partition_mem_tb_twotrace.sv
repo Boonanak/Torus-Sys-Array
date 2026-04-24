@@ -101,8 +101,8 @@ module partition_mem_tb_twotrace;
         .VECTOR_WIDTH_p     (64),
         .VECTORS_PER_ROW_p  (2),
         .NUM_VECTORS_p      (64),
-        .HARD_CODE_IDENTITY (0),
-        .HARD_CODE_ZERO     (0)
+        .HARD_CODE_IDENTITY (1),
+        .HARD_CODE_ZERO     (1)
     ) (
         .clk_i        ( clk ),
         .reset        ( reset ),
