@@ -25,7 +25,7 @@ module partition_mem_tb_twotrace;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [143:0] tr_data_lo;
+  logic [141:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
@@ -34,13 +34,13 @@ module partition_mem_tb_twotrace;
 
   logic tr_yumi_li, dut_yumi_li;
 
-  partition_mem_send_trace_rom #(.width_p(148),.addr_width_p(32))
+  partition_mem_send_trace_rom #(.width_p(146),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(144)
+  bsg_fsb_node_trace_replay #(.ring_width_p(142)
                              ,.rom_addr_width_p(32) )
     trace_replay_send
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -106,9 +106,9 @@ module partition_mem_tb_twotrace;
     ) (
         .clk_i        ( clk ),
         .reset        ( reset ),
-        .read_addr_i  ( tr_data_lo[134:128] ),
-        .write_addr_i ( tr_data_lo[141:135] ),
-        .wren_i       ( tr_data_lo[143:142] ),
+        .read_addr_i  ( tr_data_lo[133:128] ),
+        .write_addr_i ( tr_data_lo[139:134] ),
+        .wren_i       ( tr_data_lo[141:140] ),
         .write_data_i ( tr_data_lo[127:0] ),
         .read_data_o  ( dut_data_lo[127:0] )
     );
