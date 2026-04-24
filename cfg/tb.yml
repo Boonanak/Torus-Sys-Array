@@ -14,6 +14,7 @@ sim.inputs.tb_input_files: [
   "v/Top_level/Top_level_tb.sv",
   "v/Top_level/Top_level_tb_twotrace.sv",
   
+  "v/memory/memory_tb.sv",
   "v/memory/banked_mem_tb.sv",
 
   #"v/PE/PE_tb.sv",
