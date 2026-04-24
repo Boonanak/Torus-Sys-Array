@@ -113,6 +113,8 @@ module partition_mem_tb_twotrace;
         .read_data_o  ( dut_data_lo[127:0] )
     );
 
+  assign dut_data_lo[141:128] = 14'b0;
+
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
   end
