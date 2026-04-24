@@ -1,4 +1,4 @@
-module memory #(
+module memory_sync #(
      parameter memory_depth_p = 64
     ,parameter elements_per_vector_p = 8
     ,parameter weight_input_width_p = 8
@@ -139,10 +139,16 @@ module memory #(
     assign psum_r_data_o   = psum_r_data_int;
 
     // ---------------------------------------------------------
-    // asynchronous chip io read mux
+    // synchronous chip io read mux
     // ---------------------------------------------------------
+    logic [bank_tag_width_lp-1:0] r_tag_delayed;
+    always_ff @(posedge clk_i) begin
+        if (reset) r_tag_delayed <= '0;
+        else if (chip_io_r_v_i) r_tag_delayed <= r_tag;
+    end
+
     always_comb begin
-        case (r_tag)
+        case (r_tag_delayed)
             'd0:     chip_io_r_data_o = {{(psum_vector_width_lp-weight_input_vector_width_lp){1'b0}}, weight_r_data_int};
             'd1:     chip_io_r_data_o = {{(psum_vector_width_lp-weight_input_vector_width_lp){1'b0}}, input_r_data_int};
             default: chip_io_r_data_o = psum_r_data_int;
@@ -152,12 +158,12 @@ module memory #(
     // ---------------------------------------------------------
     // Memory Instantiations
     // ---------------------------------------------------------
-    bsg_mem_1r1w #(
+    bsg_mem_1r1w_sync #(
          .width_p(weight_input_vector_width_lp) 
         ,.els_p(memory_depth_p)
     ) weight_memory (
-         .w_clk_i(clk_i)
-        ,.w_reset_i(reset)
+         .clk_i(clk_i)
+        ,.reset_i(reset)
         ,.w_v_i(weight_w_v)
         ,.w_addr_i(weight_w_addr)
         ,.w_data_i(weight_w_data)
@@ -166,12 +172,12 @@ module memory #(
         ,.r_data_o(weight_r_data_int)
     );
 
-    bsg_mem_1r1w #(
+    bsg_mem_1r1w_sync #(
          .width_p(weight_input_vector_width_lp) 
         ,.els_p(memory_depth_p)
     ) input_memory (
-         .w_clk_i(clk_i)
-        ,.w_reset_i(reset)
+         .clk_i(clk_i)
+        ,.reset_i(reset)
         ,.w_v_i(input_w_v)
         ,.w_addr_i(input_w_addr)
         ,.w_data_i(input_w_data)
@@ -180,12 +186,12 @@ module memory #(
         ,.r_data_o(input_r_data_int)
     );
 
-    bsg_mem_1r1w #(
+    bsg_mem_1r1w_sync #(
          .width_p(psum_vector_width_lp) 
         ,.els_p(memory_depth_p)
     ) psum_memory (
-         .w_clk_i(clk_i)
-        ,.w_reset_i(reset)
+         .clk_i(clk_i)
+        ,.reset_i(reset)
         ,.w_v_i(psum_w_v)
         ,.w_addr_i(psum_w_addr)
         ,.w_data_i(psum_w_data)
