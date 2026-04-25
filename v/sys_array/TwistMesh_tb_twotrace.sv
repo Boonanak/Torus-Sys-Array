@@ -117,7 +117,7 @@ module TwistMesh_tb_twotrace;
 
     assign in_weight = {tr_data_lo[127:120], tr_data_lo[119:112], tr_data_lo[111:104], tr_data_lo[103:96],
                         tr_data_lo[95:88], tr_data_lo[87:80], tr_data_lo[79:72], tr_data_lo[71:64]};
-    assign in_lock   = tr_data_lo[199:192];
+    assign in_lock   = {>>{tr_data_lo[199:192]}};
     assign in_ifmap  = {tr_data_lo[191:184], tr_data_lo[183:176], tr_data_lo[175:168], tr_data_lo[167:160],
                         tr_data_lo[159:152], tr_data_lo[151:144], tr_data_lo[143:136], tr_data_lo[135:128]};
     assign in_psum   = {tr_data_lo[63:56], tr_data_lo[55:48], tr_data_lo[47:40], tr_data_lo[39:32],
