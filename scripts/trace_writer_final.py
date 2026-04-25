@@ -31,7 +31,7 @@ import numpy as np
 AB_WIDTH = 8
 C_WIDTH = 16
 MATRIX_SIZE = 8
-DELAY = 7
+DELAY = 5
 
 def to_signed_nbit_binary(integer, n_bits):
     """
