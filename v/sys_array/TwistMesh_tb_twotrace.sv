@@ -144,7 +144,7 @@ module TwistMesh_tb_twotrace;
         ,.out_last_o     ( dut_ready_lo ) // Handshake r_o
     );
 
-    assign dut_data_lo[64:56] = out_psum[7];
+    assign dut_data_lo[63:56] = out_psum[7];
     assign dut_data_lo[55:48] = out_psum[6];
     assign dut_data_lo[47:40] = out_psum[5];
     assign dut_data_lo[39:32] = out_psum[4];
