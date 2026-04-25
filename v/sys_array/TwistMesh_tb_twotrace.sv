@@ -29,7 +29,7 @@ module TwistMesh_tb_twotrace;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [204:0] rom_data_lo_send
+  logic [204:0] rom_data_lo_send;
   logic [67:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
