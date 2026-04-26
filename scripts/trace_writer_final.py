@@ -277,7 +277,7 @@ TwistMesh = [
     [['load', None, I, None], None],
     [['compute', I, None, None], ['recv', None, None, I]],
     [['compute', inc_0_63, None, None], ['recv', None, None, inc_0_63]],
-    [['load_compute', inc_0_63_neg, inc_0_63[:, ::-1], Z], ['recv', None, None, inc_0_63_neg]],
+    [['load_compute', inc_0_63_neg, inc_0_63, Z], ['recv', None, None, inc_0_63_neg]],
     [['compute', I, None, None], ['recv', None, None, inc_0_63]],
     [['compute', inc_0_63, None, None], ['recv', None, None, inc_0_63_squared]],
     [['compute', inc_0_63_neg, None, None], ['recv', None, None, inc_0_63_squared_neg]]
