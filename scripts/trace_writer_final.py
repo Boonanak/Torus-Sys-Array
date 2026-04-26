@@ -116,7 +116,7 @@ def write_trace_final(tests, trace_send, trace_recv):
         trace_recv.write(f"# ENDING SIMULATION\n0100__{'0'*64}\n")
     return
 
-def TwistMesh_trace(op, A = None, B = None, C = None):
+def TwistMesh_trace(op, propagate = 0, A = None, B = None, C = None):
     trace_lines = ''
     if A is not None:
         A_binary_rows = matrix_to_binary_rows(A, AB_WIDTH)
@@ -138,24 +138,21 @@ def TwistMesh_trace(op, A = None, B = None, C = None):
             for i in range(len(B)):
                 lock_sig = f'{'0'*MATRIX_SIZE}'
                 lock_sig = lock_sig[:i] + '1' + lock_sig[i+1:]
-                propagate = 0
-                trace_lines += f'# B[{i}] = {B[i]} | lock_sig = {lock_sig} | propagate = 1\n'
-                trace_lines += f'0001________{propagate}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
+                trace_lines += f'# B[{i}] = {B[i]} | lock_sig = {lock_sig} | propagate = {int(propagate)}\n'
+                trace_lines += f'0001________{int(propagate)}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
         case 'compute':
             trace_lines += f'# COMPUTING A * B + C\n'
             for i in range(len(A)):
                 lock_sig = f'{'0'*MATRIX_SIZE}'
-                propagate = 1
-                trace_lines += f'# A[{i}] = {A[i]} | C[{i}] = {C[i] if C is not None else '0'} | propagate = 0\n'
-                trace_lines += f'0001________{propagate}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
+                trace_lines += f'# A[{i}] = {A[i]} | C[{i}] = {C[i] if C is not None else '0'} | propagate = {int(propagate)}\n'
+                trace_lines += f'0001________{int(propagate)}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
         case 'load_compute':
             trace_lines += f'# COMPUTING A * B + C, LOADING new B\n'
             for i in range(len(B)):
                 lock_sig = f'{'0'*MATRIX_SIZE}'
                 lock_sig = lock_sig[:i] + '1' + lock_sig[i+1:]
-                propagate = 1
-                trace_lines += f'# A[{i}] = {A[i]} | B[{i}] = {B[i]} | C[{i}] = {C[i] if C is not None else '0'} | lock_sig = {lock_sig} | propagate = 1\n'
-                trace_lines += f'0001________{propagate}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
+                trace_lines += f'# A[{i}] = {A[i]} | B[{i}] = {B[i]} | C[{i}] = {C[i] if C is not None else '0'} | lock_sig = {lock_sig} | propagate = {int(propagate)}\n'
+                trace_lines += f'0001________{int(propagate)}_{lock_sig}___{A_binary_rows[i]}___{B_binary_rows[i]}___{C_binary_rows[i]}\n'
         case 'recv':
             trace_lines += f'# RECEIVING C\n'
             for i in range(len(C)):
@@ -285,20 +282,29 @@ TwistMesh = [
 
 with open('v/sys_array/TwistMesh_send_trace.tr', 'w') as trace_send, open('v/sys_array/TwistMesh_recv_trace.tr', 'w') as trace_recv:
     trace_recv.write(TwistMesh_trace('recv_noop')*DELAY)
+    propagate = False
+    loading = False
     for instruction in TwistMesh:
-        
+        print('before if statements', loading, propagate)
         if instruction[0] != None:
-            trace_send.write(TwistMesh_trace(instruction[0][0], instruction[0][1], instruction[0][2], instruction[0][3]))
+            if instruction[0][2] is not None:
+                loading = True
+                print('loading check', loading, propagate)
+            elif loading and instruction[0][1] is not None:
+                propagate = not propagate
+                loading = False
+                print('computing check', loading, propagate)
+            trace_send.write(TwistMesh_trace(instruction[0][0], propagate, instruction[0][1], instruction[0][2], instruction[0][3]))
         else:
             trace_send.write(TwistMesh_trace('send_noop')*MATRIX_SIZE)
         if instruction[1] != None:
-            trace_recv.write(TwistMesh_trace(instruction[1][0], instruction[1][1], instruction[1][2], instruction[1][3]))
+            trace_recv.write(TwistMesh_trace(instruction[1][0], 0, instruction[1][1], instruction[1][2], instruction[1][3]))
         else:
             trace_recv.write(TwistMesh_trace('recv_noop')*MATRIX_SIZE)
     trace_send.write(TwistMesh_trace('send_noop')*DELAY)
     trace_send.write(TwistMesh_trace('send_end'))
     trace_recv.write(TwistMesh_trace('recv_end'))
-TwistMesh_trace('load', None, np.identity(8), None)
-TwistMesh_trace('compute', np.arange(0,MATRIX_SIZE**2).reshape(MATRIX_SIZE, MATRIX_SIZE), None, None)
-TwistMesh_trace('recv', None, None, np.identity(8))
+TwistMesh_trace('load', 0, None, np.identity(8), None)
+TwistMesh_trace('compute', 0, np.arange(0,MATRIX_SIZE**2).reshape(MATRIX_SIZE, MATRIX_SIZE), None, None)
+TwistMesh_trace('recv', 0, None, None, np.identity(8))
 
