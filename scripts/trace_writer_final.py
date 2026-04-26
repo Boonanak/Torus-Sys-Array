@@ -268,6 +268,11 @@ inc_0_63_neg = inc_0_63 * -1
 inc_0_63_T = inc_0_63.T
 inc_0_63_squared = inc_0_63 @ inc_0_63
 inc_0_63_squared_neg = inc_0_63_squared * -1
+acc_1 = np.zeros((8,8)) + 1
+inc_0_63_plus_1 = inc_0_63 + 1
+overflow = np.zeros((8,8)) + 127
+overflow_neg = overflow * -1
+
 
 
 TwistMesh = [
@@ -277,7 +282,10 @@ TwistMesh = [
     [['load_compute', inc_0_63_neg, inc_0_63, Z], ['recv', None, None, inc_0_63_neg]],
     [['compute', I, None, None], ['recv', None, None, inc_0_63]],
     [['compute', inc_0_63, None, None], ['recv', None, None, inc_0_63_squared]],
-    [['compute', inc_0_63_neg, None, None], ['recv', None, None, inc_0_63_squared_neg]]
+    [['compute', inc_0_63_neg, None, None], ['recv', None, None, inc_0_63_squared_neg]],
+    [['load_compute', I, overflow, acc_1], ['recv', None, None, inc_0_63_plus_1]],
+    [['compute', overflow, None, Z], None]
+
 ]
 
 with open('v/sys_array/TwistMesh_send_trace.tr', 'w') as trace_send, open('v/sys_array/TwistMesh_recv_trace.tr', 'w') as trace_recv:
