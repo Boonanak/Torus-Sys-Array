@@ -28,6 +28,7 @@ synthesis.inputs.input_files: [
   "v/sys_array/TwistMesh.sv",
 
   "v/CSR/csr.sv",
+  "v/Top_level/depacketizer.sv",
 
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_hardened.v",

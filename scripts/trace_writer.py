@@ -654,13 +654,12 @@ def parse_DP_line(DP_line):
     command = DP_line[:space_i]
     trace_line_send = ''
     trace_line_recv = ''
-    NOOP_send = f'0000____00_{'0'*FLIT_SIZE*NUM_FLITS}'
-    NOOP_recv = f'0000____{'0'*FLIT_SIZE}'
+    NOOP_send = f'# NOOP\n0000____00_{'0'*FLIT_SIZE*NUM_FLITS}\n'
+    NOOP_recv = f'# NOOP\n0000____{'0'*FLIT_SIZE}\n'
     match command.casefold():
         case 'send':
             data_in = DP_line[space_i+1:]
             num_packets = len(data_in) / (FLIT_SIZE/4)
-            print(len(data_in), FLIT_SIZE/4, num_packets)
             trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
             data_in = bin(int(data_in, 16))[2:]
             data_in = data_in.zfill(FLIT_SIZE * NUM_FLITS)
@@ -735,6 +734,6 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-#write_trace('scripts/pipette_pe_test.txt', 'v/PE/Pipette_PE.tr', '')
-print(parse_DP_line('send 1111ABCD')[0])
+write_trace('scripts/DP_test_final.txt', 'v/Top_level/depacketizer_send_trace.tr', 'v/Top_level/depacketizer_recv_trace.tr')
+#print(parse_DP_line('send 1111ABCD')[0])
 
