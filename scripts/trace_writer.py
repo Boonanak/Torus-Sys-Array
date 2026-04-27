@@ -1,5 +1,8 @@
 # Code to generate trace files
 
+FLIT_SIZE = 32
+NUM_FLITS = 4
+
 def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
     index = 0
     tb_type = ''
@@ -18,6 +21,8 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                             trace_lines = parse_TU_2_line(line)
                         case "PM":
                             trace_lines = parse_PM_line(line)
+                        case "DP":
+                            trace_lines = parse_DP_line(line)
                     trace_send.write(trace_lines[0])
                     trace_recv.write(trace_lines[1])
                 index = index + 1
@@ -644,6 +649,61 @@ def parse_ARR_2_line(ARR_line):
             trace_line_recv += ARR_line
     return trace_line_send + '\n', trace_line_recv + '\n'
 
+def parse_DP_line(DP_line):
+    space_i = DP_line.find(' ')
+    command = DP_line[:space_i]
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP_send = f'0000____00_{'0'*FLIT_SIZE*NUM_FLITS}'
+    NOOP_recv = f'0000____{'0'*FLIT_SIZE}'
+    match command.casefold():
+        case 'send':
+            data_in = DP_line[space_i+1:]
+            num_packets = len(data_in) / (FLIT_SIZE/4)
+            print(len(data_in), FLIT_SIZE/4, num_packets)
+            trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:]
+            data_in = data_in.zfill(FLIT_SIZE * NUM_FLITS)
+            num_packets = bin(int(num_packets) - 1)[2:].zfill(2)
+            trace_line_send += f'0001____{num_packets}_{data_in}\n'
+            trace_line_recv += NOOP_recv
+        case 'recv':
+            trace_line_send += NOOP_send
+            data_out = DP_line[space_i+1:]
+            trace_line_recv += f'# RECV | data = {data_out}\n'
+            data_out = bin(int(data_out, 16))[2:]
+            data_out = data_out.zfill(FLIT_SIZE)
+            trace_line_recv += f'0001____{data_out}\n'
+        case 'send_recv':
+            data = DP_line[space_i:].split()
+            data_in = data[0]
+            num_packets = len(data_in) / (FLIT_SIZE/4)
+            trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:]
+            data_in = data_in.zfill(FLIT_SIZE * NUM_FLITS)
+            num_packets = bin(int(num_packets) - 1)[2:].zfill(2)
+            trace_line_send += f'0001____{num_packets}_{data_in}\n'
+            data_out = data[1]
+            trace_line_recv += f'# RECV | data = {data_out}\n'
+            data_out = bin(int(data_out, 16))[2:]
+            data_out = data_out.zfill(FLIT_SIZE)
+            trace_line_recv += f'0001____{data_out}\n'
+        case 'wait':
+            n = int(DP_line[space_i:])
+            trace_line_send += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_send += f"0000__{'0'*64}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000__{'0'*64}\n"
+        case 'end':
+            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*64}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*64}\n"
+        case '###':
+            trace_line_send += DP_line
+            trace_line_recv += DP_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
 def parse_TPU_line(TPU_line):
     return TPU_line
 
@@ -675,9 +735,6 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/PM_test_final.txt', 'v/memory/partition_mem_send_trace.tr', 'v/memory/partition_mem_recv_trace.tr')
-# for i in range(1, 65):
-#     print(f'{-1*i} ', end = '')
-# print('\n')
-# import numpy as np
-# print((np.arange(64).reshape(8, 8).T + 1))
+#write_trace('scripts/pipette_pe_test.txt', 'v/PE/Pipette_PE.tr', '')
+print(parse_DP_line('send 1111ABCD')[0])
+

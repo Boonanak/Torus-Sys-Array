@@ -1,0 +1,8 @@
+DP
+wait 6 
+send 01234567
+recv 01234567
+send 0123456789ABCDEF
+recv 01234567
+recv 89ABCDEF
+end
