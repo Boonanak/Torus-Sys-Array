@@ -51,13 +51,13 @@ module functional_top (
                        .packet_i(output_data_packet), 
                        .valid_i(output_valid), 
                        .ready_o(depacketizer_ready),
-                       .io_clk_i(bsg_link_upstream_clk),
+                       .io_clk_i(core_clk_i),
                        .io_link_reset_i(/*MISSING*/),
                        .async_token_reset_i(/*MISSING*/),
-                       .io_clk_r_o(/*MISSING*/),
+                       .io_clk_r_o(bsg_link_upstream_clk),
                        .io_data_r_o(bsg_link_upstream_data),
                        .io_valid_r_o(bsg_link_upstream_valid),
-                       .token_clk_i(/*MISSING*/),
+                       .token_clk_i(bsg_link_upstream_yumi),
                        );
 
 
