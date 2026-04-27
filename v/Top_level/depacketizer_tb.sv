@@ -30,6 +30,7 @@ module depacketizer_tb;
 
   logic [31:0] rom_addr_li;
   logic [133:0] rom_data_lo_send;
+  logic [35:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
 
