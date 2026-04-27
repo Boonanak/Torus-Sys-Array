@@ -40,7 +40,7 @@ module depacketizer_tb;
         ,.data_o( rom_data_lo_send )
         );
 
-    bsg_fsb_node_trace_replay #(.ring_width_p(138)
+    bsg_fsb_node_trace_replay #(.ring_width_p(130)
                                 ,.rom_addr_width_p(32) )
     trace_replay_send
         ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
