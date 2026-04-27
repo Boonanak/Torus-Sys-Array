@@ -47,7 +47,7 @@ module depacketizer_tb;
         , .reset_i( reset )
         , .en_i( 1'b1 )
 
-        , .v_i    ( dut_v_r )
+        , .v_i    ( 1'b1 )
         , .data_i (  )
         , .ready_o(  )
 
