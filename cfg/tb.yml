@@ -29,6 +29,7 @@ sim.inputs.tb_input_files: [
   #"v/sys_array/sys_array_tb.sv",
   #"v/sys_array/sys_array_tb_twotrace.sv",
   "v/sys_array/TwistMesh_tb.sv",
+  "v/sys_array/TwistMesh_tb_twotrace.sv",
 
 
   #"v/transpose/dff_en_tb.v",
@@ -38,6 +39,7 @@ sim.inputs.tb_input_files: [
   "v/transpose/transpose_tb_twotrace.v",
 
   "v/CSR/csr_tb.sv",
+  "v/memory/partition_mem_tb_twotrace.sv",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
@@ -144,4 +146,9 @@ sim.inputs.trace_files: [
   "v/Top_level/Top_level_send_trace.tr",
 
   "v/CSR/csr_trace.tr",
+  "v/memory/partition_mem_send_trace.tr",
+  "v/memory/partition_mem_recv_trace.tr",
+
+  "v/sys_array/TwistMesh_send_trace.tr",
+  "v/sys_array/TwistMesh_recv_trace.tr",
 ]

@@ -16,6 +16,8 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                             trace_lines = parse_ARR_2_line(line)
                         case "TU":
                             trace_lines = parse_TU_2_line(line)
+                        case "PM":
+                            trace_lines = parse_PM_line(line)
                     trace_send.write(trace_lines[0])
                     trace_recv.write(trace_lines[1])
                 index = index + 1
@@ -282,6 +284,104 @@ def parse_CSR_line(SR_line):
         case '###':
             trace_line += SR_line
     return trace_line + '\n'
+
+def parse_PM_line(MEM_line):
+    space_i = MEM_line.find(' ')
+    command = MEM_line[:space_i] if space_i > 0 else MEM_line
+    instruction_data = MEM_line[space_i:].split() if space_i > 0 else ''
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP = f'0000_00_000000_000000{'_00000000'*16}\n'
+    match command.casefold():
+        case 'read':
+            wr_en = f'_00'
+            write_addr = f'_000000'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[0]), 6)}'
+            write_data = f'{'_00000000'*16}'
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'write':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_000000'
+            write_data = [int(n) for n in instruction_data[2:18]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'read_write':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
+            write_data = [int(n) for n in instruction_data[3:19]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'recv':
+            trace_line_send += NOOP
+            read_data = [int(n) for n in instruction_data[0:16]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'read_recv':
+            wr_en = f'_00'
+            write_addr = f'_000000'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[0]), 6)}'
+            write_data = f'{'_00000000'*16}'
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[1:17]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'write_recv':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_000000'
+            write_data = [int(n) for n in instruction_data[2:18]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[18:34]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'read_write_recv':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
+            write_data = [int(n) for n in instruction_data[3:19]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[19:35]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'wait':
+            n = int(instruction_data[0])
+            for i in range(n):
+                trace_line_send += NOOP
+                trace_line_recv += NOOP
+        case 'end':
+            trace_line_send += f"0100_00_000000_000000_{'_00000000'*16}\n"
+            trace_line_recv += f"0100_00_000000_000000_{'_00000000'*16}\n"
+        case '###':
+            trace_line_send += MEM_line
+            trace_line_recv += MEM_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
 
 def parse_TP_node_line(TU_line):
     space_i = TU_line.find(' ')
@@ -575,7 +675,7 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/CSR_test_final.txt', 'v/CSR/csr_trace.tr')
+write_trace('scripts/PM_test_final.txt', 'v/memory/partition_mem_send_trace.tr', 'v/memory/partition_mem_recv_trace.tr')
 # for i in range(1, 65):
 #     print(f'{-1*i} ', end = '')
 # print('\n')
