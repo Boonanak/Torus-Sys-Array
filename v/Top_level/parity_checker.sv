@@ -7,8 +7,6 @@ module parity_checker #(
     output logic is_parity_o
 );
     
-    always_comb begin
-       assign is_parity_o = (^bits_i) ~^ parity_i;
-    end
+    assign is_parity_o = (^bits_i) ~^ parity_i;
 
 endmodule
