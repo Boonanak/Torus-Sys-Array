@@ -651,7 +651,7 @@ def parse_ARR_2_line(ARR_line):
 
 def parse_DP_line(DP_line):
     space_i = DP_line.find(' ')
-    command = DP_line[:space_i]
+    command = DP_line[:space_i] if space_i > 0 else DP_line
     trace_line_send = ''
     trace_line_recv = ''
     NOOP_send = f'# NOOP\n0000____00_{'0'*FLIT_SIZE*NUM_FLITS}\n'
@@ -735,5 +735,5 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 write_trace('scripts/DP_test_final.txt', 'v/Top_level/depacketizer_send_trace.tr', 'v/Top_level/depacketizer_recv_trace.tr')
-#print(parse_DP_line('send 1111ABCD')[0])
+# print(parse_DP_line('end')[0])
 
