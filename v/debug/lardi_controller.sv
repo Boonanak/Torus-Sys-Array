@@ -21,7 +21,7 @@ module lardi_controller #(
     logic [NUM_CLIENTS_BITWIDTH_lp-1:0] cmd_counter;
     logic counter_reached;
 
-    enum logic state_e {IDLE, CMD_START, COUNTER_RESET, CMD_BUILD} curr, next;
+    enum logic [1:0] state_e {IDLE, CMD_START, COUNTER_RESET, CMD_BUILD} curr, next;
 
     // Combinational logic to determine the next state based on the current state and inputs
     // IDLE simply outputs the current client data, and waits for a command
@@ -30,7 +30,7 @@ module lardi_controller #(
     // CMD_BUILD builds the command up from each bit of lardi_cmd.
     // Once the command has been complete, returns to IDLE with the new client selected.
     always_comb begin
-        counter_reached = cmd_counter == NUM_CLIENTS_BITWIDTH_lp
+        counter_reached = cmd_counter >= NUM_CLIENTS_BITWIDTH_lp;
         case(curr)
             IDLE:           next = lardi_cmd ? CMD_START : IDLE;
             CMD_START:      next = lardi_cmd ? (counter_reached ? COUNTER_RESET : CMD_START) : IDLE;
@@ -44,7 +44,7 @@ module lardi_controller #(
     // waits for command with is NUM_CLIENTS_BITWIDTH_lp bits of 1. 
     // the next NUM_CLIENTS_BITWIDTH_lp bits will be the command
     // Set the command as the new client data source.
-    always_ff @(posedge lardi_clk_i) begin
+    always_ff @(posedge lardi_clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
             current_client <= '0;
             next_client <= '0;
@@ -64,7 +64,7 @@ module lardi_controller #(
                     cmd_counter <= '0;
                 end
                 CMD_BUILD: begin 
-                    next_client[NUM_CLIENTS_BITWIDTH_lp - cmd_counter] <= lardi_cmd;
+                    next_client[NUM_CLIENTS_BITWIDTH_lp - 1 - cmd_counter] <= lardi_cmd;
                     cmd_counter <= cmd_counter + 1;
                 end
             endcase

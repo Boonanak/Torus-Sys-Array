@@ -1,5 +1,5 @@
 module lardi_client #(
-    parameter WIDTH_p = 16 // INVALID for width <= 1
+    parameter WIDTH_p = 16, // INVALID for width <= 1
     parameter logic DIRECTION_p = 0 // 0 for shift out left, 1 for shift out right
 ) (
     input logic lardi_clk_i,
@@ -14,7 +14,7 @@ module lardi_client #(
     // On reset, clear the shift register
     // On capture, load shift reg in parallel with the client data
     // On neither, shift data out once per cycle, shifting in 0s on the right
-    always_ff @(posedge lardi_clk_i) begin
+    always_ff @(posedge lardi_clk_i or negedge reset_n_i) begin
         if (!reset_n_i) begin
             shift_reg <= '0;
         end else if (lardi_capture) begin
@@ -29,7 +29,7 @@ module lardi_client #(
     assign lardi_client_data_o = DIRECTION_p ? shift_reg[0] : shift_reg[WIDTH_p-1];
 
     // Ensure only valid conditions are set for the parameters
-    intial begin
+    initial begin
         assert(WIDTH_p > 1) else $error("WIDTH_p must be greater than 1 for lardi_client");
     end
     
