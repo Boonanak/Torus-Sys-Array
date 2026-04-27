@@ -1,5 +1,4 @@
 // TwistMesh.sv — Twist-WS Mesh: N_p × N_p array of TwistPE
-// Reference: T2SA_gemmini/src/main/scala/gemmini/TwistMesh.scala
 //
 // Two interconnect paths:
 //   BLACK (horizontal): PE(r,c) → PE(r,   c+1) — psum and weight
@@ -25,7 +24,7 @@ module TwistMesh #(
      parameter N_p            = 4                                         // array dimension (must be power of 2)
     ,parameter INPUT_WIDTH_p  = 8
     ,parameter WEIGHT_WIDTH_p = 8
-    ,parameter OUTPUT_WIDTH_p = 16
+    ,parameter OUTPUT_WIDTH_p = 19  // 19b mesh-internal psum (truncated to 16 outside)
 )(
      input  logic                              clk_i
     ,input  logic                              reset_i
