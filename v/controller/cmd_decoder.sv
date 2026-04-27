@@ -51,7 +51,8 @@ module cmd_decoder (
         endcase
     end
 
-    assign flit_ready_o = 1'b1;
+//    assign flit_ready_o = 1'b1;                                       // BUG: never back-pressures upstream — new flit overwrites cmd_n while emit_r=1 holds prior command
+    assign flit_ready_o = !emit_r || cmd_ready_i;                     // T2SA-CTRL: stall upstream while a decoded cmd is held but downstream not ready, so the queued cmd is not silently overwritten
 
     always_comb begin
         st_n   = st_r;
