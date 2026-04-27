@@ -1,6 +1,6 @@
 /*
   Upstream Wrapper
-  Combines: Depacketizer (128 -> 32) + DDR Upstream PHY
+  Combines: Depacketizer (128 -> 32) + DDR Upstream PHY + parity checker
 */
 
 `include "bsg_defines.sv"
@@ -20,8 +20,10 @@ module upstream_wrapper
   
   , input [packet_width_p-1:0]     packet_i
   , input                          valid_i
-  , input [1:0]                    packet_size_i                     
+  , input [1:0]                    packet_size_i   
+  , input                          packet_parity_i                  
   , output                         ready_o
+  , output logic                   parity_error_o
 
   // IO
   , input                          io_clk_i
@@ -37,6 +39,29 @@ module upstream_wrapper
   logic [flit_width_p-1:0] flit_lo;
   logic                    flit_valid_lo;
   logic                    flit_ready_li;
+  logic                    parity_ok_lo;
+  logic                    gated_valid_li;
+
+  // --- Parity Checker Instance ---
+  // Check integrity upon arrival, PARITY GENERATOR SHOULD USE SAME WIDTH_p
+  parity_checker #(.WIDTH_p(128)) input_validator (
+      .bits_i(packet_i),
+      .parity_i(packet_parity_i),
+      .is_parity_o(parity_ok_lo)
+  );
+
+  // --- Error Latch logic ---
+  // Latch the error status whenever a transfer is attempted, (valid_i && ready_o)
+  always_ff @(posedge core_clk_i) begin
+    if (core_reset_i) begin
+      parity_error_o <= 1'b0;
+    end else if (valid_i && ready_o) begin
+      parity_error_o <= !parity_ok_lo;
+    end
+  end
+
+  // Only allow the depacketizer to see 'valid' if the parity check passed.
+  assign gated_valid_li = valid_i && parity_ok_lo;
 
   // --- Depacketizer Instance ---
   // Converts 128-bit memory lines into 32-bit flits
@@ -49,7 +74,7 @@ module upstream_wrapper
     ,.reset_i    (core_reset_i)
 
     ,.packet_i   (packet_i)
-    ,.valid_i    (valid_i)
+    ,.valid_i    (gated_valid_li)
     ,.packet_size_i (packet_size_i)
     ,.ready_o    (ready_o)
 
