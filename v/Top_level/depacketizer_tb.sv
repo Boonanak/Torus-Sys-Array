@@ -85,7 +85,7 @@ module depacketizer_tb;
         , .yumi_i( tr_yumi_li )
 
         , .rom_addr_o(  )
-        , .rom_data_i( rom_data_lo_send )
+        , .rom_data_i( rom_data_lo_recv )
 
         , .done_o()
         , .error_o()
