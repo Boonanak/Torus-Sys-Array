@@ -110,7 +110,7 @@ module depacketizer_tb;
         .valid_i ( tr_v_lo ),
         .packet_size_i ( tr_data_lo[129:128] ),
         .ready_o ( dut_ready_lo ),
-        .flit_o ( dut_data_lo[31:0] ),
+        .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
         .ready_i ( tr_ready_lo & dut_v_lo ) // handshake r_i
     );
