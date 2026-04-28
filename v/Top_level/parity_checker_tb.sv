@@ -79,6 +79,8 @@ module parity_checker_tb;
     );
 
     assign dut_data_lo[16:1] = 0;
+    assign dut_ready_lo = 1;
+    assign dut_v_lo = 1;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
