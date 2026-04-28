@@ -2,7 +2,7 @@
   Upstream Wrapper
   Combines: 
     - Depacketizer (128 -> 32 bit conversion)
-    - Parity Generator (Generates bit for FPGA-side checking)
+    - Parity Generators (Generates parity bits for each half-flit)
     - DDR Upstream PHY (17-bit physical channel)
 */
 
@@ -14,7 +14,7 @@ module upstream_wrapper
   , parameter flit_width_p = 32
   , parameter fifo_els_p   = 4
   
-  , parameter channel_width_p = 17 //16 + parity bit
+  , parameter channel_width_p = 17 // 16 bits data + 1 bit parity
   , parameter num_channels_p  = 1
 ) (
   // Core Interface
@@ -41,11 +41,11 @@ module upstream_wrapper
   logic                    flit_valid_lo;
   logic                    flit_ready_li;
   
-  logic                    flit_parity_bit;
+  logic                    parity_low_lo;
+  logic                    parity_high_lo;
   logic [33:0]             ddr_data_li; 
 
   // --- Depacketizer Instance ---
-  // Converts 128-bit internal packets into 32-bit flits
   depacketizer #(
     .packet_width_p(packet_width_p)
     ,.flit_width_p (flit_width_p)
@@ -62,15 +62,29 @@ module upstream_wrapper
     ,.ready_i    (flit_ready_li)
   );
 
-  // --- Parity Generation ---
-  // Generate parity for the 32b flit so the FPGA can verify it
-  parity_generator #(.WIDTH_p(flit_width_p)) flit_pg (
-      .bits_i(flit_lo)
-      ,.parity_o(flit_parity_bit)
+  // --- Dual Parity Generation ---
+  
+  // Parity for the first half-flit [15:0] (Rising Edge Slice)
+  parity_generator #(.WIDTH_p(16)) pg_low (
+      .bits_i(flit_lo[15:0])
+      ,.parity_o(parity_low_lo)
   );
 
-  // [33]: Unused, [32]: Parity Bit, [31:0]: Data flit
-  assign ddr_data_li = {1'b0, flit_parity_bit, flit_lo};
+  // Parity for the second half-flit [31:16] (Falling Edge Slice)
+  parity_generator #(.WIDTH_p(16)) pg_high (
+      .bits_i(flit_lo[31:16])
+      ,.parity_o(parity_high_lo)
+  );
+
+  // --- Link Mapping (34-bit SDR to 17-bit DDR) ---
+  // Slice 0 (Rising): [16] = Parity Low,  [15:0]  = Data Low
+  // Slice 1 (Falling):[33] = Parity High, [32:17] = Data High
+  assign ddr_data_li = {
+      parity_high_lo,   // Bit 33
+      flit_lo[31:16],   // Bits 32:17
+      parity_low_lo,    // Bit 16
+      flit_lo[15:0]     // Bits 15:0
+  };
 
   // --- DDR Upstream Instance ---
   bsg_link_ddr_upstream #(
