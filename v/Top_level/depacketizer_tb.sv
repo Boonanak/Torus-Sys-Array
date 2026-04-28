@@ -49,8 +49,8 @@ module depacketizer_tb;
         , .en_i( 1'b1 )
 
         , .v_i    ( dut_v_r )
-        , .data_i ( dut_data_r ) // nothing
-        , .ready_o( tr_ready_lo ) // nothing
+        , .data_i (  ) // nothing
+        , .ready_o(  ) // nothing
 
         , .v_o   ( tr_v_lo )
         , .data_o( tr_data_lo )
@@ -79,7 +79,7 @@ module depacketizer_tb;
 
         , .v_i    ( dut_v_r )
         , .data_i ( dut_data_r )
-        , .ready_o(  ) // tr_ready_lo
+        , .ready_o( tr_ready_lo ) // tr_ready_lo
 
         , .v_o   (  )
         , .data_o(  )
