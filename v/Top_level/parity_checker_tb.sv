@@ -21,7 +21,7 @@ module parity_checker_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic dut_data_lo, dut_data_r;
+  logic [16:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
@@ -37,7 +37,7 @@ module parity_checker_tb;
     parity_checker_trace_rom #(.width_p(21),.addr_width_p(32))
     ROM_BPS
         (.addr_i( rom_addr_li )
-        ,.data_o( rom_data_lo_send )
+        ,.data_o( rom_data_lo )
         );
 
     bsg_fsb_node_trace_replay #(.ring_width_p(17)
@@ -75,8 +75,10 @@ module parity_checker_tb;
     ) DUT (
         .bits_i ( tr_data_lo[15:0] ),
         .parity_i ( tr_data_lo[16] ),
-        .is_parity_o ( dut_data_lo )
+        .is_parity_o ( dut_data_lo[0] )
     );
+
+    assign dut_data_lo[16:1] = 0;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
