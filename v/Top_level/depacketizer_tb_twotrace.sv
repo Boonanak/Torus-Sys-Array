@@ -80,8 +80,8 @@ module depacketizer_tb_twotrace;
         , .reset_i( reset )
         , .en_i( 1'b1 )
 
-        , .v_i    ( dut_v_r )
-        , .data_i ( dut_data_r )
+        , .v_i    ( dut_v_r ) // claude was suggesting not gating these? keeping it for now
+        , .data_i ( dut_data_r ) //          "                        "
         , .ready_o( tr_ready_lo ) // tr_ready_lo
 
         , .v_o   (  )
@@ -118,7 +118,7 @@ module depacketizer_tb_twotrace;
         .ready_o ( dut_ready_lo ), // handshake r_o (input side) --> does it accept new packets from send?
         .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
-        .ready_i ( tr_ready_lo ) // handshake r_i --> dut_yumi_li? dut_v_lo (not real handshake)? Claude suggests tr_ready_lo, which hasn't worked well in the past but we will try it
+        .ready_i ( 1'b1 ) // handshake r_i --> dut_yumi_li? dut_v_lo (not real handshake)? Claude suggests tr_ready_lo, which hasn't worked well in the past but we will try it. IT DIDNT WORK. Now we are trying just 1
     );
 
   always_ff @(posedge clk) begin // same thing here, posedge (likely should revert)
