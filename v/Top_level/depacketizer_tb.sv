@@ -85,7 +85,7 @@ module depacketizer_tb;
         .ready_o ( dut_ready_lo ),
         .flit_o ( dut_data_lo[31:0] ),
         .valid_o ( dut_v_lo ),
-        .ready_i ( dut_yumi_li ) // handshake r_i
+        .ready_i ( dut_v_lo ) // handshake r_i --> changed to JUST dut_v_lo since tr_ready_lo hasn't been working
     );
 
 assign dut_data_lo[129:32] = 0;
