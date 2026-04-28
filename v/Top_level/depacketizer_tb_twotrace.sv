@@ -21,7 +21,7 @@ module depacketizer_tb;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [129:0] dut_data_lo, dut_data_r;
+  logic [31:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
@@ -30,7 +30,7 @@ module depacketizer_tb;
 
   logic [31:0] rom_addr_li;
   logic [133:0] rom_data_lo_send;
-  logic [133:0] rom_data_lo_recv;
+  logic [35:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
 
@@ -49,8 +49,8 @@ module depacketizer_tb;
         , .en_i( 1'b1 )
 
         , .v_i    ( dut_v_r )
-        , .data_i ( dut_data_r ) // nothing
-        , .ready_o( tr_ready_lo ) // nothing
+        , .data_i (  ) // nothing
+        , .ready_o(  ) // nothing
 
         , .v_o   ( tr_v_lo )
         , .data_o( tr_data_lo )
@@ -63,6 +63,34 @@ module depacketizer_tb;
         , .error_o()
         );
 
+    // / 4 bit trace command / 32 bit flit /    
+    depacketizer_recv_trace_rom #(.width_p(36),.addr_width_p(32))
+    ROM_BPS_recv
+        (.addr_i( rom_addr_li )
+        ,.data_o( rom_data_lo_recv )
+        );
+
+    bsg_fsb_node_trace_replay #(.ring_width_p(32)
+                                ,.rom_addr_width_p(32) )
+    trace_replay_recv
+        ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
+        , .reset_i( reset )
+        , .en_i( 1'b1 )
+
+        , .v_i    ( dut_v_r )
+        , .data_i ( dut_data_r )
+        , .ready_o( tr_ready_lo ) // tr_ready_lo
+
+        , .v_o   (  )
+        , .data_o(  )
+        , .yumi_i( tr_yumi_li )
+
+        , .rom_addr_o(  )
+        , .rom_data_i( rom_data_lo_recv )
+
+        , .done_o()
+        , .error_o()
+        );
 
   always_ff @(negedge clk) begin
     dut_ready_r <= dut_ready_lo;
@@ -83,12 +111,10 @@ module depacketizer_tb;
         .valid_i ( tr_v_lo ),
         .packet_size_i ( tr_data_lo[129:128] ),
         .ready_o ( dut_ready_lo ),
-        .flit_o ( dut_data_lo[31:0] ),
+        .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
         .ready_i ( dut_yumi_li ) // handshake r_i
     );
-
-assign dut_data_lo[129:32] = 0;
 
   always_ff @(negedge clk) begin
     dut_yumi_li <= tr_ready_lo & dut_v_lo;
