@@ -4,7 +4,7 @@ send        01234567
 wait 3
 recv                                            01234567
 send        0123456789ABCDEF                    
-wait 3
+wait 5
 recv                                            01234567
 recv                                            89ABCDEF
 send        0123456789ABCDEF01010202            
