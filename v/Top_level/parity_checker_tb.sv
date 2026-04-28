@@ -75,7 +75,7 @@ module parity_checker_tb;
     ) DUT (
         .bits_i ( tr_data_lo[15:0] ),
         .parity_i ( tr_data_lo[16] ),
-        .is_parity_o ( dut_data_lo ),
+        .is_parity_o ( dut_data_lo )
     );
 
   always_ff @(negedge clk) begin
