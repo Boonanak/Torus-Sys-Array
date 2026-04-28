@@ -58,27 +58,41 @@ module depacketizer
   // --- Control Logic ---
   assign ready_o = (packet_v_r == 1'b0);
 
-always_comb begin
-    flit_cnt_n    = flit_cnt_r;
-    packet_v_n    = packet_v_r;
-    flit_valid_lo = 1'b0;
+  always_comb begin
+      flit_cnt_n    = flit_cnt_r;
+      packet_v_n    = packet_v_r;
+      flit_valid_lo = 1'b0;
 
-    if (packet_v_r) begin
-      flit_valid_lo = 1'b1;
-      if (fifo_ready_lo) begin
-        flit_cnt_n = flit_cnt_r + 1'b1;
+      if (packet_v_r) begin
+          // Only assert valid if we haven't passed the size
+          // limit should fix 0's from being pushed into fifo
+          case (packet_size_r)
+              2'd1:    flit_valid_lo = (flit_cnt_r <= 2'd0);
+              2'd2:    flit_valid_lo = (flit_cnt_r <= 2'd1);
+              2'd3:    flit_valid_lo = (flit_cnt_r <= 2'd2);
+              default: flit_valid_lo = (flit_cnt_r <= 2'd3);
+          endcase
 
-        case (packet_size_i)
-          2'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
-          2'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
-          2'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
-          default: if (flit_cnt_r == 2'd3) packet_v_n = 1'b0; // Full 4 flits
-        endcase
+          if (flit_valid_lo && fifo_ready_lo) begin
+              flit_cnt_n = flit_cnt_r + 1'b1;
+              
+              // --- Flush packet immediately when last valid flit is accepted
+              case (packet_size_r)
+                  2'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
+                  2'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
+                  2'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
+                  default: if (flit_cnt_r == 2'd3) packet_v_n = 1'b0;
+              endcase
+          end else if (!flit_valid_lo) begin
+              // if for some reason we are in packet_v_r but flit is invalid, exit.
+              packet_v_n = 1'b0;
+          end
+
+      end else if (valid_i && ready_o) begin
+          // START NEW PACKET
+          packet_v_n = 1'b1;
+          flit_cnt_n = '0;
       end
-    end else if (valid_i && ready_o) begin
-      packet_v_n = 1'b1;
-      flit_cnt_n = '0;
-    end
   end
 
   // --- Big Endian Mux ---

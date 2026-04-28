@@ -1,0 +1,85 @@
+/*
+  Downstream Wrapper
+  Combines:
+    - DDR Downstream PHY (17-bit physical channel)
+    - Parity Checkers (Validates each 16 bit half-flit)
+*/
+
+`include "bsg_defines.sv"
+
+module downstream_wrapper
+#(
+  parameter flit_width_p = 32
+  , parameter channel_width_p = 17
+  , parameter num_channels_p  = 1
+) (
+  // Core Interface
+  input                             core_clk_i
+  , input                           core_reset_i
+  
+  , output [flit_width_p-1:0]       flit_o         // reassembled 32b flit
+  , output                          valid_o        
+  , input                           ready_i        
+  , output                          parity_error_o // OR'd error to controller
+
+  // IO Interface
+  , input                           io_clk_i      
+  , input [num_channels_p-1:0][channel_width_p-1:0] io_data_i
+  , input [num_channels_p-1:0]     io_valid_i
+  , output [num_channels_p-1:0]    token_clk_o    
+);
+
+  logic [33:0] ddr_data_lo;
+  logic        phy_valid_lo;
+  logic        phy_ready_li;
+  
+  logic        err_low, err_high;
+  logic        ok_low, ok_high;
+
+  // --- DDR Downstream Instance ---
+  bsg_link_ddr_downstream #(
+    .width_p(34)
+    ,.channel_width_p(channel_width_p)
+    ,.num_channels_p(num_channels_p)
+  ) ddr_down (
+    .core_clk_i         (core_clk_i)
+    ,.core_link_reset_i  (core_reset_i)
+    ,.core_data_o       (ddr_data_lo)
+    ,.core_valid_o      (phy_valid_lo)
+    ,.core_ready_i      (phy_ready_li)
+    ,.io_clk_i           (io_clk_i)
+    ,.io_data_i          (io_data_i)
+    ,.io_valid_i         (io_valid_i)
+    ,.token_clk_r_o      (token_clk_o)
+  );
+
+  // --- Parity Checkers (One per DDR Slice) ---
+
+  // Checker for the Lower 16 bits (Rising Edge Slice)
+  parity_checker #(.WIDTH_p(16)) check_low (
+      .bits_i(ddr_data_lo[15:0])      // Data bits 0-15
+      ,.parity_i(ddr_data_lo[16])     // Parity bit on pin 17 (Rising)
+      ,.is_parity_o(ok_low)
+  );
+
+  // Checker for the Upper 16 bits (Falling Edge Slice)
+  parity_checker #(.WIDTH_p(16)) check_high (
+      .bits_i(ddr_data_lo[32:17])     // Data bits 16-31
+      ,.parity_i(ddr_data_lo[33])     // Parity bit on pin 17 (Falling)
+      ,.is_parity_o(ok_high)
+  );
+
+  // --- Reassembly & Error Logic ---
+
+  // Combine the two halves back together
+  assign flit_o = {ddr_data_lo[32:17], ddr_data_lo[15:0]};
+
+  assign err_low  = !ok_low;
+  assign err_high = !ok_high;
+
+  assign parity_error_o = phy_valid_lo && (err_low || err_high);
+
+  assign valid_o = phy_valid_lo;
+  assign phy_ready_li = ready_i;
+
+endmodule
