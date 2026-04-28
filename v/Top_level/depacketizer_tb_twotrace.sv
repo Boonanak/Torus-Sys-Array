@@ -113,7 +113,7 @@ module depacketizer_tb;
         .ready_o ( dut_ready_lo ),
         .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
-        .ready_i ( dut_yumi_li ) // handshake r_i
+        .ready_i ( dut_yumi_li ) // handshake r_i --> still dut_yumi_li since we are receiving here...
     );
 
   always_ff @(negedge clk) begin
