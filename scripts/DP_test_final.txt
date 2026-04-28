@@ -1,14 +1,17 @@
 DP
 wait 6 
 send        01234567
-send_recv   0123456789ABCDEF                    01234567
-send_recv   0123456789ABCDEF01010202            01234567
-recv                                            89ABCDEF
-send_recv   0123456789ABCDEF0101020203030404    01234567
-recv                                            89ABCDEF
-recv                                            01010202
+recv                                            01234567
+send        0123456789ABCDEF                    
 recv                                            01234567
 recv                                            89ABCDEF
-recv                                            01010202
+send        0123456789ABCDEF01010202            
+recv                                            01234567
+recv                                            89ABCDEF
+recv                                            01010101
+send        0123456789ABCDEF0101020203030404    
+recv                                            01234567
+recv                                            89ABCDEF
+recv                                            01010101
 recv                                            03030404
 end
