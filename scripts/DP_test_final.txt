@@ -1,7 +1,7 @@
 DP
 wait 6 
 send        01234567
-wait 2
+wait 3
 recv                                            01234567
 send        0123456789ABCDEF                    
 recv                                            01234567
