@@ -38,6 +38,7 @@ sim.inputs.tb_input_files: [
 
   "v/CSR/csr_tb.sv",
   "v/Top_level/depacketizer_tb.sv",
+  "v/Top_level/depacketizer_tb_twotrace.sv",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
