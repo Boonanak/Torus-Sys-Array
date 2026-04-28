@@ -659,10 +659,13 @@ def parse_DP_line(DP_line):
     match command.casefold():
         case 'send':
             data_in = DP_line[space_i+1:].strip()
-            num_packets = len(data_in) / (FLIT_SIZE/4)
+            num_packets = int(len(data_in) / (FLIT_SIZE/4))
             trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
             data_in = bin(int(data_in, 16))[2:]
-            data_in = data_in.zfill(FLIT_SIZE) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
+            print(data_in)
+            print(data_in.zfill(FLIT_SIZE))
+            print(FLIT_SIZE*(NUM_FLITS-int(num_packets)))
+            data_in = data_in.zfill(FLIT_SIZE*num_packets) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
             num_packets = bin(int(num_packets) - 1)[2:].zfill(2)
             trace_line_send += f'0001____{num_packets}_{data_in}\n'
             trace_line_recv += NOOP_recv
