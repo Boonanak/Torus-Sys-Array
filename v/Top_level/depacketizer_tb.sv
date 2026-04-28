@@ -50,7 +50,7 @@ module depacketizer_tb;
 
         , .v_i    ( dut_v_r )
         , .data_i (  )
-        , .ready_o(  )
+        , .ready_o( tr_ready_lo )
 
         , .v_o   ( tr_v_lo )
         , .data_o( tr_data_lo )
@@ -79,7 +79,7 @@ module depacketizer_tb;
 
         , .v_i    ( dut_v_r )
         , .data_i ( dut_data_r )
-        , .ready_o( tr_ready_lo )
+        , .ready_o(  ) // tr_ready_lo
 
         , .v_o   (  )
         , .data_o(  )
@@ -113,7 +113,7 @@ module depacketizer_tb;
         .ready_o ( dut_ready_lo ),
         .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
-        .ready_i ( tr_ready_lo & dut_v_lo ) // handshake r_i
+        .ready_i ( dut_yumi_li ) // handshake r_i
     );
 
   always_ff @(negedge clk) begin
