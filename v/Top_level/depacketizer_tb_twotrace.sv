@@ -35,6 +35,7 @@ module depacketizer_tb_twotrace;
   logic [35:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
+  logic tr_yumi_send, tr_yumi_recv;
 
     // / 4 bit trace command / 2 bit packet size / 128 bit packet /
     depacketizer_send_trace_rom #(.width_p(134),.addr_width_p(32))
