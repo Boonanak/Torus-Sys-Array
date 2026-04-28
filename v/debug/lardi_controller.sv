@@ -21,7 +21,8 @@ module lardi_controller #(
     logic [NUM_CLIENTS_BITWIDTH_lp-1:0] cmd_counter;
     logic counter_reached;
 
-    enum logic [1:0] state_e {IDLE, CMD_START, COUNTER_RESET, CMD_BUILD} curr, next;
+    typedef enum logic [1:0] {IDLE, CMD_START, COUNTER_RESET, CMD_BUILD} state_e;
+    state_e curr, next;
 
     // Combinational logic to determine the next state based on the current state and inputs
     // IDLE simply outputs the current client data, and waits for a command
@@ -36,7 +37,6 @@ module lardi_controller #(
             CMD_START:      next = lardi_cmd ? (counter_reached ? COUNTER_RESET : CMD_START) : IDLE;
             COUNTER_RESET:  next = CMD_BUILD;
             CMD_BUILD:      next = counter_reached ? IDLE : CMD_BUILD;
-            default:        next = IDLE;
         endcase
     end
 
