@@ -97,10 +97,10 @@ module depacketizer_tb_twotrace;
 
   always_ff @(posedge clk) begin // according to Claude, this negedge sequential block adds 1/2 cycle delay. let's try making it posedge?
     dut_ready_r  <= dut_ready_lo;
-    tr_yumi_li   <= dut_ready_r & tr_v_lo;
+    //tr_yumi_li   <= dut_ready_r & tr_v_lo;
     tr_yumi_send <= dut_ready_lo & tr_v_lo;
     tr_yumi_recv <= dut_v_lo & tr_ready_lo;
-    //tr_yumi_li   <= 1;
+    tr_yumi_li   <= 1;
     dut_v_r      <= dut_v_lo;
     dut_data_r   <= dut_data_lo;
   end
