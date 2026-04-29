@@ -80,8 +80,8 @@ module depacketizer_tb_twotrace;
         , .reset_i( reset )
         , .en_i( 1'b1 )
 
-        , .v_i    ( dut_v_r ) // claude was suggesting not gating these? keeping it for now
-        , .data_i ( dut_data_r ) //          "                        "
+        , .v_i    ( dut_v_lo ) // claude was suggesting not gating these? TRYING UNREGISTERED VERSION
+        , .data_i ( dut_data_lo ) //          "                        "
         , .ready_o( tr_ready_lo ) // tr_ready_lo
 
         , .v_o   (  )
