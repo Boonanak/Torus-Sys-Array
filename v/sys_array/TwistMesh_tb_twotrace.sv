@@ -33,6 +33,7 @@ module TwistMesh_tb_twotrace;
   logic [131:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
+  logic tr_yumi_send, tr_yumi_recv; // NEW
 
   TwistMesh_send_trace_rom #(.width_p(269),.addr_width_p(32))
     ROM_BPS_send
@@ -75,8 +76,8 @@ module TwistMesh_tb_twotrace;
       , .reset_i( reset )
       , .en_i( 1'b1 )
 
-      , .v_i    ( dut_v_r )
-      , .data_i ( dut_data_r )
+      , .v_i    ( dut_v_lo ) // NEW (no longer registered)
+      , .data_i ( dut_data_r ) // NEW (no longer registered)
       , .ready_o( tr_ready_lo )
 
       , .v_o   (  )
