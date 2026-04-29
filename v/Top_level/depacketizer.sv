@@ -56,6 +56,8 @@ module depacketizer
   logic flit_valid_lo;
 
   // --- Control Logic ---
+  assign ready_o = (packet_v_r == 1'b0);
+
   always_comb begin
       flit_cnt_n    = flit_cnt_r;
       packet_v_n    = packet_v_r;
