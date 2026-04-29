@@ -14,7 +14,7 @@ module downstream_wrapper_tb_twotrace;
 
   // Core Clock
   logic core_clk;
-  bsg_nonsynth_clock_gen #(12000) clk_gen_1 (core_clk)
+  bsg_nonsynth_clock_gen #(12000) clk_gen_2 (core_clk);
 
   /* Non-synth reset generator */
   logic reset;
@@ -100,7 +100,7 @@ module downstream_wrapper_tb_twotrace;
     , .error_o()
     );
 
-  depacketizer #(
+  downstream_wrapper #(
     .flit_width_p(32),
     .channel_width_p(17),
     .num_channels_p(1)
