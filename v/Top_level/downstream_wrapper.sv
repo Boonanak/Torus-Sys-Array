@@ -14,26 +14,25 @@ module downstream_wrapper
   , parameter num_channels_p  = 1
 ) (
   // Core Interface
-  input                             core_clk_i
-  , input                           core_reset_i
+  input                               core_clk_i
+  , input                             core_reset_i
   
-  , output [flit_width_p-1:0]       flit_o         // reassembled 32b flit
-  , output                          valid_o        
-  , input                           ready_i        
-  , output                          parity_error_o // OR'd error to controller
+  , output [flit_width_p-1:0]         flit_o         // reassembled 32b flit
+  , output                            valid_o         
+  , input                             ready_i         
+  , output                            parity_error_o // OR'd error to controller
 
   // IO Interface
-  , input                           io_clk_i      
+  , input [num_channels_p-1:0]        io_clk_i      
+  , input [num_channels_p-1:0]        io_link_reset_i // Synchronous to io_clk_i
   , input [num_channels_p-1:0][channel_width_p-1:0] io_data_i
-  , input [num_channels_p-1:0]     io_valid_i
-  , output [num_channels_p-1:0]    token_clk_o    
+  , input [num_channels_p-1:0]        io_valid_i
+  , output [num_channels_p-1:0]       token_clk_o    
 );
 
   logic [33:0] ddr_data_lo;
   logic        phy_valid_lo;
-  logic        phy_ready_li;
   
-  logic        err_low, err_high;
   logic        ok_low, ok_high;
 
   // --- DDR Downstream Instance ---
@@ -42,15 +41,16 @@ module downstream_wrapper
     ,.channel_width_p(channel_width_p)
     ,.num_channels_p(num_channels_p)
   ) ddr_down (
-    .core_clk_i         (core_clk_i)
-    ,.core_link_reset_i  (core_reset_i)
-    ,.core_data_o       (ddr_data_lo)
-    ,.core_valid_o      (phy_valid_lo)
-    ,.core_ready_i      (phy_ready_li)
-    ,.io_clk_i           (io_clk_i)
-    ,.io_data_i          (io_data_i)
-    ,.io_valid_i         (io_valid_i)
-    ,.token_clk_r_o      (token_clk_o)
+    .core_clk_i           (core_clk_i)
+    ,.core_link_reset_i    (core_reset_i)
+    ,.io_link_reset_i      (io_link_reset_i)
+    ,.core_data_o         (ddr_data_lo)
+    ,.core_valid_o        (phy_valid_lo)
+    ,.core_yumi_i         (phy_valid_lo & ready_i)
+    ,.io_clk_i            (io_clk_i)
+    ,.io_data_i           (io_data_i)
+    ,.io_valid_i          (io_valid_i)
+    ,.core_token_r_o      (token_clk_o)
   );
 
   // --- Parity Checkers (One per DDR Slice) ---
@@ -74,12 +74,8 @@ module downstream_wrapper
   // Combine the two halves back together
   assign flit_o = {ddr_data_lo[32:17], ddr_data_lo[15:0]};
 
-  assign err_low  = !ok_low;
-  assign err_high = !ok_high;
-
-  assign parity_error_o = phy_valid_lo && (err_low || err_high);
+  assign parity_error_o = phy_valid_lo && (!ok_low || !ok_high);
 
   assign valid_o = phy_valid_lo;
-  assign phy_ready_li = ready_i;
 
 endmodule
