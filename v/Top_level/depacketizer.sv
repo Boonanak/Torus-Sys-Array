@@ -45,10 +45,11 @@ module depacketizer
 );
 
   localparam num_flits_lp = packet_width_p / flit_width_p;
+  localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1;
 
-  logic [1:0] packet_size_r, packet_size_n;
-  logic [1:0] flit_cnt_r, flit_cnt_n;
-  logic [127:0] packet_r, packet_n;
+  logic [flit_cnt_width_lp-1:0] packet_size_r, packet_size_n;
+  logic [flit_cnt_width_lp-1:0] flit_cnt_r, flit_cnt_n;
+  logic [packet_width_p-1:0] packet_r, packet_n;
 
   assign ready_o = (flit_cnt_r >= packet_size_r);
   assign valid_o = (flit_cnt_r <= packet_size_r);
