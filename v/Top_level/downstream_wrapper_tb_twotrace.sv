@@ -5,7 +5,7 @@ module downstream_wrapper_tb_twotrace;
   /* Dump Test Waveform To VPD File */
   initial begin
   $fsdbDumpfile("waveform.fsdb");
-  $fsdbDumpvars();
+  $fsdbDumpvars("+all");
   end
 
   /* Non-synth clock generator */
