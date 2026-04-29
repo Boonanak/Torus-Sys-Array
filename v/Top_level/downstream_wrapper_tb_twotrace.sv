@@ -26,7 +26,7 @@ module downstream_wrapper_tb_twotrace;
 
   // IO clock runs at half the speed of the testbench clock
   logic io_clk;
-  always_ff(@posedge clk) begin
+  always_ff @(posedge clk) begin
     if(reset) io_clk = 0;
     else      io_clk = ~io_clk;
   end
