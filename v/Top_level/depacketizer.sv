@@ -51,8 +51,8 @@ module depacketizer
   logic [flit_cnt_width_lp-1:0] flit_cnt_r, flit_cnt_n;
   logic [packet_width_p-1:0] packet_r, packet_n;
 
-  //assign ready_o = (flit_cnt_r >= packet_size_r);
-  assign ready_o = 1'b1;
+  assign ready_o = (flit_cnt_r >= packet_size_r);
+  // assign ready_o = 1'b1; // --> this is if we want the ready_o signal to be accurate and not just a warning
   assign valid_o = (flit_cnt_r < packet_size_r);
   assign flit_o = packet_r[((num_flits_lp - 1) - flit_cnt_r) * flit_width_p +: flit_width_p];
 
