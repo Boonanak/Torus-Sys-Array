@@ -41,6 +41,8 @@ sim.inputs.tb_input_files: [
   "v/Top_level/depacketizer_tb_twotrace.sv",
   "v/Top_level/parity_checker_tb.sv",
   "v/Top_level/parity_generator_tb.sv",
+  "v/Top_level/downstream_wrapper_tb_twotrace.sv",
+  #"v/Top_level/upstream_wrapper_tb_twotrace.sv",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
@@ -151,6 +153,10 @@ sim.inputs.trace_files: [
   "v/Top_level/depacketizer_recv_trace.tr",
   "v/Top_level/parity_checker_trace.tr",
   "v/Top_level/parity_generator_trace.tr",
+  "v/Top_level/downstream_wrapper_send_trace.tr",
+  "v/Top_level/downstream_wrapper_recv_trace.tr",
+  #"v/Top_level/upstream_wrapper_send_trace.tr",
+  #"v/Top_level/upstream_wrapper_recv_trace.tr",
 
   "v/sys_array/TwistMesh_send_trace.tr",
   "v/sys_array/TwistMesh_recv_trace.tr",

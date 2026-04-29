@@ -31,6 +31,8 @@ synthesis.inputs.input_files: [
   "v/Top_level/depacketizer.sv",
   "v/Top_level/parity_checker.sv",
   "v/Top_level/parity_generator.sv",
+  "v/Top_level/downstream_wrapper.sv",
+  "v/Top_levle/upstream_wrapper.sv",
 
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_hardened.v",
