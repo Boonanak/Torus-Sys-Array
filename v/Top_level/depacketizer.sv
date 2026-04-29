@@ -67,10 +67,11 @@ module depacketizer
           // Only assert valid if we haven't passed the size
           // limit should fix 0's from being pushed into fifo
           case (packet_size_r)
-              2'd1:    flit_valid_lo = (flit_cnt_r <= 2'd0);
-              2'd2:    flit_valid_lo = (flit_cnt_r <= 2'd1);
-              2'd3:    flit_valid_lo = (flit_cnt_r <= 2'd2);
-              default: flit_valid_lo = (flit_cnt_r <= 2'd3);
+              2'd0:    flit_valid_lo = (flit_cnt_r <= 2'd0);
+              2'd1:    flit_valid_lo = (flit_cnt_r <= 2'd1);
+              2'd2:    flit_valid_lo = (flit_cnt_r <= 2'd2);
+              2'd3:    flit_valid_lo = (flit_cnt_r <= 2'd3);
+              default: flit_valid_lo = (flit_cnt_r <= 2'd0);
           endcase
 
           if (flit_valid_lo && fifo_ready_lo) begin
@@ -78,10 +79,11 @@ module depacketizer
               
               // --- Flush packet immediately when last valid flit is accepted
               case (packet_size_r)
-                  2'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
-                  2'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
-                  2'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
-                  default: if (flit_cnt_r == 2'd3) packet_v_n = 1'b0;
+                  2'd0:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
+                  2'd1:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
+                  2'd2:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
+                  2'd3:    if (flit_cnt_r == 2'd3) packet_v_n = 1'b0;
+                  default: if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
               endcase
           end else if (!flit_valid_lo) begin
               // if for some reason we are in packet_v_r but flit is invalid, exit.
