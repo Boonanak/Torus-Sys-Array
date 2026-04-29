@@ -8,10 +8,10 @@ recv                                            89ABCDEF
 send        0123456789ABCDEF01010202            
 recv                                            01234567
 recv                                            89ABCDEF
-recv                                            01010101
+recv                                            01010202
 send        0123456789ABCDEF0101020203030404    
 recv                                            01234567
 recv                                            89ABCDEF
-recv                                            01010101
+recv                                            01010202
 recv                                            03030404
 end
