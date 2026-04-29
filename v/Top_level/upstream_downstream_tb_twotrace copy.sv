@@ -100,6 +100,11 @@ module upstream_downstream_tb_twotrace;
     , .error_o()
     );
 
+  logic token_clk;
+  logic io_valid;
+  logic io_clk_o;
+  logic [0:0][16:0] io_data;
+
   upstream_wrapper #(
     .packet_width_p(128),
     .flit_width_p(32),
@@ -108,19 +113,19 @@ module upstream_downstream_tb_twotrace;
     .num_channels_p(1)
   ) DUT_upstream (
     .core_clk_i ( core_clk ),
-    .core_reset_i ( reset ),
-    .packet_i (  ),
-    .valid_i ( tr_v_lo ), // handshake v_i --> comes from send side v_o
-    .packet_size_i(  ),
-    .ready_o(  ), // handshake r_o --> goes to send side r_i
+    .core_reset_i ( reset ),        
+    .packet_i ( tr_data_lo[127:0] ),        // input data from send trace replay
+    .valid_i ( tr_v_lo ),                   // handshake v_i --> comes from send side v_o
+    .packet_size_i( tr_data_lo[129:128] ),  // input data from send trace replay
+    .ready_o(  ),                           // handshake r_o --> goes to send side r_i
 
     .io_clk_i ( io_clk ),
     .io_link_reset_i (  ),
     .async_token_reset_i (  ),
-    .io_clk_r_o (  ),
-    .io_data_r_o (  ),
-    .io_valid_r_o (  ),
-    .token_clk_i (  )
+    .io_clk_r_o ( io_clk_o ),               // output clk to downstream
+    .io_data_r_o ( io_data ),               // output data to downstream
+    .io_valid_r_o ( io_valid ),             // handshake v_o --> gpes to downstream v_i
+    .token_clk_i ( token_clk )              // essentially handshake r_i, comes from downstream r_o
   );
 
   downstream_wrapper #(
@@ -130,15 +135,15 @@ module upstream_downstream_tb_twotrace;
   ) DUT_downstream (
     .core_clk_i ( core_clk ),
     .core_reset_i ( reset ),
-    .flit_o ( dut_data_lo[31:0] ),
-    .valid_o ( dut_v_lo ),       // handshake v_o --> goes to receive side v_i
-    .ready_i ( 1'b1 ),    // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
-    .parity_error_o ( dut_data_lo[32] ),
+    .flit_o ( dut_data_lo[31:0] ),          // output data to recv trace replay
+    .valid_o ( dut_v_lo ),                  // handshake v_o --> goes to receive side v_i
+    .ready_i ( 1'b1 ),                      // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
+    .parity_error_o ( dut_data_lo[32] ),    // output data to recv trace replay
 
-    .io_clk_i ( io_clk ),
-    .io_data_i ( tr_data_lo[16:0] ),
-    .io_valid_i (  ),     // handshake v_i --> comes from upstream v_o
-    .token_clk_o ( dut_data_lo[33] ) // will be used for handshake r_o
+    .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
+    .io_data_i ( io_data ),                 // input data should come from upstream
+    .io_valid_i ( io_valid ),               // handshake v_i --> comes from upstream v_o
+    .token_clk_o ( token_clk )              // essentially handshake r_o, will go to upstream r_i
   );
 
 endmodule
