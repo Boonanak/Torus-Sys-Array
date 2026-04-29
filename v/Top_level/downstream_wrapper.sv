@@ -42,15 +42,16 @@ module downstream_wrapper
     ,.channel_width_p(channel_width_p)
     ,.num_channels_p(num_channels_p)
   ) ddr_down (
-    .core_clk_i         (core_clk_i)
+    .core_clk_i          (core_clk_i)
     ,.core_link_reset_i  (core_reset_i)
-    ,.core_data_o       (ddr_data_lo)
-    ,.core_valid_o      (phy_valid_lo)
-    ,.core_ready_i      (phy_ready_li)
+    ,.io_link_reset_i    (core_reset_i) // added this signal... set to core_reset_i for now but should we change?
+    ,.core_data_o        (ddr_data_lo)
+    ,.core_valid_o       (phy_valid_lo)
+    ,.core_yumi_i        (phy_ready_li) // changed from core_ready_i to core_yumi_i
     ,.io_clk_i           (io_clk_i)
     ,.io_data_i          (io_data_i)
     ,.io_valid_i         (io_valid_i)
-    ,.token_clk_r_o      (token_clk_o)
+    ,.core_token_r_o     (token_clk_o) // changed from token_clk_r_o to core_token_r_o
   );
 
   // --- Parity Checkers (One per DDR Slice) ---
