@@ -48,7 +48,7 @@ module TwistMesh_tb_twotrace;
       , .reset_i( reset )
       , .en_i( 1'b1 )
 
-      , .v_i    ( dut_v_r )
+      , .v_i    (  )
       , .data_i (  )
       , .ready_o(  )
 
