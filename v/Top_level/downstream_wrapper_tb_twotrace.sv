@@ -109,7 +109,7 @@ module downstream_wrapper_tb_twotrace;
     .core_reset_i ( reset ),
     .flit_o ( dut_data_lo[31:0] ),
     .valid_o ( dut_v_lo ),       // handshake v_o --> goes to receive side v_i
-    .ready_i ( tr_ready_lo ),    // handshake r_i --> comes from receive side r_o
+    .ready_i ( 1'b1 ),    // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
     .parity_error_o ( dut_data_lo[32] ),
 
     .io_clk_i ( io_clk ),
