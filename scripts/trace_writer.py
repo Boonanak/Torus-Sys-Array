@@ -23,6 +23,8 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                             trace_lines = parse_PM_line(line)
                         case "DP":
                             trace_lines = parse_DP_line(line)
+                        case "DS":
+                            trace_lines = parse_DS_line(line)
                     trace_send.write(trace_lines[0])
                     trace_recv.write(trace_lines[1])
                 index = index + 1
@@ -703,6 +705,65 @@ def parse_DP_line(DP_line):
             trace_line_recv += DP_line
     return trace_line_send + '\n', trace_line_recv + '\n'
 
+def parse_DS_line(DS_line):
+    space_i = DS_line.find(' ')
+    command = DS_line[:space_i] if space_i > 0 else DS_line
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP_send = f'# NOOP\n0000____0_{'0'*int(FLIT_SIZE/2)}\n'
+    NOOP_recv = f'# NOOP\n0000____0_0_{'0'*FLIT_SIZE}\n'
+    match command.casefold():
+        case 'send':
+            data_in = DS_line[space_i+1:].strip()
+            trace_line_send += f'# SEND | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:].zfill(int(FLIT_SIZE/2))
+            parity = False
+            for bit in data_in:
+                if bit == '1':
+                    parity = not parity
+            trace_line_send += f'0001____{int(parity)}_{data_in}\n'
+            trace_line_recv += NOOP_recv
+        case 'recv':
+            trace_line_send += NOOP_send
+            data_out = DS_line[space_i+1:].split()
+            token_clock = int(data_out[1])
+            data_out = data_out[0]
+            trace_line_recv += f'# RECV | data = {data_out} | token count = {token_clock}\n'
+            data_out = bin(int(data_out, 16))[2:].zfill(FLIT_SIZE)
+            parity_error = False
+            trace_line_recv += f'0010____{int(parity_error)}_{token_clock}_{data_out}\n'
+        case 'send_recv':
+            data = DS_line[space_i:].split()
+            data_in = data[0]
+            trace_line_send += f'# SEND | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:].zfill(int(FLIT_SIZE/2))
+            parity = False
+            for bit in data_in:
+                if bit == '1':
+                    parity = not parity
+            trace_line_send += f'0001____{int(parity)}_{data_in}\n'
+            data_out = data[1]
+            token_clock = data[2]
+            trace_line_recv += f'# RECV | data = {data_out} | token count = {token_clock}\n'
+            data_out = bin(int(data_out, 16))[2:].zfill(FLIT_SIZE)
+            parity_error = False
+            trace_line_recv += f'0010____{int(parity_error)}_{token_clock}_{data_out}\n'
+        case 'wait':
+            n = int(DS_line[space_i:])
+            trace_line_send += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_send += f"0000____0_{'0'*int(FLIT_SIZE/2)}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000____0_0_{'0'*FLIT_SIZE}\n"
+        case 'end':
+            trace_line_send += f"# ENDING SIMULATION\n0100____0_{'0'*int(FLIT_SIZE/2)}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100____0_0_{'0'*FLIT_SIZE}\n"
+        case '###':
+            trace_line_send += DS_line
+            trace_line_recv += DS_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
 def parse_TPU_line(TPU_line):
     return TPU_line
 
@@ -734,6 +795,6 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/DP_test_final.txt', 'v/Top_level/depacketizer_send_trace.tr', 'v/Top_level/depacketizer_recv_trace.tr')
+write_trace('scripts/DS_test_final.txt', 'v/Top_level/downstream_wrapper_send_trace.tr', 'v/Top_level/downstream_wrapper_recv_trace.tr')
 # print(parse_DP_line('end')[0])
 
