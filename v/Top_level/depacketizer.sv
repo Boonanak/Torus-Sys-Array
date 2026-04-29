@@ -52,7 +52,7 @@ module depacketizer
   logic [packet_width_p-1:0] packet_r, packet_n;
 
   assign ready_o = (flit_cnt_r >= packet_size_r);
-  assign valid_o = (flit_cnt_r <= packet_size_r);
+  assign valid_o = (flit_cnt_r < packet_size_r);
   assign flit_o = packet_r[((num_flits_lp - 1) - flit_cnt_r) * flit_width_p +: flit_width_p];
 
   always_comb begin 
