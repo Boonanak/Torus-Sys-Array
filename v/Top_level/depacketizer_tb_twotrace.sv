@@ -69,7 +69,7 @@ module depacketizer_tb_twotrace;
     // / 4 bit trace command / 32 bit flit /    
     depacketizer_recv_trace_rom #(.width_p(36),.addr_width_p(32))
     ROM_BPS_recv
-        (.addr_i( rom_addr_send_li ) // recv address
+        (.addr_i( rom_addr_recv_li ) // recv address
         ,.data_o( rom_data_lo_recv )
         );
 
