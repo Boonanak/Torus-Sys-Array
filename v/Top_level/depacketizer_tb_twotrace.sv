@@ -51,13 +51,13 @@ module depacketizer_tb_twotrace;
         , .reset_i( reset )
         , .en_i( 1'b1 )
 
-        , .v_i    ( 1'b0 ) // in theory, there should be no valid_i, since send side is not checking any inputs. previously dut_v_r, now 0
-        , .data_i ( 0 ) // nothing
+        , .v_i    ( dut_v_r ) // in theory, there should be no valid_i, since send side is not checking any inputs. previously dut_v_r, now 0
+        , .data_i (  ) // nothing
         , .ready_o(  ) // nothing
 
         , .v_o   ( tr_v_lo )
         , .data_o( tr_data_lo )
-        , .yumi_i( tr_yumi_send ) // acknowledge send trace replay's output (DUT consumed the packet). previously gated dut_ready_r & tr_v_lo, now gated dut_ready_lo & tr_v_lo
+        , .yumi_i( tr_yumi_li ) // acknowledge send trace replay's output (DUT consumed the packet). previously gated dut_ready_r & tr_v_lo, now gated dut_ready_lo & tr_v_lo
 
         , .rom_addr_o( rom_addr_send_li ) // new send address
         , .rom_data_i( rom_data_lo_send )
@@ -69,7 +69,7 @@ module depacketizer_tb_twotrace;
     // / 4 bit trace command / 32 bit flit /    
     depacketizer_recv_trace_rom #(.width_p(36),.addr_width_p(32))
     ROM_BPS_recv
-        (.addr_i( rom_addr_recv_li ) // recv address
+        (.addr_i( rom_addr_send_li ) // recv address
         ,.data_o( rom_data_lo_recv )
         );
 
@@ -86,7 +86,7 @@ module depacketizer_tb_twotrace;
 
         , .v_o   (  )
         , .data_o(  )
-        , .yumi_i( tr_yumi_recv ) // should be driven by DUT output (did DUT produce a flit that recv accepted). previously, gated dut_ready_r & tr_v_lo, now gated dut_v_lo & tr_ready_lo
+        , .yumi_i( tr_yumi_li ) // should be driven by DUT output (did DUT produce a flit that recv accepted). previously, gated dut_ready_r & tr_v_lo, now gated dut_v_lo & tr_ready_lo
 
         , .rom_addr_o( rom_addr_recv_li ) // new recv address
         , .rom_data_i( rom_data_lo_recv )
@@ -100,6 +100,7 @@ module depacketizer_tb_twotrace;
     //tr_yumi_li   <= dut_ready_r & tr_v_lo;
     tr_yumi_send <= dut_ready_lo & tr_v_lo;
     tr_yumi_recv <= dut_v_lo & tr_ready_lo;
+    tr_yumi_li   <= 1;
     dut_v_r      <= dut_v_lo;
     dut_data_r   <= dut_data_lo;
   end
@@ -118,7 +119,7 @@ module depacketizer_tb_twotrace;
         .ready_o ( dut_ready_lo ), // handshake r_o (input side) --> does it accept new packets from send?
         .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
-        .ready_i ( tr_ready_lo ) // handshake r_i --> dut_yumi_li? dut_v_lo (not real handshake)? Claude suggests tr_ready_lo, which hasn't worked well in the past but we will try it. IT DIDNT WORK. Now we are trying just 1
+        .ready_i ( tr_ready_lo & dut_v_lo ) // handshake r_i --> dut_yumi_li? dut_v_lo (not real handshake)? Claude suggests tr_ready_lo, which hasn't worked well in the past but we will try it. IT DIDNT WORK. Now we are trying just 1
     );
 
   always_ff @(posedge clk) begin // same thing here, posedge (likely should revert)
