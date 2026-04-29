@@ -3,6 +3,7 @@ wait 6
 send        01234567
 wait 2
 recv                                            01234567
+wait 6
 send        0123456789ABCDEF                    
 wait 2
 recv                                            01234567
