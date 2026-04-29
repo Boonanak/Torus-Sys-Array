@@ -5,7 +5,7 @@
     - Parity Checkers (Validates each 16 bit half-flit)
 */
 
-`include "bsg_defines.sv"
+`include "bsg_defines.v"
 
 module downstream_wrapper
 #(
