@@ -51,7 +51,7 @@ module depacketizer_tb_twotrace;
         , .reset_i( reset )
         , .en_i( 1'b1 )
 
-        , .v_i    ( dut_v_r ) // in theory, there should be no valid_i, since send side is not checking any inputs. previously dut_v_r, now 0
+        , .v_i    (  ) // in theory, there should be no valid_i, since send side is not checking any inputs. previously dut_v_r, now 0
         , .data_i (  ) // nothing
         , .ready_o(  ) // nothing
 
