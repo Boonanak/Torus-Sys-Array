@@ -654,7 +654,7 @@ def parse_DP_line(DP_line):
     command = DP_line[:space_i] if space_i > 0 else DP_line
     trace_line_send = ''
     trace_line_recv = ''
-    NOOP_send = f'# NOOP\n0000____00_{'0'*FLIT_SIZE*NUM_FLITS}\n'
+    NOOP_send = f'# NOOP\n0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n'
     NOOP_recv = f'# NOOP\n0000____{'0'*FLIT_SIZE}\n'
     match command.casefold():
         case 'send':
@@ -691,12 +691,12 @@ def parse_DP_line(DP_line):
             n = int(DP_line[space_i:])
             trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_send += f"0000____00_{'0'*FLIT_SIZE*NUM_FLITS}\n"
+                trace_line_send += f"0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
             trace_line_recv += f"# WAIT for {n} cycles\n"
             for i in range(n):
                 trace_line_recv += f"0000____{'0'*FLIT_SIZE}\n"
         case 'end':
-            trace_line_send += f"# ENDING SIMULATION\n0100____00_{'0'*FLIT_SIZE*NUM_FLITS}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
             trace_line_recv += f"# ENDING SIMULATION\n0100____{'0'*FLIT_SIZE}\n"
         case '###':
             trace_line_send += DP_line
