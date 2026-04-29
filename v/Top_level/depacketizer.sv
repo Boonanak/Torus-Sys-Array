@@ -45,76 +45,41 @@ module depacketizer
 );
 
   localparam num_flits_lp = packet_width_p / flit_width_p;
+  localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1;
 
-  logic [$clog2(num_flits_lp)-1:0] flit_cnt_r, flit_cnt_n;
-  logic [packet_width_p-1:0] packet_r;
-  logic [1:0] packet_size_r;
-  logic packet_v_r, packet_v_n;
-  
-  logic fifo_ready_lo;
-  logic [flit_width_p-1:0] flit_mux_lo;
-  logic flit_valid_lo;
+  logic [flit_cnt_width_lp-1:0] packet_size_r, packet_size_n;
+  logic [flit_cnt_width_lp-1:0] flit_cnt_r, flit_cnt_n;
+  logic [packet_width_p-1:0] packet_r, packet_n;
 
-  // --- Control Logic ---
-  always_comb begin
-      flit_cnt_n    = flit_cnt_r;
-      packet_v_n    = packet_v_r;
-      flit_valid_lo = 1'b0;
+  assign ready_o = (flit_cnt_r >= packet_size_r);
+  // assign ready_o = 1'b1; // --> this is if we want the ready_o signal to be accurate and not just a warning
+  assign valid_o = (flit_cnt_r < packet_size_r);
+  assign flit_o = packet_r[((num_flits_lp - 1) - flit_cnt_r) * flit_width_p +: flit_width_p];
 
-      if (packet_v_r) begin
-          // Push data to the FIFO only if the state machine is active (packet_v_r)
-          flit_valid_lo = 1'b1;
+  always_comb begin 
+    packet_n = packet_r;
+    flit_cnt_n = flit_cnt_r;
+    packet_size_n = packet_size_r;
 
-          if (fifo_ready_lo) begin
-              flit_cnt_n = flit_cnt_r + 1'b1;
-
-              case (packet_size_r)
-                  2'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
-                  2'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
-                  2'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
-                  default: if (flit_cnt_r == 2'd3) packet_v_n = 1'b0;
-              endcase
-          end
-      end 
-      else if (valid_i && ready_o) begin
-          // Signal the start. FIFO push will happen on the next cycle once packet_v_r is high
-          packet_v_n = 1'b1;
-          flit_cnt_n = '0;
-      end
-  end
-
-  // --- Big Endian Mux ---
-  assign flit_mux_lo = packet_r[((num_flits_lp - 1) - flit_cnt_r)*flit_width_p +: flit_width_p];
-
-  always_ff @(posedge clk_i) begin
-    if (reset_i) begin
-      flit_cnt_r <= '0;
-      packet_v_r <= 1'b0;
-      packet_r   <= '0;
-      packet_size_r <= '0;
-    end else begin
-      flit_cnt_r <= flit_cnt_n;
-      packet_v_r <= packet_v_n;
-      if (ready_o && valid_i) begin
-        packet_r <= packet_i;
-        packet_size_r <= packet_size_i;
-      end
+    if (valid_i) begin // new packet 
+      packet_n = packet_i;
+      packet_size_n = packet_size_i;
+      flit_cnt_n = 0;
+    end else if (valid_o && ready_i) begin // next flit
+        flit_cnt_n = flit_cnt_r + 1;
     end
   end
 
-  // --- Output FIFO ---
-  bsg_fifo_1r1w_small #(
-    .width_p(flit_width_p)
-    ,.els_p(fifo_els_p)
-  ) out_fifo (
-    .clk_i    (clk_i)
-    ,.reset_i  (reset_i)
-    ,.data_i  (flit_mux_lo)
-    ,.v_i     (flit_valid_lo)
-    ,.ready_o (fifo_ready_lo)
-    ,.data_o  (flit_o)
-    ,.v_o     (valid_o)
-    ,.yumi_i  (valid_o & ready_i)
-  );
+  always_ff @(posedge clk_i) begin 
+    if (reset_i) begin 
+      flit_cnt_r <= '0;
+      packet_r <= '0;
+      packet_size_r <= '0;
+    end else begin 
+      flit_cnt_r <= flit_cnt_n;
+      packet_r <= packet_n;
+      packet_size_r <= packet_size_n;
+    end
+  end
 
 endmodule

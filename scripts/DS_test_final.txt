@@ -1,0 +1,17 @@
+DS
+wait 6
+send 0123
+send AABA
+send 4567
+send BBCB
+send 89AB
+send CCDC
+send CDEF
+send 0123
+send AABA
+send 4567
+send BBCB
+send 89AB
+send CCDC
+send CDEF
+end

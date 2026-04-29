@@ -21,20 +21,20 @@ module transpose_tb_twotrace;
       );
 
   logic dut_v_lo, dut_v_r;
-  logic [33:0] dut_data_lo, dut_data_r;
+  logic [64:0] dut_data_lo, dut_data_r;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [33:0] tr_data_lo;
+  logic [64:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   logic [31:0] rom_addr_li;
-  logic [37:0] rom_data_lo_send, rom_data_lo_recv;
+  logic [68:0] rom_data_lo_send, rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
   logic valid_i_r;
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(34)
+  bsg_fsb_node_trace_replay #(.ring_width_p(65)
                              ,.rom_addr_width_p(32) )
     trace_replay_recv
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -56,7 +56,7 @@ module transpose_tb_twotrace;
       , .error_o()
       );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(34)
+  bsg_fsb_node_trace_replay #(.ring_width_p(65)
                              ,.rom_addr_width_p(32) )
     trace_replay_send
       ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -88,24 +88,24 @@ module transpose_tb_twotrace;
     valid_i_r <= tr_v_lo;
   end
 
-  transpose_recv_trace_rom #(.width_p(38),.addr_width_p(32))
+  transpose_recv_trace_rom #(.width_p(69),.addr_width_p(32))
     ROM_BPS_recv
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_recv )
       );
-  transpose_send_trace_rom #(.width_p(38),.addr_width_p(32))
+  transpose_send_trace_rom #(.width_p(69),.addr_width_p(32))
     ROM_BPS_send
       (.addr_i( rom_addr_li )
       ,.data_o( rom_data_lo_send )
       );
 
-  transpose #(.WIDTH_P(8), .DIM_p(4))
+  transpose #(.WIDTH_P(8), .DIM_p(8))
     DUT
     (.clk_i    ( clk )
     ,.rst_n_i  ( ~reset )
 
-    ,.col_major_i ( 1'b0 )
-    ,.in_data ( {tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8], tr_data_lo[7:0]} )
+    ,.in_data ( {tr_data_lo[63:56], tr_data_lo[55:48], tr_data_lo[47:40], tr_data_lo[39:32],
+                 tr_data_lo[31:24], tr_data_lo[23:16], tr_data_lo[15:8],  tr_data_lo[7:0]} )
     //,.\in_data[3] ( {tr_data_lo[31:24]} )
     //,.\in_data[2] ( {tr_data_lo[23:16]} )
     //,.\in_data[1] ( {tr_data_lo[15:8]} )
@@ -116,20 +116,18 @@ module transpose_tb_twotrace;
 
     ,.valid_o ( dut_v_lo )
     ,.ready_o ( dut_ready_lo )
-    //,.valid_o (  )
-    //,.ready_o (  )
-    
-    ,.rotate(tr_data_lo[33])
-    ,.transpose(tr_data_lo[32])
 
-    ,.out_data ( {dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
+    ,.transpose(tr_data_lo[64])
+
+    ,.out_data ( {dut_data_lo[63:56], dut_data_lo[55:48], dut_data_lo[47:40], dut_data_lo[39:32],
+                  dut_data_lo[31:24], dut_data_lo[23:16], dut_data_lo[15:8], dut_data_lo[7:0]} )
     //,.\out_data[3] ( {dut_data_lo[31:24]} )
     //,.\out_data[2] ( {dut_data_lo[23:16]} )
     //,.\out_data[1] ( {dut_data_lo[15:8]} )
     //,.\out_data[0] ( {dut_data_lo[7:0]} )
     );
   
-  assign dut_data_lo[33:32] = 2'b0;
+  assign dut_data_lo[64] = 1'b0;
 
   // no handshake logic. all ready/valid signal is 1.
   //assign dut_ready_lo = '1;

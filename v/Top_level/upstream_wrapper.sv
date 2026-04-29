@@ -6,7 +6,7 @@
     - DDR Upstream PHY (17-bit physical channel)
 */
 
-`include "bsg_defines.sv"
+`include "bsg_defines.v"
 
 module upstream_wrapper
 #(

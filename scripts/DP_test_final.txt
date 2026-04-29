@@ -1,164 +1,29 @@
-ARR
+DP
 wait 6 
-### load in identity matrix transposed and shifted
-loadB R 0 0 0 0
-loadB R 0 0 0 0
-loadB R 0 0 0 0
-loadB R 1 1 1 1
-### Compute A1 x I = I x I = I, A2 x I = A2, A3 x I = -A2
-compute R 1 0 0 0
-compute R 0 1 0 0
-compute R 0 0 1 0
-compute R 0 0 0 1
-compute R      1 2 3 4   
-compute_recv R 2 3 4 3   1 0 0 0
-compute_recv R 3 4 3 2   0 1 0 0
-compute_recv R 4 3 2 1   0 0 1 0
-compute_recv R -1 -2 -3 -4   0 0 0 1
-compute_recv R -2 -3 -4 -3   1 2 3 4
-compute_recv R -3 -4 -3 -2   2 3 4 3
-compute_recv R -4 -3 -2 -1   3 4 3 2
-### load in B2 = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16] transposed and shifted
-loadB_recv R 3 5 12 14   4 3 2 1
-loadB_recv R 4 7 10 13   -1 -2 -3 -4
-loadB_recv R 2 8 9 15   -2 -3 -4 -3
-loadB_recv R 1 6 11 16   -3 -4 -3 -2
-### Compute A1 x B2 = B2, A2 x B2 = C2, A3 x B2 = -C2
-compute_recv R 1 0 0 0   -4 -3 -2 -1
-wait 1
-compute R 0 1 0 0
-compute R 0 0 1 0
-compute R 0 0 0 1
-compute R      1 2 3 4   
-compute_recv R 2 3 4 3   1 2 3 4
-compute_recv R 3 4 3 2   5 6 7 8
-compute_recv R 4 3 2 1   9 10 11 12
-compute_recv R -1 -2 -3 -4   13 14 15 16
-compute_recv R -2 -3 -4 -3   90 100 110 120
-compute_recv R -3 -4 -3 -2   92 104 116 128
-compute_recv R -4 -3 -2 -1   76 88 100 112
-### load in A and B as all 127s. A x B = all overflow and should cap at 32767
-loadB_recv R 127 127 127 127    50 60 70 80
-loadB_recv R 127 127 127 127    -90 -100 -110 -120
-loadB_recv R 127 127 127 127    -92 -104 -116 -128
-loadB_recv R 127 127 127 127    -76 -88 -100 -112
-compute_recv R 127 127 127 127    -50 -60 -70 -80
-compute R      127 127 127 127
-compute R      127 127 127 127
-compute R      127 127 127 127
-### load in identity matrix in column major order
-loadB C      0 0 0 0
-loadB_recv C 0 0 0 0    32767 32767 32767 32767
-loadB_recv C 0 0 0 0    32767 32767 32767 32767
-loadB_recv C 1 1 1 1    32767 32767 32767 32767
-### Compute A1 x I = I x I = I, A2 x I = A2, A3 x I = -A2
-compute_recv C 1 0 0 0    32767 32767 32767 32767
-compute C      0 1 0 0
-compute C      0 0 1 0
-compute C      0 0 0 1
-compute C      1 2 3 4
-compute_recv C 2 3 4 3   1 0 0 0
-compute_recv C 3 4 3 2   0 1 0 0
-compute_recv C 4 3 2 1   0 0 1 0
-compute_recv C -1 -2 -3 -4   0 0 0 1
-compute_recv C -2 -3 -4 -3   1 2 3 4
-compute_recv C -3 -4 -3 -2   2 3 4 3
-compute_recv C -4 -3 -2 -1   3 4 3 2
-### load in B2 = [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16] transposed and shifted
-loadB_recv C 9 2 15 8    4 3 2 1
-loadB_recv C 13 10 7 4   -1 -2 -3 -4
-loadB_recv C 5 14 3 12   -2 -3 -4 -3
-loadB_recv C 1 6 11 16   -3 -4 -3 -2
-### Compute A1 x B2 = B2, A2 x B2 = C2, A3 x B2 = -C2
-compute_recv C 1 0 0 0   -4 -3 -2 -1
-compute C      0 1 0 0
-compute C      0 0 1 0
-compute C      0 0 0 1
-compute C      1 2 3 4   
-compute_recv C 2 3 4 3       1 2 3 4
-compute_recv C 3 4 3 2       5 6 7 8
-compute_recv C 4 3 2 1       9 10 11 12
-compute_recv C -1 -2 -3 -4   13 14 15 16
-compute_recv C -2 -3 -4 -3        90 100 110 120
-compute_recv C -3 -4 -3 -2        92 104 116 128
-compute_recv C -4 -3 -2 -1        76 88 100 112
-### load in A and B as all 127s. A x B = all overflow and should cap at 32767
-loadB_recv C 127 127 127 127    50 60 70 80
-loadB_recv C 127 127 127 127    -90 -100 -110 -120
-loadB_recv C 127 127 127 127    -92 -104 -116 -128
-loadB_recv C 127 127 127 127    -76 -88 -100 -112
-compute_recv C -127 -127 -127 -127    -50 -60 -70 -80
-compute C      -127 -127 -127 -127
-compute C      -127 -127 -127 -127
-compute C      -127 -127 -127 -127
-wait 1
-recv -32768 -32768 -32768 -32768
-recv -32768 -32768 -32768 -32768
-recv -32768 -32768 -32768 -32768
-recv -32768 -32768 -32768 -32768
-wait 6
-### RANDOM TESTS
-loadB R          55    3 -109   73
-loadB R          41  -60  -48 -116
-loadB R          -5 -124  -64   41
-loadB R         109  -26   80   78
-compute R       117  -49 -115  -92
-compute R       -63 -122  -64  -32
-compute R      -128   91   41  -27
-compute R        29  122  -31   53
-loadB R          53  -81  -49   40
-loadB_recv R    -17  122 -121 -104      30638   -507  -3597  16232
-loadB_recv R     36   18   50  -91        575   4223  -2577  17025
-loadB_recv R     30   78 -117  -28     -13171  -5665 -10327 -23107
-compute_recv R  -12   33  -83  -80       -637   2040  -6032  -6426
-compute R        29  -67  -52   -7
-compute R        75   38   27  120
-compute R      -126   31   66 -121
-wait 1
-recv                                     1137   8985  20381   7105
-recv                                     4425   1830     84   1045
-recv                                   -11958   7197  -5468  -5274
-recv                                     9593 -14944    393   2854
-### Testing loading B during compute, and maximum throughput
-loadB C           0    0    0    0
-loadB C           0    0    0    0
-loadB C           0    0    0    0
-loadB C           1    1    1    1
-compute C         1    2    3    4
-loadB C           9    2   15    8
-loadB C          13   10    7    4
-loadB C           5   14    3   12
-loadB C           1    6   11   16
-compute_recv C    1    2    3    4         1    2    3    4
-compute C         2    3    4    3
-compute C         3    4    3    2
-compute C         4    3    2    1
-wait 1
-recv                                      90  100  110  120
-recv                                      92  104  116  128
-recv                                      76   88  100  112
-recv                                      50   60   70   80
-wait 1
-loadB C           0    0    0    0
-loadB C           0    0    0    0
-loadB C           0    0    0    0
-loadB C           1    1    1    1
-compute C         1    2    3    4
-compute C         2    3    4    3
-compute C         3    4    3    2
-compute C         4    3    2    1
-loadB C           9    2   15    8         
-loadB_recv C     13   10    7    4         1    2    3    4
-loadB_recv C      5   14    3   12         2    3    4    3
-loadB_recv C      1    6   11   16         3    4    3    2
-compute_recv C    1    2    3    4         4    3    2    1
-compute C         2    3    4    3
-compute C         3    4    3    2
-wait 1
-compute C         4    3    2    1
-wait 1
-recv                                      90  100  110  120
-recv                                      92  104  116  128
-recv                                      76   88  100  112
-recv                                      50   60   70   80
+send        01234567
+recv                                            01234567
+send        0123456789ABCDEF                    
+recv                                            01234567
+recv                                            89ABCDEF
+send        0123456789ABCDEF01010202            
+recv                                            01234567
+recv                                            89ABCDEF
+recv                                            01010202
+send        0123456789ABCDEF0101020203030404    
+recv                                            01234567
+recv                                            89ABCDEF
+recv                                            01010202
+recv                                            03030404
+send        11235813
+send_recv   1123581321345589                    11235813
+recv                                            11235813
+send_recv   112358132134558914423337            21345589
+recv                                            11235813
+recv                                            21345589
+send_recv   11235813213455891442333776109871    14423337
+recv                                            11235813
+recv                                            21345589
+recv                                            14423337
+send_recv   DEADBEEF                            76109871
+recv                                            DEADBEEF
 end

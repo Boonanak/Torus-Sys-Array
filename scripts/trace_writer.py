@@ -19,8 +19,12 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                             trace_lines = parse_ARR_2_line(line)
                         case "TU":
                             trace_lines = parse_TU_2_line(line)
+                        case "PM":
+                            trace_lines = parse_PM_line(line)
                         case "DP":
                             trace_lines = parse_DP_line(line)
+                        case "DS":
+                            trace_lines = parse_DS_line(line)
                     trace_send.write(trace_lines[0])
                     trace_recv.write(trace_lines[1])
                 index = index + 1
@@ -41,6 +45,8 @@ def write_trace(input_file_name, trace_file_name, trace_file_name_2 = ''):
                         trace.write(parse_DFF_line(line))
                     case "SR":
                         trace.write(parse_SR_line(line))
+                    case "CSR":
+                        trace.write(parse_CSR_line(line))
                     case "TP_node":
                         trace.write(parse_TP_node_line(line))
                     case "TU":
@@ -240,6 +246,150 @@ def parse_SR_line(SR_line):
             trace_line += SR_line
     return trace_line + '\n'
 
+def parse_CSR_line(SR_line):
+    space_i = SR_line.find(' ')
+    command = SR_line[:space_i] if space_i > 0 else SR_line
+    trace_line = ''
+    match command.casefold():
+        case 'read':
+            data = SR_line[space_i+1:]
+            trace_line += f"# RECV | data = {data}\n"
+            trace_line += f"0010________00____{data}\n"
+        case 'set':
+            bits = [int(n) for n in SR_line[space_i:].split()]
+            mask = f'{'0'*64}'
+            for bit in bits:
+                mask = list(mask)
+                mask[63-bit] = '1'
+                mask = "".join(mask)
+            trace_line += f"# SEND | mode = SET | bits = {bits}\n"
+            trace_line += f"0001________01____{mask}\n"
+        case 'clear':
+            bits = [int(n) for n in SR_line[space_i:].split()]
+            mask = f'{'0'*64}'
+            for bit in bits:
+                mask = list(mask)
+                mask[63-bit] = '1'
+                mask = "".join(mask)
+            trace_line += f"# SEND | mode = CLEAR | bits = {bits}\n"
+            trace_line += f"0001________10____{mask}\n"
+        case 'clearall':
+            mask = f'{'1'*64}'
+            trace_line += f"# SEND | mode = CLEAR | bits = [63:0]\n"
+            trace_line += f"0001________10____{mask}\n"
+        case 'assign':
+            data = SR_line[space_i+1:]
+            trace_line += f"# SEND | mode = ASSIGN | data = {data}\n"
+            trace_line += f"0001________11____{data}\n"
+        case 'wait':
+            n = int(SR_line[space_i:])
+            trace_line += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line += f"0000__{'0'*66}\n"
+        case 'end':
+            trace_line += f"# ENDING SIMULATION\n0100__{'0'*66}\n"
+        case '###':
+            trace_line += SR_line
+    return trace_line + '\n'
+
+def parse_PM_line(MEM_line):
+    space_i = MEM_line.find(' ')
+    command = MEM_line[:space_i] if space_i > 0 else MEM_line
+    instruction_data = MEM_line[space_i:].split() if space_i > 0 else ''
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP = f'0000_00_000000_000000{'_00000000'*16}\n'
+    match command.casefold():
+        case 'read':
+            wr_en = f'_00'
+            write_addr = f'_000000'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[0]), 6)}'
+            write_data = f'{'_00000000'*16}'
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'write':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_000000'
+            write_data = [int(n) for n in instruction_data[2:18]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'read_write':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
+            write_data = [int(n) for n in instruction_data[3:19]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            trace_line_recv += NOOP
+        case 'recv':
+            trace_line_send += NOOP
+            read_data = [int(n) for n in instruction_data[0:16]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'read_recv':
+            wr_en = f'_00'
+            write_addr = f'_000000'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[0]), 6)}'
+            write_data = f'{'_00000000'*16}'
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[1:17]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'write_recv':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_000000'
+            write_data = [int(n) for n in instruction_data[2:18]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[18:34]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'read_write_recv':
+            wr_en = f'_{instruction_data[0]}'
+            write_addr = f'_{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
+            read_addr = f'_{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
+            write_data = [int(n) for n in instruction_data[3:19]]
+            write_data_string = ''
+            for data in write_data:
+                write_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            write_data = write_data_string
+            trace_line_send += f'0001{wr_en}{write_addr}{read_addr}{write_data}'
+            read_data = [int(n) for n in instruction_data[19:35]]
+            read_data_string = ''
+            for data in read_data:
+                read_data_string += f'_{to_signed_nbit_binary(data, 8)}'
+            trace_line_recv += f'0010_00_000000_000000{read_data_string}'
+        case 'wait':
+            n = int(instruction_data[0])
+            for i in range(n):
+                trace_line_send += NOOP
+                trace_line_recv += NOOP
+        case 'end':
+            trace_line_send += f"0100_00_000000_000000_{'_00000000'*16}\n"
+            trace_line_recv += f"0100_00_000000_000000_{'_00000000'*16}\n"
+        case '###':
+            trace_line_send += MEM_line
+            trace_line_recv += MEM_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
 def parse_TP_node_line(TU_line):
     space_i = TU_line.find(' ')
     command = TU_line[:space_i] if space_i > 0 else TU_line
@@ -305,60 +455,72 @@ def parse_TU_line(TU_line):
     return trace_line + '\n'
 
 def parse_TU_2_line(TU_line):
+    MATRIX_SIZE = 8
     space_i = TU_line.find(' ')
     command = TU_line[:space_i] if space_i > 0 else TU_line
     trace_line_send = ''
     trace_line_recv = ''
+    #print(f'_{command.casefold()}_')
     match command.casefold():
         case 'load':
-            TU_line = TU_line[space_i+1:]
-            space_i = TU_line.find(' ')
-            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# SEND  |  {op}  |  {numbers}\n"
-            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______"
+            trace_line_send += f"# LOAD  |  {numbers}\n"
+            trace_line_send += f"0001_______0___"
             for n in numbers:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# NOOP for RECV while loading B\n0000__{'0'*34}\n"
+            trace_line_recv += f"# NOOP for RECV while loading B\n0000_______0____{'0'*8*MATRIX_SIZE}\n"
         case 'recv':
-            TU_line = TU_line[space_i+1:]
-            space_i = TU_line.find(' ')
-            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_recv += f"# RECV  |  {numbers}\n"
-            trace_line_recv += f"0010__________00_______"
+            trace_line_recv += f"# RECV (passed)  |  {numbers}\n"
+            trace_line_recv += f"0010_______0___"
             for n in numbers:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
-            trace_line_send += f"# SEND  |  {op}  |  0\n"
-            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______{'0'*32}\n"
-        case 'load_recv':
-            TU_line = TU_line[space_i+1:]
-            space_i = TU_line.find(' ')
-            op = 0 if TU_line[:space_i] == 'NA' else 1 if TU_line[:space_i] == 'T' else 2 if TU_line[:space_i] == 'R' else 3
+            trace_line_send += f"# Receiving with no transpose; T = 0\n0000_______0____{'0'*8*MATRIX_SIZE}\n"
+        case 'recvt':
             numbers = [int(n) for n in TU_line[space_i:].split()]
-            trace_line_send += f"# SEND  |  {op}  |  {numbers[:4]}\n"
-            trace_line_send += f"0001__________{to_signed_nbit_binary(op, 3)[1:]}_______"
-            for n in numbers[:4]:
+            trace_line_recv += f"# RECV (transposed)  |  {numbers}\n"
+            trace_line_recv += f"0010_______0___"
+            for n in numbers:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
+            trace_line_send += f"# Receiving with transpose; T = 1\n0000_______1____{'0'*8*MATRIX_SIZE}\n"
+        case 'load_recv':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# LOAD  |  {numbers[:8]}  |  Receiving with no transpose; T = 0\n"
+            trace_line_send += f"0001_______0___"
+            for n in numbers[:MATRIX_SIZE]:
                 trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_send += '\n'
-            trace_line_recv += f"# RECV  |  {numbers[4:]}\n"
-            trace_line_recv += f"0010__________00_______"
-            for n in numbers[4:]:
+            trace_line_recv += f"# RECV  |  {numbers[8:]}\n"
+            trace_line_recv += f"0010_______0___"
+            for n in numbers[MATRIX_SIZE:]:
+                trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_recv += '\n'
+        case 'load_recvt':
+            numbers = [int(n) for n in TU_line[space_i:].split()]
+            trace_line_send += f"# LOAD  |  {numbers[:8]}  |  Receiving with transpose; T = 1\n"
+            trace_line_send += f"0001_______1___"
+            for n in numbers[:MATRIX_SIZE]:
+                trace_line_send += f"_{to_signed_nbit_binary(n, 8)}"
+            trace_line_send += '\n'
+            trace_line_recv += f"# RECV  |  {numbers[8:]}\n"
+            trace_line_recv += f"0010_______0___"
+            for n in numbers[MATRIX_SIZE:]:
                 trace_line_recv += f"_{to_signed_nbit_binary(n, 8)}"
             trace_line_recv += '\n'
         case 'wait':
             n = int(TU_line[space_i:])
             trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_send += f"0000__{'0'*34}\n"
+                trace_line_send += f"0000_______0____{'0'*8*MATRIX_SIZE}\n"
             trace_line_recv += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_recv += f"0000__{'0'*34}\n"
+                trace_line_recv += f"0000_______0____{'0'*8*MATRIX_SIZE}\n"
         case 'end':
-            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
-            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*34}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100_______0____{'0'*8*MATRIX_SIZE}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100_______0____{'0'*8*MATRIX_SIZE}\n"
         case '###':
             trace_line_send += TU_line
             trace_line_recv += TU_line
@@ -491,57 +653,115 @@ def parse_ARR_2_line(ARR_line):
 
 def parse_DP_line(DP_line):
     space_i = DP_line.find(' ')
-    command = DP_line[:space_i]
+    command = DP_line[:space_i] if space_i > 0 else DP_line
     trace_line_send = ''
     trace_line_recv = ''
-    NOOP_send = f'0000____00_{'0'*FLIT_SIZE*NUM_FLITS}'
-    NOOP_recv = f'0000____{'0'*FLIT_SIZE}'
+    NOOP_send = f'# NOOP\n0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n'
+    NOOP_recv = f'# NOOP\n0000____{'0'*FLIT_SIZE}\n'
     match command.casefold():
         case 'send':
-            data_in = DP_line[space_i+1:]
-            num_packets = len(data_in) / (FLIT_SIZE/4)
-            print(len(data_in), FLIT_SIZE/4, num_packets)
+            data_in = DP_line[space_i+1:].strip()
+            num_packets = int(len(data_in) / (FLIT_SIZE/4))
             trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
             data_in = bin(int(data_in, 16))[2:]
-            data_in = data_in.zfill(FLIT_SIZE * NUM_FLITS)
-            num_packets = bin(int(num_packets) - 1)[2:].zfill(2)
+            data_in = data_in.zfill(FLIT_SIZE*num_packets) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
+            num_packets = bin(int(num_packets) )[2:].zfill(3)
             trace_line_send += f'0001____{num_packets}_{data_in}\n'
             trace_line_recv += NOOP_recv
         case 'recv':
             trace_line_send += NOOP_send
-            data_out = DP_line[space_i+1:]
+            data_out = DP_line[space_i+1:].strip()
             trace_line_recv += f'# RECV | data = {data_out}\n'
             data_out = bin(int(data_out, 16))[2:]
             data_out = data_out.zfill(FLIT_SIZE)
-            trace_line_recv += f'0001____{data_out}\n'
+            trace_line_recv += f'0010____{data_out}\n'
         case 'send_recv':
             data = DP_line[space_i:].split()
             data_in = data[0]
-            num_packets = len(data_in) / (FLIT_SIZE/4)
+            num_packets = int(len(data_in) / (FLIT_SIZE/4))
             trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
             data_in = bin(int(data_in, 16))[2:]
-            data_in = data_in.zfill(FLIT_SIZE * NUM_FLITS)
-            num_packets = bin(int(num_packets) - 1)[2:].zfill(2)
+            data_in = data_in.zfill(FLIT_SIZE*num_packets) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
+            num_packets = bin(int(num_packets))[2:].zfill(3)
             trace_line_send += f'0001____{num_packets}_{data_in}\n'
             data_out = data[1]
             trace_line_recv += f'# RECV | data = {data_out}\n'
             data_out = bin(int(data_out, 16))[2:]
             data_out = data_out.zfill(FLIT_SIZE)
-            trace_line_recv += f'0001____{data_out}\n'
+            trace_line_recv += f'0010____{data_out}\n'
         case 'wait':
             n = int(DP_line[space_i:])
             trace_line_send += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_send += f"0000__{'0'*64}\n"
+                trace_line_send += f"0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
             trace_line_recv += f"# WAIT for {n} cycles\n"
             for i in range(n):
-                trace_line_recv += f"0000__{'0'*64}\n"
+                trace_line_recv += f"0000____{'0'*FLIT_SIZE}\n"
         case 'end':
-            trace_line_send += f"# ENDING SIMULATION\n0100__{'0'*64}\n"
-            trace_line_recv += f"# ENDING SIMULATION\n0100__{'0'*64}\n"
+            trace_line_send += f"# ENDING SIMULATION\n0100____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100____{'0'*FLIT_SIZE}\n"
         case '###':
             trace_line_send += DP_line
             trace_line_recv += DP_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
+def parse_DS_line(DS_line):
+    space_i = DS_line.find(' ')
+    command = DS_line[:space_i] if space_i > 0 else DS_line
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP_send = f'# NOOP\n0000____0_{'0'*int(FLIT_SIZE/2)}\n'
+    NOOP_recv = f'# NOOP\n0000____0_0_{'0'*FLIT_SIZE}\n'
+    match command.casefold():
+        case 'send':
+            data_in = DS_line[space_i+1:].strip()
+            trace_line_send += f'# SEND | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:].zfill(int(FLIT_SIZE/2))
+            parity = False
+            for bit in data_in:
+                if bit == '1':
+                    parity = not parity
+            trace_line_send += f'0001____{int(parity)}_{data_in}\n'
+            trace_line_recv += NOOP_recv
+        case 'recv':
+            trace_line_send += NOOP_send
+            data_out = DS_line[space_i+1:].split()
+            token_clock = int(data_out[1])
+            data_out = data_out[0]
+            trace_line_recv += f'# RECV | data = {data_out} | token count = {token_clock}\n'
+            data_out = bin(int(data_out, 16))[2:].zfill(FLIT_SIZE)
+            parity_error = False
+            trace_line_recv += f'0010____{int(parity_error)}_{token_clock}_{data_out}\n'
+        case 'send_recv':
+            data = DS_line[space_i:].split()
+            data_in = data[0]
+            trace_line_send += f'# SEND | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:].zfill(int(FLIT_SIZE/2))
+            parity = False
+            for bit in data_in:
+                if bit == '1':
+                    parity = not parity
+            trace_line_send += f'0001____{int(parity)}_{data_in}\n'
+            data_out = data[1]
+            token_clock = data[2]
+            trace_line_recv += f'# RECV | data = {data_out} | token count = {token_clock}\n'
+            data_out = bin(int(data_out, 16))[2:].zfill(FLIT_SIZE)
+            parity_error = False
+            trace_line_recv += f'0010____{int(parity_error)}_{token_clock}_{data_out}\n'
+        case 'wait':
+            n = int(DS_line[space_i:])
+            trace_line_send += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_send += f"0000____0_{'0'*int(FLIT_SIZE/2)}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000____0_0_{'0'*FLIT_SIZE}\n"
+        case 'end':
+            trace_line_send += f"# ENDING SIMULATION\n0100____0_{'0'*int(FLIT_SIZE/2)}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100____0_0_{'0'*FLIT_SIZE}\n"
+        case '###':
+            trace_line_send += DS_line
+            trace_line_recv += DS_line
     return trace_line_send + '\n', trace_line_recv + '\n'
 
 def parse_TPU_line(TPU_line):
@@ -575,6 +795,6 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-#write_trace('scripts/pipette_pe_test.txt', 'v/PE/Pipette_PE.tr', '')
-print(parse_DP_line('send 1111ABCD')[0])
+write_trace('scripts/DS_test_final.txt', 'v/Top_level/downstream_wrapper_send_trace.tr', 'v/Top_level/downstream_wrapper_recv_trace.tr')
+# print(parse_DP_line('end')[0])
 
