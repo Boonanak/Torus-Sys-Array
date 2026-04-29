@@ -25,26 +25,26 @@ module depacketizer_tb_twotrace;
   logic dut_ready_lo, dut_ready_r;
 
   logic tr_v_lo;
-  logic [129:0] tr_data_lo;
+  logic [130:0] tr_data_lo;
   logic tr_ready_lo, tr_ready_r;
 
   //logic [31:0] rom_addr_li;
   logic [31:0] rom_addr_send_li; // this was an interesting note. Claude suggested separating these addresses. Let's see if it works
   logic [31:0] rom_addr_recv_li; // new address for recv
-  logic [133:0] rom_data_lo_send;
+  logic [134:0] rom_data_lo_send;
   logic [35:0]  rom_data_lo_recv;
 
   logic tr_yumi_li, dut_yumi_li;
   logic tr_yumi_send, tr_yumi_recv;
 
     // / 4 bit trace command / 2 bit packet size / 128 bit packet /
-    depacketizer_send_trace_rom #(.width_p(134),.addr_width_p(32))
+    depacketizer_send_trace_rom #(.width_p(135),.addr_width_p(32))
     ROM_BPS_send
         (.addr_i( rom_addr_send_li ) // send address
         ,.data_o( rom_data_lo_send )
         );
 
-    bsg_fsb_node_trace_replay #(.ring_width_p(130)
+    bsg_fsb_node_trace_replay #(.ring_width_p(131)
                                 ,.rom_addr_width_p(32) )
     trace_replay_send
         ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -115,7 +115,7 @@ module depacketizer_tb_twotrace;
         .reset_i ( reset ),
         .packet_i ( tr_data_lo[127:0] ),
         .valid_i ( tr_v_lo ),
-        .packet_size_i ( tr_data_lo[129:128] ),
+        .packet_size_i ( tr_data_lo[130:128] ),
         .ready_o ( dut_ready_lo ), // handshake r_o (input side) --> does it accept new packets from send?
         .flit_o ( dut_data_lo ),
         .valid_o ( dut_v_lo ),
