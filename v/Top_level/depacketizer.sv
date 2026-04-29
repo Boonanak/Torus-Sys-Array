@@ -60,7 +60,7 @@ module depacketizer
     flit_cnt_n = flit_cnt_r;
     packet_size_n = packet_size_r;
 
-    if (valid_i && ready_o) begin // new packet 
+    if (valid_i) begin // new packet 
       packet_n = packet_i;
       packet_size_n = packet_size_i;
       flit_cnt_n = 0;
