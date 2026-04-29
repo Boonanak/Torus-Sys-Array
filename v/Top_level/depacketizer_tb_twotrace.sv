@@ -86,7 +86,7 @@ module depacketizer_tb_twotrace;
 
         , .v_o   (  )
         , .data_o(  )
-        , .yumi_i( tr_yumi_li ) // should be driven by DUT output (did DUT produce a flit that recv accepted). previously, gated dut_ready_r & tr_v_lo, now gated dut_v_lo & tr_ready_lo
+        , .yumi_i(  ) // should be driven by DUT output (did DUT produce a flit that recv accepted). previously, gated dut_ready_r & tr_v_lo, now gated dut_v_lo & tr_ready_lo
 
         , .rom_addr_o( rom_addr_recv_li ) // new recv address
         , .rom_data_i( rom_data_lo_recv )
