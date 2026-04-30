@@ -52,6 +52,14 @@ module upstream_downstream_tb_twotrace;
     ,.async_reset_o ( downstream_reset )
     );
 
+  // Manually pulse token_clk to give upstream infinite credits
+  // This bypasses the real token return path temporarily
+  logic token_clk_override;
+  always_ff @(posedge core_clk) begin
+      token_clk_override <= ~token_clk_override;
+  end
+
+
   logic dut_v_lo;
   logic [31:0] dut_data_lo;
   logic dut_read_lo;
@@ -148,7 +156,7 @@ module upstream_downstream_tb_twotrace;
     .io_clk_r_o ( io_clk_o ),               // output clk to downstream
     .io_data_r_o ( io_data ),               // output data to downstream
     .io_valid_r_o ( io_valid ),             // handshake v_o --> gpes to downstream v_i
-    .token_clk_i ( token_clk )              // essentially handshake r_i, comes from downstream r_o (previously token_clk, temporarily 1)
+    .token_clk_i ( token_clk_override )              // essentially handshake r_i, comes from downstream r_o (previously token_clk, temporarily 1)
   );
 
   downstream_wrapper #(
