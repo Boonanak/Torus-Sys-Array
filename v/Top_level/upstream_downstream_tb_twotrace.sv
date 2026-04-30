@@ -56,7 +56,7 @@ module upstream_downstream_tb_twotrace;
     );
 
   logic dut_v_lo;
-  logic [32:0] dut_data_lo;
+  logic [31:0] dut_data_lo;
   logic dut_read_lo;
 
   logic tr_v_lo;
@@ -65,7 +65,7 @@ module upstream_downstream_tb_twotrace;
 
   logic [31:0] rom_addr_li;
   logic [134:0] rom_data_lo_send;
-  logic [36:0]  rom_data_lo_recv;
+  logic [35:0]  rom_data_lo_recv;
 
   // / 4 bit trace command / 2 bit packet size / 128 bit packet /
   upstream_downstream_send_trace_rom #(.width_p(135),.addr_width_p(32))
@@ -97,13 +97,13 @@ module upstream_downstream_tb_twotrace;
     );
 
   // / 4 bit trace command / 32 bit flit /    
-  upstream_downstream_recv_trace_rom #(.width_p(37),.addr_width_p(32))
+  upstream_downstream_recv_trace_rom #(.width_p(36),.addr_width_p(32))
   ROM_BPS_recv
     (.addr_i( rom_addr_li )
     ,.data_o( rom_data_lo_recv )
     );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(33)
+  bsg_fsb_node_trace_replay #(.ring_width_p(32)
                               ,.rom_addr_width_p(32) )
   trace_replay_recv
     ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -129,6 +129,7 @@ module upstream_downstream_tb_twotrace;
   logic io_valid;
   logic io_clk_o;
   logic [0:0][16:0] io_data;
+  logic parity_error;
 
   upstream_wrapper #(
     .packet_width_p(128),
@@ -163,7 +164,7 @@ module upstream_downstream_tb_twotrace;
     .flit_o ( dut_data_lo[31:0] ),          // output data to recv trace replay
     .valid_o ( dut_v_lo ),                  // handshake v_o --> goes to receive side v_i
     .ready_i ( tr_ready_lo ),                      // handshake r_i --> comes from receive side r_o (tr_ready_lo)
-    .parity_error_o ( dut_data_lo[32] ),    // output data to recv trace replay
+    .parity_error_o ( parity_error ),    // output data to recv trace replay
 
     .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
     .io_link_reset_i ( downstream_reset ),          // input io reset comes from the same reset signal as upstream??????
