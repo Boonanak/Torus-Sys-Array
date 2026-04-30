@@ -36,10 +36,10 @@ module downstream_wrapper_tb_twotrace;
     if(reset) io_clk = 0;
     else      io_clk = ~io_clk;
   end
-  logic io_reset;
+  logic io_reset; // we generate this reset signal based on the original full speed clock
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
   reset_gen_3
-    (.clk_i        ( io_clk )
+    (.clk_i        ( clk )
     ,.async_reset_o( io_reset )
     );
 
