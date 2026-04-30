@@ -150,7 +150,7 @@ module upstream_downstream_tb_twotrace;
     .core_reset_i ( core_reset ),
     .flit_o ( dut_data_lo[31:0] ),          // output data to recv trace replay
     .valid_o ( dut_v_lo ),                  // handshake v_o --> goes to receive side v_i
-    .ready_i ( 1'b1 ),                      // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
+    .ready_i ( tr_ready_lo ),                      // handshake r_i --> comes from receive side r_o (tr_ready_lo)
     .parity_error_o ( dut_data_lo[32] ),    // output data to recv trace replay
 
     .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
