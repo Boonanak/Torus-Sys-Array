@@ -28,12 +28,9 @@ module upstream_downstream_tb_twotrace;
     ,.async_reset_o( core_reset )
     );
 
-  // IO clock runs at half the speed of the testbench clock
+  // IO clock runs at twice (?) the speed of the testbench clock
   logic io_clk;
-  always_ff @(posedge clk) begin
-    if(reset) io_clk = 0;
-    else      io_clk = ~io_clk;
-  end
+  bsg_nonsynth_clock_gen #(6000) clk_gen_io (io_clk);
   logic io_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(4),. reset_cycles_hi_p(11))
   reset_gen_3
