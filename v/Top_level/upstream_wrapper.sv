@@ -109,7 +109,7 @@ module upstream_wrapper
     ,.io_clk_r_o        (io_clk_r_o)
     ,.io_data_r_o       (io_data_r_o)
     ,.io_valid_r_o      (io_valid_r_o)
-    ,.token_clk_i       (1'b1) // previously token_clk_i
+    ,.token_clk_i       (token_clk_i)
   );
 
 endmodule

@@ -138,7 +138,7 @@ module upstream_downstream_tb_twotrace;
     .io_clk_r_o ( io_clk_o ),               // output clk to downstream
     .io_data_r_o ( io_data ),               // output data to downstream
     .io_valid_r_o ( io_valid ),             // handshake v_o --> gpes to downstream v_i
-    .token_clk_i ( token_clk )              // essentially handshake r_i, comes from downstream r_o
+    .token_clk_i ( 1'b1 )              // essentially handshake r_i, comes from downstream r_o (previously token_clk, temporarily 1)
   );
 
   downstream_wrapper #(
