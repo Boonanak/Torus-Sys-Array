@@ -48,6 +48,13 @@ module upstream_downstream_tb_twotrace;
     ,.async_reset_o ( token_reset )
     );
 
+  logic downstream_reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(4), .reset_cycles_hi_p(20))
+  reset_gen_4
+    (.clk_i         ( clk )
+    ,.async_reset_o ( token_reset )
+    );
+
   logic dut_v_lo;
   logic [32:0] dut_data_lo;
   logic dut_read_lo;

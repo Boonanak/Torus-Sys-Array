@@ -1,5 +1,5 @@
 DP
-wait 20
+wait 30
 send        01234567
 wait 80
 recv                                            01234567
