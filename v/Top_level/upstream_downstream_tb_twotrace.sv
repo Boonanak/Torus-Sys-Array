@@ -12,7 +12,7 @@ module upstream_downstream_tb_twotrace;
   logic clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_1 (clk);
   logic reset;
-  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(1),. reset_cycles_hi_p(2))
   reset_gen_1
     (.clk_i        ( clk )
     ,.async_reset_o( reset )
@@ -21,10 +21,8 @@ module upstream_downstream_tb_twotrace;
   // Core Clock
   logic core_clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_2 (core_clk);
-
-  /* Non-synth reset generator */
   logic core_reset;
-  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(4),. reset_cycles_hi_p(8))
   reset_gen_2
     (.clk_i        ( core_clk )
     ,.async_reset_o( core_reset )
@@ -37,10 +35,17 @@ module upstream_downstream_tb_twotrace;
     else      io_clk = ~io_clk;
   end
   logic io_reset;
-  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(4),. reset_cycles_hi_p(7))
   reset_gen_3
     (.clk_i        ( clk )
     ,.async_reset_o( io_reset )
+    );
+  
+  logic token_reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5), .reset_cycles_hi_p(1))
+  reset_gen_4
+    (.clk_i         ( clk )
+    ,.async_reset_o ( io_reset )
     );
 
   logic dut_v_lo;
@@ -134,7 +139,7 @@ module upstream_downstream_tb_twotrace;
 
     .io_clk_i ( io_clk ),
     .io_link_reset_i ( io_reset ),
-    .async_token_reset_i ( io_reset ),      // ??? we are just going to feed in the io_clk reset for now
+    .async_token_reset_i ( token_reset ),   // new token_reset
     .io_clk_r_o ( io_clk_o ),               // output clk to downstream
     .io_data_r_o ( io_data ),               // output data to downstream
     .io_valid_r_o ( io_valid ),             // handshake v_o --> gpes to downstream v_i
