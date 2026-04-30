@@ -25,7 +25,7 @@ module downstream_wrapper_tb_twotrace;
   /* Non-synth reset generator */
   logic core_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
-  reset_gen_1
+  reset_gen_2
     (.clk_i        ( core_clk )
     ,.async_reset_o( core_reset )
     );
@@ -38,7 +38,7 @@ module downstream_wrapper_tb_twotrace;
   end
   logic io_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
-  reset_gen_1
+  reset_gen_3
     (.clk_i        ( io_clk )
     ,.async_reset_o( io_reset )
     );
