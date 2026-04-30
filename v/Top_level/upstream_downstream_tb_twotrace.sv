@@ -166,7 +166,7 @@ module upstream_downstream_tb_twotrace;
     .parity_error_o ( dut_data_lo[32] ),    // output data to recv trace replay
 
     .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
-    .io_link_reset_i ( io_reset ),          // input io reset comes from the same reset signal as upstream??????
+    .io_link_reset_i ( downstream_reset ),          // input io reset comes from the same reset signal as upstream??????
     .io_data_i ( io_data ),                 // input data should come from upstream
     .io_valid_i ( io_valid ),               // handshake v_i --> comes from upstream v_o
     .token_clk_o ( token_clk )              // essentially handshake r_o, will go to upstream r_i
