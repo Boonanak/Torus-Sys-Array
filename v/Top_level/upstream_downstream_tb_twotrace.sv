@@ -302,7 +302,7 @@ module upstream_downstream_tb_twotrace;
   logic parity_error;
 
   logic token_clk_init;
-  logic [3:0] token_init_count;
+  logic [4:0] token_init_count;
   logic token_init_done;
 
   // During reset sequence, pulse token_clk at io_master_clk rate
@@ -311,7 +311,7 @@ module upstream_downstream_tb_twotrace;
       if (tb_reset) begin
           token_init_count = 0;
           token_clk_init = 0;
-      end else if (!calib_done && token_init_count < 4'hF) begin
+      end else if (!calib_done && token_init_count < 8'hF0) begin
           token_init_count <= token_init_count + 1;
           token_clk_init   <= ~token_clk_init;
       end
