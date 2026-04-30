@@ -1,6 +1,6 @@
 DP
 wait 20
 send        01234567
-wait 40
+wait 80
 recv                                            01234567
 end
