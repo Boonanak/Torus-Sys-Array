@@ -32,6 +32,8 @@ module downstream_wrapper
 
   logic [33:0] ddr_data_lo;
   logic        phy_valid_lo;
+  logic        phy_ready_li;
+  assign phy_ready_li = ready_i;
   
   logic        ok_low, ok_high;
 
