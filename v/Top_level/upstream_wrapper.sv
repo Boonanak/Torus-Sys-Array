@@ -16,6 +16,9 @@ module upstream_wrapper
   
   , parameter channel_width_p = 17 // 16 bits data + 1 bit parity
   , parameter num_channels_p  = 1
+
+  , localparam num_flits_lp = packet_width_p / flit_width_p
+  , localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1
 ) (
   // Core Interface
   input                             core_clk_i
@@ -23,7 +26,7 @@ module upstream_wrapper
   
   , input [packet_width_p-1:0]      packet_i
   , input                           valid_i
-  , input [1:0]                     packet_size_i
+  , input [flit_cnt_width_lp:0]     packet_size_i
   , output                          ready_o
 
   // IO Interface

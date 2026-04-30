@@ -770,7 +770,7 @@ def parse_US_DS_line(US_DS_line):
     trace_line_send = ''
     trace_line_recv = ''
     NOOP_send = f'# NOOP\n0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n'
-    NOOP_recv = f'# NOOP\n0000____{'0'*FLIT_SIZE}\n'
+    NOOP_recv = f'# NOOP\n0000____0_{'0'*FLIT_SIZE}\n'
     match command.casefold():
         case 'send':
             data_in = DP_line[space_i+1:].strip()

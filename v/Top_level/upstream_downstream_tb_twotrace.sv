@@ -48,21 +48,21 @@ module upstream_downstream_tb_twotrace;
   logic dut_read_lo;
 
   logic tr_v_lo;
-  logic [129:0] tr_data_lo;
+  logic [130:0] tr_data_lo;
   logic tr_ready_lo;
 
   logic [31:0] rom_addr_li;
-  logic [133:0] rom_data_lo_send;
+  logic [134:0] rom_data_lo_send;
   logic [36:0]  rom_data_lo_recv;
 
   // / 4 bit trace command / 2 bit packet size / 128 bit packet /
-  downstream_wrapper_send_trace_rom #(.width_p(134),.addr_width_p(32))
+  depacketizer_send_trace_rom #(.width_p(135),.addr_width_p(32))
   ROM_BPS_send
     (.addr_i( rom_addr_li ) 
     ,.data_o( rom_data_lo_send )
     );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(130)
+  bsg_fsb_node_trace_replay #(.ring_width_p(131)
                               ,.rom_addr_width_p(32) )
   trace_replay_send
     ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -85,7 +85,7 @@ module upstream_downstream_tb_twotrace;
     );
 
   // / 4 bit trace command / 32 bit flit /    
-  downstream_wrapper_recv_trace_rom #(.width_p(37),.addr_width_p(32))
+  depacketizer_recv_trace_rom #(.width_p(37),.addr_width_p(32))
   ROM_BPS_recv
     (.addr_i( rom_addr_li )
     ,.data_o( rom_data_lo_recv )
@@ -129,7 +129,7 @@ module upstream_downstream_tb_twotrace;
     .core_reset_i ( core_reset ),        
     .packet_i ( tr_data_lo[127:0] ),        // input data from send trace replay
     .valid_i ( tr_v_lo ),                   // handshake v_i --> comes from send side v_o
-    .packet_size_i( tr_data_lo[129:128] ),  // input data from send trace replay
+    .packet_size_i( tr_data_lo[130:128] ),  // input data from send trace replay
     .ready_o( dut_ready_lo ),               // handshake r_o --> goes to send side r_i
 
     .io_clk_i ( io_clk ),

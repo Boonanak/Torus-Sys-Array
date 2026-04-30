@@ -43,6 +43,7 @@ sim.inputs.tb_input_files: [
   "v/Top_level/parity_generator_tb.sv",
   "v/Top_level/downstream_wrapper_tb_twotrace.sv",
   #"v/Top_level/upstream_wrapper_tb_twotrace.sv",
+  "v/Top_level/upstream_downstream_tb_twotrace.sv",
 
     # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
