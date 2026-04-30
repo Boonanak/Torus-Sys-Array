@@ -311,7 +311,7 @@ module upstream_downstream_tb_twotrace;
       if (tb_reset) begin
           token_init_count = 0;
           token_clk_init = 0;
-      end else if (!calib_done && token_init_count < 5'h78) begin
+      end else if (!calib_done && token_init_count < 5'd31) begin
           token_init_count <= token_init_count + 1;
           token_clk_init   <= ~token_clk_init;
       end
