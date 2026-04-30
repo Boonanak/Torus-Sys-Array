@@ -40,7 +40,7 @@ module downstream_wrapper
     .width_p(34)
     ,.channel_width_p(channel_width_p)
     ,.num_channels_p(num_channels_p)
-    ,.lg_credit_to_token_decimation(0)
+    //,.lg_credit_to_token_decimation(0)
   ) ddr_down (
     .core_clk_i          (core_clk_i)
     ,.core_link_reset_i  (core_reset_i)

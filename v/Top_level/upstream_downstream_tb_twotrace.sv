@@ -295,10 +295,30 @@ module upstream_downstream_tb_twotrace;
     );
 
   logic token_clk;
+  logic token_clk_from_downstream;
   logic io_valid;
   logic io_clk_o;
   logic [0:0][16:0] io_data;
   logic parity_error;
+
+  logic token_clk_init;
+  logic [3:0] token_init_count;
+  logic token_init_done;
+
+  // During reset sequence, pulse token_clk at io_master_clk rate
+  // to pre-load credits into upstream's counter
+  always_ff @(posedge io_master_clk) begin
+      if (tb_reset) begin
+          token_init_count = 0;
+          token_clk_init = 0;
+      end else if (!calib_done && token_init_count < 4'hF) begin
+          token_init_count <= token_init_count + 1;
+          token_clk_init   <= ~token_clk_init;
+      end
+  end
+
+  // After calib_done, switch to real token return path
+  assign token_clk = calib_done ? token_clk_from_downstream : token_clk_init;
 
   upstream_wrapper #(
     .packet_width_p(128),
@@ -339,7 +359,7 @@ module upstream_downstream_tb_twotrace;
     .io_link_reset_i ( io_downstream_link_reset ), // driven by state machine
     .io_data_i ( io_data ),                 // input data should come from upstream
     .io_valid_i ( io_valid ),               // handshake v_i --> comes from upstream v_o
-    .token_clk_o ( token_clk )              // essentially handshake r_o, will go to upstream r_i
+    .token_clk_o ( token_clk_from_downstream )              // essentially handshake r_o, will go to upstream r_i
   );
 
 endmodule
