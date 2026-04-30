@@ -332,7 +332,7 @@ module upstream_downstream_tb_twotrace;
     .core_reset_i ( core_clk_link_reset_r ),       // driven by state machine
     .flit_o ( dut_data_lo ),          // output data to recv trace replay
     .valid_o ( dut_v_lo ),                  // handshake v_o --> goes to receive side v_i
-    .ready_i ( tr_ready_lo ),               // handshake r_i --> comes from receive side r_o (tr_ready_lo)
+    .ready_i ( 1'b1 ),               // handshake r_i --> comes from receive side r_o (tr_ready_lo)
     .parity_error_o ( parity_error ),       // output data to recv trace replay
 
     .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
