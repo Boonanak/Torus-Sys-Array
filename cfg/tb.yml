@@ -158,6 +158,8 @@ sim.inputs.trace_files: [
   "v/Top_level/downstream_wrapper_recv_trace.tr",
   #"v/Top_level/upstream_wrapper_send_trace.tr",
   #"v/Top_level/upstream_wrapper_recv_trace.tr",
+  "v/Top_level/upstream_downstream_send_trace.tr",
+  "v/Top_level/upstream_downstream_recv_trace.tr",
 
   "v/sys_array/TwistMesh_send_trace.tr",
   "v/sys_array/TwistMesh_recv_trace.tr",

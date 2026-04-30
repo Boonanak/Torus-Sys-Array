@@ -61,7 +61,7 @@ module upstream_downstream_tb_twotrace;
   logic [36:0]  rom_data_lo_recv;
 
   // / 4 bit trace command / 2 bit packet size / 128 bit packet /
-  depacketizer_send_trace_rom #(.width_p(135),.addr_width_p(32))
+  upstream_downstream_send_trace_rom #(.width_p(135),.addr_width_p(32))
   ROM_BPS_send
     (.addr_i( rom_addr_li ) 
     ,.data_o( rom_data_lo_send )
@@ -90,7 +90,7 @@ module upstream_downstream_tb_twotrace;
     );
 
   // / 4 bit trace command / 32 bit flit /    
-  depacketizer_recv_trace_rom #(.width_p(37),.addr_width_p(32))
+  upstream_downstream_recv_trace_rom #(.width_p(37),.addr_width_p(32))
   ROM_BPS_recv
     (.addr_i( rom_addr_li )
     ,.data_o( rom_data_lo_recv )

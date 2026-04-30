@@ -1,0 +1,6 @@
+DP
+wait 20
+send        01234567
+wait 20
+recv                                            01234567
+end

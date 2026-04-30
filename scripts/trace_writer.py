@@ -849,7 +849,8 @@ def to_signed_nbit_binary(integer, n_bits):
 
 
 
-write_trace('scripts/DP_test_final.txt', 'v/Top_level/depacketizer_send_trace.tr', 'v/Top_level/depacketizer_recv_trace.tr')
+#write_trace('scripts/DP_test_final.txt', 'v/Top_level/depacketizer_send_trace.tr', 'v/Top_level/depacketizer_recv_trace.tr')
+write_trace('scripts/US_DS_test_final.txt', 'v/Top_level/upstream_downstream_send_trace.tr', 'v/Top_level/upstream_downstream_recv_trace.tr')
 #write_trace('scripts/DS_test_final.txt', 'v/Top_level/downstream_wrapper_send_trace.tr', 'v/Top_level/downstream_wrapper_recv_trace.tr')
 # print(parse_DP_line('end')[0])
 
