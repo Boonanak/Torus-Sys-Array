@@ -56,7 +56,8 @@ module upstream_downstream_tb_twotrace;
   // This bypasses the real token return path temporarily
   logic token_clk_override;
   always_ff @(posedge core_clk) begin
-      token_clk_override <= ~token_clk_override;
+      if(reset) token_clk_override <= 0;
+      else token_clk_override <= ~token_clk_override;
   end
 
 
