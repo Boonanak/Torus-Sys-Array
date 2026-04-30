@@ -25,9 +25,11 @@ Description:
 */
 module depacketizer 
 #(
-  parameter packet_width_p = 128
+    parameter packet_width_p = 128
   , parameter flit_width_p = 32
   , parameter fifo_els_p   = 4
+  , localparam num_flits_lp = packet_width_p / flit_width_p
+  , localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1
 ) (
   input                                clk_i
   , input                              reset_i
@@ -39,13 +41,12 @@ module depacketizer
   , output logic                       ready_o
 
   // Output to bsg_upstream
-  , output [flit_width_p-1:0]          flit_o
+  , output [flit_cnt_width_lp-1:0]     flit_o
   , output                             valid_o
   , input                              ready_i
 );
 
-  localparam num_flits_lp = packet_width_p / flit_width_p;
-  localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1;
+  
 
   logic [flit_cnt_width_lp-1:0] packet_size_r, packet_size_n;
   logic [flit_cnt_width_lp-1:0] flit_cnt_r, flit_cnt_n;

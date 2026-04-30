@@ -764,6 +764,60 @@ def parse_DS_line(DS_line):
             trace_line_recv += DS_line
     return trace_line_send + '\n', trace_line_recv + '\n'
 
+def parse_US_DS_line(US_DS_line):
+    space_i = US_DS_line.find(' ')
+    command = US_DS_line[:space_i] if space_i > 0 else US_DS_line
+    trace_line_send = ''
+    trace_line_recv = ''
+    NOOP_send = f'# NOOP\n0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n'
+    NOOP_recv = f'# NOOP\n0000____{'0'*FLIT_SIZE}\n'
+    match command.casefold():
+        case 'send':
+            data_in = DP_line[space_i+1:].strip()
+            num_packets = int(len(data_in) / (FLIT_SIZE/4))
+            trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:]
+            data_in = data_in.zfill(FLIT_SIZE*num_packets) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
+            num_packets = bin(int(num_packets) )[2:].zfill(3)
+            trace_line_send += f'0001____{num_packets}_{data_in}\n'
+            trace_line_recv += NOOP_recv
+        case 'recv':
+            trace_line_send += NOOP_send
+            data_out = DP_line[space_i+1:].strip()
+            trace_line_recv += f'# RECV | data = {data_out}\n'
+            data_out = bin(int(data_out, 16))[2:]
+            data_out = data_out.zfill(FLIT_SIZE)
+            trace_line_recv += f'0010____{data_out}\n'
+        case 'send_recv':
+            data = DP_line[space_i:].split()
+            data_in = data[0]
+            num_packets = int(len(data_in) / (FLIT_SIZE/4))
+            trace_line_send += f'# SEND {int(num_packets)} flits | data = {data_in}\n'
+            data_in = bin(int(data_in, 16))[2:]
+            data_in = data_in.zfill(FLIT_SIZE*num_packets) + f'{'0'*FLIT_SIZE*(NUM_FLITS-int(num_packets))}'
+            num_packets = bin(int(num_packets))[2:].zfill(3)
+            trace_line_send += f'0001____{num_packets}_{data_in}\n'
+            data_out = data[1]
+            trace_line_recv += f'# RECV | data = {data_out}\n'
+            data_out = bin(int(data_out, 16))[2:]
+            data_out = data_out.zfill(FLIT_SIZE)
+            trace_line_recv += f'0010____{data_out}\n'
+        case 'wait':
+            n = int(DP_line[space_i:])
+            trace_line_send += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_send += f"0000____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
+            trace_line_recv += f"# WAIT for {n} cycles\n"
+            for i in range(n):
+                trace_line_recv += f"0000____{'0'*FLIT_SIZE}\n"
+        case 'end':
+            trace_line_send += f"# ENDING SIMULATION\n0100____000_{'0'*FLIT_SIZE*NUM_FLITS}\n"
+            trace_line_recv += f"# ENDING SIMULATION\n0100____{'0'*FLIT_SIZE}\n"
+        case '###':
+            trace_line_send += DP_line
+            trace_line_recv += DP_line
+    return trace_line_send + '\n', trace_line_recv + '\n'
+
 def parse_TPU_line(TPU_line):
     return TPU_line
 

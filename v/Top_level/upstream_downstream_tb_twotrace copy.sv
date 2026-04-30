@@ -39,29 +39,30 @@ module upstream_downstream_tb_twotrace;
   logic io_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
   reset_gen_3
-    (.clk_i        ( io_clk )
+    (.clk_i        ( clk )
     ,.async_reset_o( io_reset )
     );
 
   logic dut_v_lo;
-  logic [33:0] dut_data_lo;
+  logic [32:0] dut_data_lo;
+  logic dut_read_lo;
 
   logic tr_v_lo;
-  logic [16:0] tr_data_lo;
+  logic [129:0] tr_data_lo;
   logic tr_ready_lo;
 
   logic [31:0] rom_addr_li;
-  logic [20:0] rom_data_lo_send;
-  logic [37:0]  rom_data_lo_recv;
+  logic [133:0] rom_data_lo_send;
+  logic [36:0]  rom_data_lo_recv;
 
   // / 4 bit trace command / 2 bit packet size / 128 bit packet /
-  downstream_wrapper_send_trace_rom #(.width_p(21),.addr_width_p(32))
+  downstream_wrapper_send_trace_rom #(.width_p(134),.addr_width_p(32))
   ROM_BPS_send
     (.addr_i( rom_addr_li ) 
     ,.data_o( rom_data_lo_send )
     );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(17)
+  bsg_fsb_node_trace_replay #(.ring_width_p(130)
                               ,.rom_addr_width_p(32) )
   trace_replay_send
     ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -84,13 +85,13 @@ module upstream_downstream_tb_twotrace;
     );
 
   // / 4 bit trace command / 32 bit flit /    
-  downstream_wrapper_recv_trace_rom #(.width_p(38),.addr_width_p(32))
+  downstream_wrapper_recv_trace_rom #(.width_p(37),.addr_width_p(32))
   ROM_BPS_recv
     (.addr_i( rom_addr_li )
     ,.data_o( rom_data_lo_recv )
     );
 
-  bsg_fsb_node_trace_replay #(.ring_width_p(34)
+  bsg_fsb_node_trace_replay #(.ring_width_p(33)
                               ,.rom_addr_width_p(32) )
   trace_replay_recv
     ( .clk_i ( ~clk ) // Trace Replay should run on negative clock edge!
@@ -129,11 +130,11 @@ module upstream_downstream_tb_twotrace;
     .packet_i ( tr_data_lo[127:0] ),        // input data from send trace replay
     .valid_i ( tr_v_lo ),                   // handshake v_i --> comes from send side v_o
     .packet_size_i( tr_data_lo[129:128] ),  // input data from send trace replay
-    .ready_o(  ),                           // handshake r_o --> goes to send side r_i
+    .ready_o( dut_ready_lo ),               // handshake r_o --> goes to send side r_i
 
     .io_clk_i ( io_clk ),
     .io_link_reset_i ( io_reset ),
-    .async_token_reset_i (  ),
+    .async_token_reset_i ( io_reset ),      // ??? we are just going to feed in the io_clk reset for now
     .io_clk_r_o ( io_clk_o ),               // output clk to downstream
     .io_data_r_o ( io_data ),               // output data to downstream
     .io_valid_r_o ( io_valid ),             // handshake v_o --> gpes to downstream v_i
