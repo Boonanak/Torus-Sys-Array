@@ -11,17 +11,23 @@ module downstream_wrapper_tb_twotrace;
   /* Non-synth clock generator */
   logic clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_1 (clk);
+  logic reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  reset_gen_1
+    (.clk_i        ( clk )
+    ,.async_reset_o( reset )
+    );
 
   // Core Clock
   logic core_clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_2 (core_clk);
 
   /* Non-synth reset generator */
-  logic reset;
+  logic core_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
-  reset_gen
-    (.clk_i        ( clk )
-    ,.async_reset_o( reset )
+  reset_gen_1
+    (.clk_i        ( core_clk )
+    ,.async_reset_o( core_reset )
     );
 
   // IO clock runs at half the speed of the testbench clock
@@ -30,6 +36,12 @@ module downstream_wrapper_tb_twotrace;
     if(reset) io_clk = 0;
     else      io_clk = ~io_clk;
   end
+  logic io_reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  reset_gen_1
+    (.clk_i        ( io_clk )
+    ,.async_reset_o( io_reset )
+    );
 
   logic dut_v_lo;
   logic [33:0] dut_data_lo;
@@ -106,13 +118,14 @@ module downstream_wrapper_tb_twotrace;
     .num_channels_p(1)
   ) DUT (
     .core_clk_i ( core_clk ),
-    .core_reset_i ( reset ),
+    .core_reset_i ( core_reset ),
     .flit_o ( dut_data_lo[31:0] ),
     .valid_o ( dut_v_lo ),       // handshake v_o --> goes to receive side v_i
     .ready_i ( 1'b1 ),    // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
     .parity_error_o ( dut_data_lo[32] ),
 
     .io_clk_i ( io_clk ),
+    .io_link_reset_i ( io_reset ),
     .io_data_i ( tr_data_lo[16:0] ),
     .io_valid_i ( tr_v_lo ),     // handshake v_i --> comes from send side v_o
     .token_clk_o ( dut_data_lo[33] ) // will be used for handshake r_o

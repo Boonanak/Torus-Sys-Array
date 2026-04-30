@@ -11,17 +11,23 @@ module upstream_downstream_tb_twotrace;
   /* Non-synth clock generator */
   logic clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_1 (clk);
+  logic reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  reset_gen_1
+    (.clk_i        ( clk )
+    ,.async_reset_o( reset )
+    );
 
   // Core Clock
   logic core_clk;
   bsg_nonsynth_clock_gen #(12000) clk_gen_2 (core_clk);
 
   /* Non-synth reset generator */
-  logic reset;
+  logic core_reset;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
-  reset_gen
-    (.clk_i        ( clk )
-    ,.async_reset_o( reset )
+  reset_gen_1
+    (.clk_i        ( core_clk )
+    ,.async_reset_o( core_reset )
     );
 
   // IO clock runs at half the speed of the testbench clock
@@ -30,6 +36,12 @@ module upstream_downstream_tb_twotrace;
     if(reset) io_clk = 0;
     else      io_clk = ~io_clk;
   end
+  logic io_reset;
+  bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5),. reset_cycles_hi_p(5))
+  reset_gen_1
+    (.clk_i        ( io_clk )
+    ,.async_reset_o( io_reset )
+    );
 
   logic dut_v_lo;
   logic [33:0] dut_data_lo;
@@ -113,14 +125,14 @@ module upstream_downstream_tb_twotrace;
     .num_channels_p(1)
   ) DUT_upstream (
     .core_clk_i ( core_clk ),
-    .core_reset_i ( reset ),        
+    .core_reset_i ( core_reset ),        
     .packet_i ( tr_data_lo[127:0] ),        // input data from send trace replay
     .valid_i ( tr_v_lo ),                   // handshake v_i --> comes from send side v_o
     .packet_size_i( tr_data_lo[129:128] ),  // input data from send trace replay
     .ready_o(  ),                           // handshake r_o --> goes to send side r_i
 
     .io_clk_i ( io_clk ),
-    .io_link_reset_i (  ),
+    .io_link_reset_i ( io_reset ),
     .async_token_reset_i (  ),
     .io_clk_r_o ( io_clk_o ),               // output clk to downstream
     .io_data_r_o ( io_data ),               // output data to downstream
@@ -134,13 +146,14 @@ module upstream_downstream_tb_twotrace;
     .num_channels_p(1)
   ) DUT_downstream (
     .core_clk_i ( core_clk ),
-    .core_reset_i ( reset ),
+    .core_reset_i ( core_reset ),
     .flit_o ( dut_data_lo[31:0] ),          // output data to recv trace replay
     .valid_o ( dut_v_lo ),                  // handshake v_o --> goes to receive side v_i
     .ready_i ( 1'b1 ),                      // TEMP: SET TO 1 for only sending... handshake r_i --> comes from receive side r_o (tr_ready_lo)
     .parity_error_o ( dut_data_lo[32] ),    // output data to recv trace replay
 
     .io_clk_i ( io_clk_o ),                 // input io clock should come from upstream
+    .io_link_reset_i ( io_reset ),          // input io reset comes from the same reset signal as upstream??????
     .io_data_i ( io_data ),                 // input data should come from upstream
     .io_valid_i ( io_valid ),               // handshake v_i --> comes from upstream v_o
     .token_clk_o ( token_clk )              // essentially handshake r_o, will go to upstream r_i
