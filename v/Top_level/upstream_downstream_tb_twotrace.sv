@@ -45,7 +45,7 @@ module upstream_downstream_tb_twotrace;
   bsg_nonsynth_reset_gen #(.num_clocks_p(1),.reset_cycles_lo_p(5), .reset_cycles_hi_p(1))
   reset_gen_4
     (.clk_i         ( clk )
-    ,.async_reset_o ( io_reset )
+    ,.async_reset_o ( token_reset )
     );
 
   logic dut_v_lo;
