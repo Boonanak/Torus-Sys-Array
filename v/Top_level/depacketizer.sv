@@ -37,11 +37,11 @@ module depacketizer
   // Input from Memory
   , input [packet_width_p-1:0]         packet_i
   , input                              valid_i
-  , input [1:0]                        packet_size_i
+  , input [flit_cnt_width_lp:0]                        packet_size_i
   , output logic                       ready_o
 
   // Output to bsg_upstream
-  , output [flit_cnt_width_lp-1:0]     flit_o
+  , output [flit_width_p-1:0]     flit_o
   , output                             valid_o
   , input                              ready_i
 );
