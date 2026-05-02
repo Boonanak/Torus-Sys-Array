@@ -5,8 +5,11 @@ import PE_pkg::*;
 
 module top_chip #(
      parameter int DIM_p          = 4
-    ,parameter int NUM_MATRICES_p = 64
+    ,parameter int NUM_MATRICES_p = 4
     ,parameter int CMDQ_DEPTH_p   = 8
+    ,parameter int PACKET_WIDTH_p = 256
+    ,parameter int FLIT_WIDTH_lp = 32
+    ,localparam int PACKET_LENGTH_BITWIDTH_p = $clog2(PACKET_WIDTH_p / FLIT_WIDTH_lp)
     ,localparam int IFM_W_lp      = DIM_p * 8
     ,localparam int WGT_W_lp      = DIM_p * 8
     ,localparam int PSM_W_lp      = DIM_p * 16  // bank-side; mesh-internal still 19b (m_in/out_psum etc)
@@ -18,24 +21,31 @@ module top_chip #(
     ,input  logic        reset_i
 
     ,input  logic        link_in_v_i
-    ,input  logic [15:0] link_in_data_i
+    ,input  logic [FLIT_WIDTH_lp-1:0] link_in_data_i
     ,input  logic        link_in_parity_i
     ,output logic        link_in_yumi_o
 
-    ,output logic        link_out_v_o
-    ,output logic [15:0] link_out_data_o
-    ,output logic        link_out_parity_o
-    ,input  logic        link_out_yumi_i
+    ,output logic           link_out_v_o
+    ,output logic [PACKET_WIDTH_p-1:0] link_out_data_o
+    ,output logic [PACKET_LENGTH_BITWIDTH_p-1:0] link_out_packet_size_o
+    ,input  logic           link_out_yumi_i
 );
 
     logic rst_n_i;
     assign rst_n_i = ~reset_i;  // csr.sv uses active-low
 
-    logic [31:0] in_flit;
+    logic [FLIT_WIDTH_lp-1:0] in_flit;
     logic        in_flit_v;
     logic        in_flit_ready;
     logic        in_flit_par_ok;
 
+    assign in_flit = link_in_data_i;
+    assign in_flit_v = link_in_v_i;
+    assign in_flit_ready = link_in_yumi_i;
+    assign in_flit_par_ok = link_in_parity_i;
+
+    // Module not needed, flits are already 32 bit
+    /*
     link16_to_flit32 u_in_adapter (
          .clk_i, .reset_i
         ,.link_data_i      (link_in_data_i)
@@ -47,6 +57,7 @@ module top_chip #(
         ,.flit_parity_ok_o (in_flit_par_ok)
         ,.flit_ready_i     (in_flit_ready)
     );
+    */
 
     decoded_cmd_t dec_cmd;
     logic         dec_cmd_v;
@@ -256,9 +267,9 @@ module top_chip #(
     logic [ADDR_W_lp-1:0]  rd_mem_addr;
     sp_bank_id_e           rd_mem_bank;
     logic [PSM_W_lp-1:0]   rd_mem_data;  // widest
-    logic [127:0]          rd_pkt;
+    logic [PACKET_WIDTH_p-1:0]          rd_pkt;
     logic                  rd_pkt_v, rd_pkt_ready;
-    logic [1:0]            rd_pkt_size;
+    logic [PACKET_LENGTH_BITWIDTH_p-1:0] rd_pkt_size;
     logic [63:0]           csr_data_lo;  // current csr.data_o
 
     read_ctrl #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_rd (
@@ -355,6 +366,15 @@ module top_chip #(
         ,.data_o       (csr_data_lo)
     );
 
+    // Output handshake and data
+    assign link_out_packet_size_o = rd_pkt_size;
+    assign link_out_data_o = rd_pkt;
+    assign link_out_v_o = rd_pkt_v;
+    assign rd_pkt_ready = link_out_yumi_i;
+
+    // Depacketization handled in upstream_wrapper module
+    // Output packets are 128 bit not 16 bit
+    /*
     logic [31:0] out_flit;
     logic        out_flit_v, out_flit_ready;
 
@@ -373,7 +393,7 @@ module top_chip #(
         ,.valid_o         (out_flit_v)
         ,.ready_i         (out_flit_ready)
     );
-
+    
     flit32_to_link16 u_out_adapter (
          .clk_i, .reset_i
         ,.flit_i        (out_flit)
@@ -384,5 +404,6 @@ module top_chip #(
         ,.link_parity_o (link_out_parity_o)
         ,.link_yumi_i   (link_out_yumi_i)
     );
+    */
 
 endmodule

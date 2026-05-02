@@ -2,12 +2,15 @@
 // Upstream is output
 // Downstream is input
 module functional_top #(
-                        parameter PACKET_WIDTH_p = 128,
+                        parameter PACKET_WIDTH_p = 256,
                         parameter FLIT_WIDTH_p = 32,
                         parameter FIFO_ELS_p = 4,
                         parameter PARITY_DATA_WIDTH_p = 17,
                         parameter NUM_CHANNELS_p = 1,
                         parameter DATA_WIDTH_p = 16,
+                        parameter DIM_p = 8,
+                        parameter NUM_MATRICES_p = 4,
+                        parameter CMDQ_DEPTH_p = 8,
                         localparam PACKET_LENGTH_p = $clog2(PACKET_WIDTH_p / FLIT_WIDTH_p) // how many bits needed to break a packet into flits
                       ) (
                         // System Inputs
@@ -52,16 +55,33 @@ module functional_top #(
 
     // Most of the chip design, houses the memory and functional parts of the chip.
     // Signals are WIP
-    datapath dp1 ();
+    top_chip tc1 #(
+                   .DIM_p(DIM_p),
+                   .NUM_MATRICES_p(NUM_MATRICES_p),
+                   .CMDQ_DEPTH_p(CMDQ_DEPTH_p),
+                   .PACKET_WIDTH_p(PACKET_WIDTH_p)
+                  ) (
+                   .clk_i(core_clk_i),
+                   .reset_i(reset_n_i), // ENSURE ALL MODULES USE ACTIVE LOW RESET
+                   .link_in_v_i(downstream_valid),
+                   .link_in_data_i(bsg_link_downstream_flit),
+                   .link_in_parity_i(parity_check),
+                   .link_in_yumi_o(datapath_ready),
+                   .link_out_v_o(datapath_valid),
+                   .link_out_data_o(output_data_packet),
+                   .link_out_packet_size_o(packet_length),
+                   .link_out_yumi_i(upstream_ready)
+                  );
+  
 
     // Wrapper for the output module
-    upstream_wrapper #(.packet_width_p(PACKET_WIDTH_p), 
-                       .flit_width_p(FLIT_WIDTH_p), 
-                       .fifo_els_p(FIFO_ELS_p), 
-                       .channel_width(PARITY_DATA_WIDTH_p), 
+    upstream_wrapper #(.packet_width_p(PACKET_WIDTH_p),
+                       .flit_width_p(FLIT_WIDTH_p),
+                       .fifo_els_p(FIFO_ELS_p),
+                       .channel_width(PARITY_DATA_WIDTH_p),
                        .num_channels_p(NUM_CHANNELS_p)
-                      ) 
-                       us1
+                      )
+                       usw1
                       (.core_clk_i(core_clk_i), 
                        .core_reset_i(reset_n_i), 
                        .packet_i(output_data_packet), 
@@ -81,10 +101,10 @@ module functional_top #(
     downstream_wrapper #(.flit_width_p(FLIT_WIDTH_p),
                          .channel_width(PARITY_DATA_WIDTH_p),
                          .num_channels_p(NUM_CHANNELS_p)
-                        ) 
-                         ds1
-                        (.core_clk_i(core_clk_i), 
-                         .core_reset_i(reset_n_i), 
+                        )
+                         dsw1
+                        (.core_clk_i(core_clk_i),
+                         .core_reset_i(reset_n_i),
                          .flit_o(bsg_link_downstream_flit),
                          .valid_o(downstream_valid),
                          .ready_i(datapath_ready),
