@@ -2,16 +2,17 @@
 // Upstream is output
 // Downstream is input
 module functional_top #(
-                        parameter PACKET_WIDTH_p = 256,
-                        parameter FLIT_WIDTH_p = 32,
-                        parameter FIFO_ELS_p = 4,
-                        parameter PARITY_DATA_WIDTH_p = 17,
-                        parameter NUM_CHANNELS_p = 1,
-                        parameter DATA_WIDTH_p = 16,
-                        parameter DIM_p = 8,
-                        parameter NUM_MATRICES_p = 4,
-                        parameter CMDQ_DEPTH_p = 8,
-                        localparam PACKET_LENGTH_p = $clog2(PACKET_WIDTH_p / FLIT_WIDTH_p) // how many bits needed to break a packet into flits
+                        parameter int PACKET_WIDTH_p = 256,
+                        parameter int FLIT_WIDTH_p = 32,
+                        parameter int FIFO_ELS_p = 4,
+                        parameter int PARITY_DATA_WIDTH_p = 17,
+                        parameter int NUM_CHANNELS_p = 1,
+                        parameter int DATA_WIDTH_p = 16,
+                        parameter int DIM_p = 8,
+                        parameter int NUM_MATRICES_p = 4,
+                        parameter int CMDQ_DEPTH_p = 8,
+                        // how many bits needed to break a packet into flits
+                        localparam int PACKET_LENGTH_p = $clog2(PACKET_WIDTH_p / FLIT_WIDTH_p)
                       ) (
                         // System Inputs
                         input logic core_clk_i,
@@ -37,17 +38,17 @@ module functional_top #(
                         output logic bsg_link_upstream_valid,
                         output logic bsg_link_upstream_yumi,
                         output logic bsg_link_upstream_parity,
-                        output logic [DATA_WIDTH_p-1:0] bsg_link_upstream_data,
-                      );  
+                        output logic [DATA_WIDTH_p-1:0] bsg_link_upstream_data
+                      );
 
     // Downstream side
-    logic downstream_valid, datapath_ready, parity_check; 
+    logic downstream_valid, datapath_ready, parity_check;
     logic [FLIT_WIDTH_p-1:0] bsg_link_downstream_flit;
     logic [PARITY_DATA_WIDTH_p-1:0] bsg_link_downstream_parity_data;
-    assign bsg_link_upstream_parity_data = {bsg_link_upstream_parity, bsg_link_upstream_data}; 
+    assign bsg_link_upstream_parity_data = {bsg_link_upstream_parity, bsg_link_upstream_data};
 
     // Upstream side
-    logic upstream_ready, datapath_valid; 
+    logic upstream_ready, datapath_valid;
     logic [PACKET_WIDTH_p-1:0] output_data_packet;
     logic [PACKET_LENGTH_p:0] packet_length;
     logic [PARITY_DATA_WIDTH_p-1:0] bsg_link_upstream_parity_data;
@@ -55,12 +56,12 @@ module functional_top #(
 
     // Most of the chip design, houses the memory and functional parts of the chip.
     // Signals are WIP
-    top_chip tc1 #(
+    top_chip #(
                    .DIM_p(DIM_p),
                    .NUM_MATRICES_p(NUM_MATRICES_p),
                    .CMDQ_DEPTH_p(CMDQ_DEPTH_p),
                    .PACKET_WIDTH_p(PACKET_WIDTH_p)
-                  ) (
+                  ) tc1 (
                    .clk_i(core_clk_i),
                    .reset_i(reset_n_i), // ENSURE ALL MODULES USE ACTIVE LOW RESET
                    .link_in_v_i(downstream_valid),
@@ -72,7 +73,7 @@ module functional_top #(
                    .link_out_packet_size_o(packet_length),
                    .link_out_yumi_i(upstream_ready)
                   );
-  
+
 
     // Wrapper for the output module
     upstream_wrapper #(.packet_width_p(PACKET_WIDTH_p),
@@ -82,10 +83,10 @@ module functional_top #(
                        .num_channels_p(NUM_CHANNELS_p)
                       )
                        usw1
-                      (.core_clk_i(core_clk_i), 
-                       .core_reset_i(reset_n_i), 
-                       .packet_i(output_data_packet), 
-                       .valid_i(datapath_valid), 
+                      (.core_clk_i(core_clk_i),
+                       .core_reset_i(reset_n_i),
+                       .packet_i(output_data_packet),
+                       .valid_i(datapath_valid),
                        .packet_size_i(packet_length),
                        .ready_o(upstream_ready),
                        .io_clk_i(core_clk_i),
@@ -117,6 +118,5 @@ module functional_top #(
                         );
 
   // Wrapper for the debug interface
-
 
 endmodule

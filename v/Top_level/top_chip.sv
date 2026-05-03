@@ -393,7 +393,7 @@ module top_chip #(
         ,.valid_o         (out_flit_v)
         ,.ready_i         (out_flit_ready)
     );
-    
+
     flit32_to_link16 u_out_adapter (
          .clk_i, .reset_i
         ,.flit_i        (out_flit)
