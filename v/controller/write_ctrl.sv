@@ -6,7 +6,7 @@ module write_ctrl #(
      parameter int DIM_p = scratchpad_pkg::DIM_p
     ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p*DIM_p)
-    ,localparam int PSM_W_lp = DIM_p*16  // bank stores 16b/elem
+    ,localparam int PSM_W_lp = scratchpad_pkg::PSM_ROW_W_lp
 )(
      input  logic          clk_i
     ,input  logic          reset_i

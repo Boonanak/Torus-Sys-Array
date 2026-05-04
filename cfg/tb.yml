@@ -14,6 +14,9 @@ sim.inputs.tb_input_files: [
   "v/Top_level/Top_level_tb.sv",
   "v/Top_level/Top_level_tb_twotrace.sv",
   
+  "v/controller/mem_arbiter_tb.sv",
+  "v/controller/controller_tb.sv",
+
   "v/memory/memory_tb.sv",
   "v/memory/memory_sync_tb.sv",
   "v/memory/banked_mem_tb.sv",
@@ -23,12 +26,12 @@ sim.inputs.tb_input_files: [
   #"v/PE/PE_shared_B_tb.sv",
   #"v/PE/PE_final_tb.sv",
   #"v/PE/Pipette_PE_tb.sv",
-  "v/PE/TwistPE_tb.sv",
+  #"v/PE/TwistPE_tb.sv",
 
   
   #"v/sys_array/sys_array_tb.sv",
   #"v/sys_array/sys_array_tb_twotrace.sv",
-  "v/sys_array/TwistMesh_tb.sv",
+  #"v/sys_array/TwistMesh_tb.sv",
 
 
   #"v/transpose/dff_en_tb.v",
@@ -123,25 +126,6 @@ sim.inputs.tb_input_files_meta: [append, subst]
 
 # List of trace files for the simulation
 sim.inputs.trace_files: [
-  #"v/PE/trace.tr",
-  #"v/PE/trace_separateBPS.tr",
-  #"v/PE/shared_B.tr",
-  #"v/PE/PE_final_trace.tr",
-  "v/PE/Pipette_PE.tr",
-
-  #"v/sys_array/sys_array_trace.tr",
-  #"v/sys_array/sys_array_recv_trace.tr",
-  #"v/sys_array/sys_array_send_trace.tr",
-
-  #"v/transpose/dff_en_trace.tr",
-  "v/transpose/shift_reg_trace.tr",
-  "v/transpose/tp_node_trace.tr",
-  #"v/transpose/transpose_trace.tr",
-  "v/transpose/transpose_recv_trace.tr",
-  "v/transpose/transpose_send_trace.tr",
-
-  "v/Top_level/Top_level_recv_trace.tr",
-  "v/Top_level/Top_level_send_trace.tr",
-
-  "v/CSR/csr_trace.tr",
+  "v/controller/controller_send_trace.tr",
+  "v/controller/controller_recv_trace.tr",
 ]

@@ -7,8 +7,8 @@ module read_ctrl #(
     ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
     ,parameter int PKT_W_p   = 128  // matches depacketizer packet_width_p
     ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p*DIM_p)
-    ,localparam int IFM_W_lp  = DIM_p*8
-    ,localparam int PSM_W_lp  = DIM_p*16  // bank-side
+    ,localparam int IFM_W_lp  = scratchpad_pkg::IFM_ROW_W_lp
+    ,localparam int PSM_W_lp  = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
 )(
      input  logic                       clk_i
@@ -107,8 +107,8 @@ module read_ctrl #(
     assign ready_o     = (st_r == S_IDLE);
     assign rd_active_o = (st_r != S_IDLE);
 
-    function automatic logic [127:0] psum_row_pad_128(input logic [PSM_W_lp-1:0] r);
-        logic [127:0] v;
+    function automatic logic [PSM_W_lp-1:0] psum_row_pad(input logic [PSM_W_lp-1:0] r);
+        logic [PSM_W_lp-1:0] v;
         v = '0;
         v[PSM_W_lp-1:0] = r;  // already 16b/elem
         return v;
@@ -132,8 +132,8 @@ module read_ctrl #(
 
             S_GATHER: begin
                 if (is_m16_r || is_v16_r) begin
-                    buf_n[row_cnt_r*128 +: 128] =
-                        psum_row_pad_128(mem_data_i);
+                    buf_n[row_cnt_r*PSM_W_lp +: PSM_W_lp] =
+                        psum_row_pad(mem_data_i);
                 end else begin
                     buf_n[row_cnt_r*64 +: 64] = mem_data_i[IFM_W_lp-1:0];
                 end
