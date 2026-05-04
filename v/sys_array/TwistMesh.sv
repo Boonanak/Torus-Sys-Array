@@ -24,7 +24,8 @@ module TwistMesh #(
      parameter N_p            = 4                                         // array dimension (must be power of 2)
     ,parameter INPUT_WIDTH_p  = 8
     ,parameter WEIGHT_WIDTH_p = 8
-    ,parameter OUTPUT_WIDTH_p = 19  // 19b mesh-internal psum (truncated to 16 outside)
+    // ,parameter OUTPUT_WIDTH_p = 19  // 19b mesh-internal psum (truncated to 16 outside)
+    ,parameter OUTPUT_WIDTH_p = 32     // T2SA-MESH: int32 psum (no truncation outside)
 )(
      input  logic                              clk_i
     ,input  logic                              reset_i

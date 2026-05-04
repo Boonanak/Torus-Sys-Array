@@ -6,7 +6,8 @@ module mesh_driver #(
      parameter int DIM_p = 4
     ,parameter int IFM_W_p = 8
     ,parameter int WGT_W_p = 8
-    ,parameter int PSM_W_p = 19  // match TwistPE OUTPUT_WIDTH_p for N=8
+    // ,parameter int PSM_W_p = 19  // match TwistPE OUTPUT_WIDTH_p for N=8
+    ,parameter int PSM_W_p = 32     // T2SA-CTRL: int32 psum (matches TwistPE/TwistMesh OUTPUT_WIDTH_p)
     ,localparam int CYC_W_lp = $clog2(DIM_p+1)
 )(
      input  logic                              clk_i

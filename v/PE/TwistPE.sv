@@ -28,7 +28,8 @@ import PE_pkg::*;
 module TwistPE #(
      parameter INPUT_WIDTH_p  = 8
     ,parameter WEIGHT_WIDTH_p = 8
-    ,parameter OUTPUT_WIDTH_p = 19  // 19b psum (8 partial-sums of int8×int8 = 18b max, +1 sign)
+    // ,parameter OUTPUT_WIDTH_p = 19  // 19b psum (8 partial-sums of int8×int8 = 18b max, +1 sign)
+    ,parameter OUTPUT_WIDTH_p = 32     // T2SA-PE: int32 psum (no truncation in writeback path)
 )(
      input  logic                              clk_i
     ,input  logic                              reset_i
