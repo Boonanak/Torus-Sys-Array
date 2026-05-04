@@ -57,22 +57,22 @@ module functional_top #(
     // Most of the chip design, houses the memory and functional parts of the chip.
     // Signals are WIP
     top_chip #(
-                   .DIM_p(DIM_p),
-                   .NUM_MATRICES_p(NUM_MATRICES_p),
-                   .CMDQ_DEPTH_p(CMDQ_DEPTH_p),
-                   .PACKET_WIDTH_p(PACKET_WIDTH_p)
-                  ) tc1 (
-                   .clk_i(core_clk_i),
-                   .reset_i(reset_n_i), // ENSURE ALL MODULES USE ACTIVE LOW RESET
-                   .link_in_v_i(downstream_valid),
-                   .link_in_data_i(bsg_link_downstream_flit),
-                   .link_in_parity_i(parity_check),
-                   .link_in_yumi_o(datapath_ready),
-                   .link_out_v_o(datapath_valid),
-                   .link_out_data_o(output_data_packet),
-                   .link_out_packet_size_o(packet_length),
-                   .link_out_yumi_i(upstream_ready)
-                  );
+                .DIM_p(DIM_p),
+                .NUM_MATRICES_p(NUM_MATRICES_p),
+                .CMDQ_DEPTH_p(CMDQ_DEPTH_p),
+                .PACKET_WIDTH_p(PACKET_WIDTH_p)
+              ) tc1 (
+                .clk_i(core_clk_i),
+                .reset_i(reset_n_i), // ENSURE ALL MODULES USE ACTIVE LOW RESET
+                .link_in_v_i(downstream_valid),
+                .link_in_data_i(bsg_link_downstream_flit),
+                .link_in_parity_i(parity_check),
+                .link_in_yumi_o(datapath_ready),
+                .link_out_v_o(datapath_valid),
+                .link_out_data_o(output_data_packet),
+                .link_out_packet_size_o(packet_length),
+                .link_out_yumi_i(upstream_ready)
+              );
 
 
     // Wrapper for the output module
