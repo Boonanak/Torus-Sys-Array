@@ -27,7 +27,7 @@ module top_chip #(
 
     ,output logic           link_out_v_o
     ,output logic [PACKET_WIDTH_p-1:0] link_out_data_o
-    ,output logic [PACKET_LENGTH_BITWIDTH_p-1:0] link_out_packet_size_o
+    ,output logic [PACKET_LENGTH_BITWIDTH_p:0] link_out_packet_size_o
     ,input  logic           link_out_yumi_i
 );
 
@@ -269,7 +269,7 @@ module top_chip #(
     logic [PSM_W_lp-1:0]   rd_mem_data;  // widest
     logic [PACKET_WIDTH_p-1:0]          rd_pkt;
     logic                  rd_pkt_v, rd_pkt_ready;
-    logic [PACKET_LENGTH_BITWIDTH_p-1:0] rd_pkt_size;
+    logic [PACKET_LENGTH_BITWIDTH_p:0] rd_pkt_size;
     logic [63:0]           csr_data_lo;  // current csr.data_o
 
     read_ctrl #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_rd (
