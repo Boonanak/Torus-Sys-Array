@@ -103,7 +103,8 @@ module TwistMesh_tb_twotrace;
     localparam N = 8;
     localparam IW = 8;
     localparam WW = 8;
-    localparam OW = 16;
+    // localparam OW = 16;
+    localparam OW = 32;                                                        // T2SA-MESH: int32 psum
 
     // ================================================================
     // DUT signals

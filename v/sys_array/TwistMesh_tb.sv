@@ -22,7 +22,8 @@ module TwistMesh_tb;
     localparam N = 4;
     localparam IW = 8;
     localparam WW = 8;
-    localparam OW = 16;
+    // localparam OW = 16;
+    localparam OW = 32;                                                        // T2SA-MESH: int32 psum
 
     // ================================================================
     // Clock and reset
