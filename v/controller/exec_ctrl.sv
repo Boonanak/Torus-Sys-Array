@@ -7,7 +7,7 @@ module exec_ctrl #(
     ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int IFM_W_lp = DIM_p * 8
     ,localparam int WGT_W_lp = DIM_p * 8
-    ,localparam int PSM_W_lp = DIM_p * 16  // bank-side; sign-ext 16→19 for mesh, truncate 19→16 on writeback
+    ,localparam int PSM_W_lp = DIM_p * 32  // bank-side; sign-ext 16→19 for mesh, truncate 19→16 on writeback
     ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p * DIM_p)
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
 )(

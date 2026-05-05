@@ -14,31 +14,10 @@ sim.inputs.tb_input_files: [
   "v/Top_level/Top_level_tb.sv",
   "v/Top_level/Top_level_tb_twotrace.sv",
   
+  "v/Top_level/top_chip_tb.sv",
+
   "v/controller/mem_arbiter_tb.sv",
   "v/controller/controller_tb.sv",
-
-  "v/memory/memory_tb.sv",
-  "v/memory/memory_sync_tb.sv",
-  "v/memory/banked_mem_tb.sv",
-
-  #"v/PE/PE_tb.sv",
-  #"v/PE/PE_combine_B_PS_tb.sv",
-  #"v/PE/PE_shared_B_tb.sv",
-  #"v/PE/PE_final_tb.sv",
-  #"v/PE/Pipette_PE_tb.sv",
-  #"v/PE/TwistPE_tb.sv",
-
-  
-  #"v/sys_array/sys_array_tb.sv",
-  #"v/sys_array/sys_array_tb_twotrace.sv",
-  #"v/sys_array/TwistMesh_tb.sv",
-
-
-  #"v/transpose/dff_en_tb.v",
-  "v/transpose/shift_reg_tb.v",
-  "v/transpose/tp_node_tb.v",
-  #"v/transpose/transpose_tb.v",
-  "v/transpose/transpose_tb_twotrace.v",
 
   "v/CSR/csr_tb.sv",
 
@@ -128,4 +107,7 @@ sim.inputs.tb_input_files_meta: [append, subst]
 sim.inputs.trace_files: [
   "v/controller/controller_send_trace.tr",
   "v/controller/controller_recv_trace.tr",
+
+  "v/Top_level/top_chip_send_trace.tr",
+  "v/Top_level/top_chip_recv_trace.tr",
 ]
