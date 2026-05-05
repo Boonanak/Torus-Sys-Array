@@ -55,6 +55,11 @@ def to_signed_nbit_binary(integer, n_bits):
 # 111100 = 60: LRCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 # 110100 = 52: LCCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 
+DIM        = 8
+AB_WIDTH   = 8
+C_WIDTH    = 32
+FLIT_WIDTH = 32
+
 def to_machine_code(instruction):
     machine_code = ''
     expected_output = ''
@@ -63,18 +68,31 @@ def to_machine_code(instruction):
     match op:
         case "NOOP":
             opcode = '000000'
-            machine_code = f'{'0'*26}_{opcode}\n'
-            expected_output = f'{'0'*26}_{opcode}\n'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "ERROR_CSR":
             opcode = '011100'
-            machine_code = f'{'0'*26}_{opcode}\n'
-            expected_output = f'{'0'*26}_{opcode}\n'
-        case "WRITE":
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+        case "WRITE8":
             opcode = '010000'
             Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
             bracket_i = instruction.find('[')
-            data = instruction[bracket_i+1:len(instruction)-1].split(sep=', ')
-            data = [f'_{to_signed_nbit_binary(int(n), 8)}' for n in data]
+            bracket_j = instruction.find(']')
+            data = instruction[bracket_i+1:bracket_j].split(sep=', ')
+            data = [f'_{to_signed_nbit_binary(int(n), AB_WIDTH)}' for n in data]
+            data_string = ''
+            for n in data:
+                data_string += n
+            machine_code = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}___{data_string}\n'
+            expected_output = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}\n'
+        case "WRITE32":
+            opcode = '010010'
+            Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
+            bracket_i = instruction.find('[')
+            bracket_j = instruction.find(']')
+            data = instruction[bracket_i+1:bracket_j].split(sep=', ')
+            data = [f'_{to_signed_nbit_binary(int(n), C_WIDTH)}' for n in data]
             data_string = ''
             for n in data:
                 data_string += n

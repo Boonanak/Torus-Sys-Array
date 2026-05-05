@@ -44,8 +44,10 @@ module TwistPE_tb;
     logic               out_lock;
     logic signed [7:0]  in_ifmap;
     logic signed [7:0]  out_ifmap;
-    logic signed [15:0] in_psum;
-    logic signed [15:0] out_psum;
+    // logic signed [15:0] in_psum;                                            // original 16-bit
+    // logic signed [15:0] out_psum;
+    logic signed [31:0] in_psum;                                                // T2SA-PE: int32 psum
+    logic signed [31:0] out_psum;
     logic               in_propagate;
     logic               out_propagate;
     logic               in_valid;
@@ -53,7 +55,8 @@ module TwistPE_tb;
     TwistPE #(
          .INPUT_WIDTH_p  (8)
         ,.WEIGHT_WIDTH_p (8)
-        ,.OUTPUT_WIDTH_p (16)
+        // ,.OUTPUT_WIDTH_p (16)
+        ,.OUTPUT_WIDTH_p (32)                                                  // T2SA-PE: int32 psum
     ) DUT (
          .clk_i           (clk_i)
         ,.reset_i         (reset_i)
@@ -76,7 +79,8 @@ module TwistPE_tb;
     integer test_pass;
     integer test_fail;
 
-    task automatic check_psum(input signed [15:0] expected, input string msg);
+    // task automatic check_psum(input signed [15:0] expected, input string msg);
+    task automatic check_psum(input signed [31:0] expected, input string msg); // T2SA-PE: int32
         if (out_psum !== expected) begin
             $error("FAIL [%s]: out_psum=%0d, expected=%0d", msg, out_psum, expected);
             test_fail++;

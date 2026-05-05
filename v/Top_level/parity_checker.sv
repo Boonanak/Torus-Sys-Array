@@ -8,7 +8,7 @@ module parity_checker #(
 );
     
     always_comb begin
-        is_parity_o = (^bits_i) ~^ parity_i;
+       assign is_parity_o = (^bits_i) ~^ parity_i;
     end
 
 endmodule

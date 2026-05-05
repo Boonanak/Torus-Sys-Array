@@ -1,5 +1,4 @@
 // TwistPE.sv — Twist-WS Processing Element
-// Reference: T2SA_gemmini/src/main/scala/gemmini/TwistPE.scala
 //
 // Three internal data registers:
 //   buffer1_r, buffer2_r : weight double-buffers (selected by propagate)
@@ -29,7 +28,8 @@ import PE_pkg::*;
 module TwistPE #(
      parameter INPUT_WIDTH_p  = 8
     ,parameter WEIGHT_WIDTH_p = 8
-    ,parameter OUTPUT_WIDTH_p = 16
+    // ,parameter OUTPUT_WIDTH_p = 19  // 19b psum (8 partial-sums of int8×int8 = 18b max, +1 sign)
+    ,parameter OUTPUT_WIDTH_p = 32     // T2SA-PE: int32 psum (no truncation in writeback path)
 )(
      input  logic                              clk_i
     ,input  logic                              reset_i
@@ -115,12 +115,12 @@ module TwistPE #(
 
     logic signed [OUTPUT_WIDTH_p-1:0] mac_result;
     always_comb begin
-        if (mac_full < -signed'(17'(2**(OUTPUT_WIDTH_p-1))))
-            mac_result = {1'b1, {(OUTPUT_WIDTH_p-1){1'b0}}};             // saturate min
-        else if (mac_full > signed'(17'(2**(OUTPUT_WIDTH_p-1) - 1)))
-            mac_result = {1'b0, {(OUTPUT_WIDTH_p-1){1'b1}}};             // saturate max
+        if (mac_full < -signed'((OUTPUT_WIDTH_p+1)'(2**(OUTPUT_WIDTH_p-1))))
+            mac_result = {1'b1, {(OUTPUT_WIDTH_p-1){1'b0}}};      // saturate min
+        else if (mac_full > signed'((OUTPUT_WIDTH_p+1)'(2**(OUTPUT_WIDTH_p-1) - 1)))
+            mac_result = {1'b0, {(OUTPUT_WIDTH_p-1){1'b1}}};      // saturate max
         else
-            mac_result = mac_full[OUTPUT_WIDTH_p-1:0];                    // normal
+            mac_result = mac_full[OUTPUT_WIDTH_p-1:0];
     end
 
     // ================================================================
