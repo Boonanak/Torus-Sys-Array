@@ -19,7 +19,7 @@ module top_chip_tb;
     
     // Trace Widths based on top_chip IO
     localparam int SEND_WIDTH_lp = 32; // in_flit width
-    localparam int RECV_WIDTH_lp = 16; // link_out_data_o width
+    localparam int RECV_WIDTH_lp = 32; // link_out_data_o width
 
     logic clk_i;
     bsg_nonsynth_clock_gen #(.cycle_time_p(10000)) clk_gen (clk_i);
@@ -35,7 +35,7 @@ module top_chip_tb;
     logic        in_flit_ready;
 
     logic        link_out_v_o;
-    logic [15:0] link_out_data_o;
+    logic [31:0] link_out_data_o;
     logic        link_out_parity_o;
     logic        link_out_yumi_i;
 

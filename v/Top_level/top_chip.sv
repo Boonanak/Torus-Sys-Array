@@ -23,7 +23,7 @@ module top_chip #(
     ,output logic        in_flit_ready
 
     ,output logic        link_out_v_o
-    ,output logic [15:0] link_out_data_o
+    ,output logic [31:0] link_out_data_o
     ,output logic        link_out_parity_o
     ,input  logic        link_out_yumi_i
 );
