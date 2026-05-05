@@ -6,6 +6,8 @@ synthesis.inputs.input_files: [
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
   "v/Top_level/bsg_test_node_client.v",
   
+  "v/memory/memory.sv",
+  "v/memory/memory_sync.sv",
   "v/memory/lvt_mem.sv",
   "v/memory/partition_mem.sv",
   "v/memory/mem_pkg.sv",
