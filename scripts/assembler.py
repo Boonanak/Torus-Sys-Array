@@ -70,13 +70,17 @@ def to_machine_code(instruction):
             opcode = '000000'
             machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
             expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
-        case "ERROR_CSR":
-            opcode = '011100'
-            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
-            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "WRITE8":
             opcode = '010000'
-            Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
+            Addr_dest = instruction_data[1]
+            if(Addr_dest[0] == 'C'):
+                print("WARNING: Cannot write int8 vector to C bank")
+                return ''
+            Addr_dest = int(Addr_dest[1:])
+            if(Addr_dest < 0 or Addr_dest > 31):
+                print("WARNING: Address out of bounds")
+                return ''
+            Addr_dest = f'{to_signed_nbit_binary(int(Addr_dest[1:]), 9)}'
             bracket_i = instruction.find('[')
             bracket_j = instruction.find(']')
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
@@ -88,7 +92,15 @@ def to_machine_code(instruction):
             expected_output = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}\n'
         case "WRITE32":
             opcode = '010010'
-            Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
+            Addr_dest = instruction_data[1]
+            if(Addr_dest[0] == 'C'):
+                print("WARNING: Cannot write int8 vector to C bank")
+                return ''
+            Addr_dest = int(Addr_dest[1:])
+            if(Addr_dest < 0 or Addr_dest > 31):
+                print("WARNING: Address out of bounds")
+                return ''
+            Addr_dest = f'{to_signed_nbit_binary(int(Addr_dest[1:]), 9)}'
             bracket_i = instruction.find('[')
             bracket_j = instruction.find(']')
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
@@ -107,32 +119,36 @@ def to_machine_code(instruction):
         case "WRITE_CSR":
             opcode = '010100'
             data_string = instruction_data[1]
-            machine_code = f'{'0'*26}_{opcode}___{data_string}\n'
-            expected_output = f'{'0'*26}_{opcode}\n'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}___{data_string}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+        case "ERROR_CSR":
+            opcode = '011100'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "READ_CSR":
             opcode = '001100'
-            machine_code = f'{'0'*26}_{opcode}\n'
-            expected_output = f'{'0'*26}_{opcode}___{'x'*64}\n'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}___{'x'*8*AB_WIDTH}\n'
         case "READM8":
             opcode = '001001'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*512}\n'
-        case "READM16":
+            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*64*AB_WIDTH}\n'
+        case "READM32":
             opcode = '001011'
             BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
             machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*512}\n'
+            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*64*C_WIDTH}\n'
         case "READV8":
             opcode = '001000'
             Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
             machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*64}\n'
+            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*8*AB_WIDTH}\n'
         case "READV16":
             opcode = '001010'
             Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
             machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*128}\n'
+            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*8*C_WIDTH}\n'
         case "LR":
             opcode = '111000'
             BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
