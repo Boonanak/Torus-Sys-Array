@@ -55,6 +55,12 @@ def to_signed_nbit_binary(integer, n_bits):
 # 111100 = 60: LRCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 # 110100 = 52: LCCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 
+DIM     = 8
+A_WIDTH = 8
+B_WIDTH = 8
+C_WIDTH = 32
+FLIT_WIDTH = 32
+
 def to_machine_code(instruction):
     machine_code = ''
     expected_output = ''
@@ -63,12 +69,12 @@ def to_machine_code(instruction):
     match op:
         case "NOOP":
             opcode = '000000'
-            machine_code = f'{'0'*26}_{opcode}\n'
-            expected_output = f'{'0'*26}_{opcode}\n'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "ERROR_CSR":
             opcode = '011100'
-            machine_code = f'{'0'*26}_{opcode}\n'
-            expected_output = f'{'0'*26}_{opcode}\n'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
+            expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "WRITE":
             opcode = '010000'
             Addr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 9)}'
