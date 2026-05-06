@@ -55,10 +55,14 @@ def to_signed_nbit_binary(integer, n_bits):
 # 111100 = 60: LRCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 # 110100 = 52: LCCC <BaseAddr_dest> <BaseAddr_source> <BaseAddr_weight>
 
+import math
 DIM        = 8
 AB_WIDTH   = 8
 C_WIDTH    = 32
 FLIT_WIDTH = 32
+MEM_DEPTH  = 32
+ADDR_W     = int(math.log2(MEM_DEPTH))
+BASEADDR_W = ADDR_W - 3
 
 def to_machine_code(instruction):
     machine_code = ''
@@ -80,7 +84,7 @@ def to_machine_code(instruction):
             if(Addr_dest < 0 or Addr_dest > 31):
                 print("WARNING: Address out of bounds")
                 return ''
-            Addr_dest = f'{to_signed_nbit_binary(int(Addr_dest[1:]), 9)}'
+            Addr_dest = f'{to_signed_nbit_binary(Addr_dest, ADDR_W)}'
             bracket_i = instruction.find('[')
             bracket_j = instruction.find(']')
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
@@ -88,19 +92,19 @@ def to_machine_code(instruction):
             data_string = ''
             for n in data:
                 data_string += n
-            machine_code = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}___{data_string}\n'
-            expected_output = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            machine_code = f'{Addr_dest}{f'_{'0'*5}'*3}_{'0'*6}_{opcode}___{data_string}\n'
+            expected_output = f'{Addr_dest}{f'_{'0'*5}'*3}_{'0'*6}_{opcode}\n'
         case "WRITE32":
             opcode = '010010'
             Addr_dest = instruction_data[1]
-            if(Addr_dest[0] == 'C'):
-                print("WARNING: Cannot write int8 vector to C bank")
+            if(Addr_dest[0] == 'A' or Addr_dest[0] == 'B'):
+                print("WARNING: Cannot write int32 vector to AB bank")
                 return ''
             Addr_dest = int(Addr_dest[1:])
             if(Addr_dest < 0 or Addr_dest > 31):
                 print("WARNING: Address out of bounds")
                 return ''
-            Addr_dest = f'{to_signed_nbit_binary(int(Addr_dest[1:]), 9)}'
+            Addr_dest = f'{to_signed_nbit_binary(Addr_dest, ADDR_W)}'
             bracket_i = instruction.find('[')
             bracket_j = instruction.find(']')
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
@@ -108,14 +112,24 @@ def to_machine_code(instruction):
             data_string = ''
             for n in data:
                 data_string += n
-            machine_code = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}___{data_string}\n'
-            expected_output = f'{Addr_dest}_000_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            machine_code = f'{Addr_dest}{f'_{'0'*5}'*3}_{'0'*6}_{opcode}___{data_string}\n'
+            expected_output = f'{Addr_dest}{f'_{'0'*5}'*3}_{'0'*6}_{opcode}\n'
         case "TRANSPOSE":
             opcode = '011001'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            if(BaseAddr_dest[0] == 'C' or BaseAddr_source[0] == 'C'):
+                print("WARNING: Cannot transpose int32 vector")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
         case "WRITE_CSR":
             opcode = '010100'
             data_string = instruction_data[1]
@@ -131,106 +145,282 @@ def to_machine_code(instruction):
             expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}___{'x'*8*AB_WIDTH}\n'
         case "READM8":
             opcode = '001001'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*64*AB_WIDTH}\n'
+            BaseAddr_source = instruction_data[1]
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: Cannot read int8 vector from C bank")
+                return ''
+            BaseAddr_source = int(BaseAddr_source[1:])
+            if(BaseAddr_source < 0 or BaseAddr_source > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            machine_code = f'{'0'*5}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
+            expected_output = f'{'0'*5}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}___{'x'*64*AB_WIDTH}\n'
         case "READM32":
             opcode = '001011'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            machine_code = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{BaseAddr_source}_{'0'*6}_{'0'*6}_00_{opcode}___{'x'*64*C_WIDTH}\n'
+            BaseAddr_source = instruction_data[1]
+            if(BaseAddr_source[0] == 'A' or BaseAddr_source[0] == 'B'):
+                print("WARNING: Cannot read int32 vector from AB bank")
+                return ''
+            BaseAddr_source = int(BaseAddr_source[1:])
+            if(BaseAddr_source < 0 or BaseAddr_source > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            machine_code = f'{'0'*5}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
+            expected_output = f'{'0'*5}_{BaseAddr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}___{'x'*64*C_WIDTH}\n'
         case "READV8":
             opcode = '001000'
-            Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
-            machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*8*AB_WIDTH}\n'
-        case "READV16":
+            Addr_source = instruction_data[1]
+            if(Addr_source[0] == 'C'):
+                print("WARNING: Cannot read int8 vector from C bank")
+                return ''
+            Addr_source = int(Addr_source[1:])
+            if(Addr_source < 0 or Addr_source > 31):
+                print("WARNING: Address out of bounds")
+                return ''
+            Addr_source = f'{to_signed_nbit_binary(Addr_source, ADDR_W)}'
+            machine_code = f'{'0'*5}_{Addr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
+            expected_output = f'{'0'*5}_{Addr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}___{'x'*8*AB_WIDTH}\n'
+        case "READV32":
             opcode = '001010'
-            Addr_source = to_signed_nbit_binary(int(instruction_data[1]), 9)
-            machine_code = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{'0'*6}_{Addr_source}_000_{'0'*6}_00_{opcode}___{'x'*8*C_WIDTH}\n'
+            Addr_source = instruction_data[1]
+            if(Addr_source[0] == 'A' or Addr_source[0] == 'B'):
+                print("WARNING: Cannot read int32 vector from AB bank")
+                return ''
+            Addr_source = int(Addr_source[1:])
+            if(Addr_source < 0 or Addr_source > 31):
+                print("WARNING: Address out of bounds")
+                return ''
+            Addr_source = f'{to_signed_nbit_binary(Addr_source, ADDR_W)}'
+            machine_code = f'{'0'*5}_{Addr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}\n'
+            expected_output = f'{'0'*5}_{Addr_source}{f'_{'0'*5}'*2}_{'0'*6}_{opcode}___{'x'*8*C_WIDTH}\n'
         case "LR":
             opcode = '111000'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
-            expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
+            BaseAddr_weight = instruction_data[1]
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: Cannot read weights vector from C bank")
+                return ''
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{'00000_'*3}{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{'00000_'*3}{BaseAddr_weight}_000000_{opcode}\n'
         case "LC":
             opcode = '110000'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
-            expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
+            BaseAddr_weight = instruction_data[1]
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: Cannot read weights vector from C bank")
+                return ''
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{'00000_'*3}{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{'00000_'*3}{BaseAddr_weight}_000000_{opcode}\n'
         case "CR":
             opcode = '100110'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            if int(instruction_data[1]) % 2 == 1:
-                print(f"WARNING: Destination address is not aligned to 16 bit matrix address.\n" \
-                f"Matrix will be written to {int(instruction_data[1]) - 1}")
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*5}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*5}_000000_{opcode}\n'
         case "CC":
             opcode = '100100'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*5}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*5}_000000_{opcode}\n'
         case "LRCR":
             opcode = '111110'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            BaseAddr_weight = instruction_data[4]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: weight address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3 or BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
         case "LCCR":
             opcode = '110110'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            BaseAddr_weight = instruction_data[4]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: weight address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3 or BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
         case "LRCC":
             opcode = '111100'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            BaseAddr_weight = instruction_data[4]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: weight address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3 or BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
         case "LCCC":
             opcode = '110100'
-            BaseAddr_dest = f'{to_signed_nbit_binary(int(instruction_data[1]), 6)}'
-            BaseAddr_source = f'{to_signed_nbit_binary(int(instruction_data[2]), 6)}'
-            BaseAddr_acc = f'{to_signed_nbit_binary(int(instruction_data[3]), 6)}'
-            BaseAddr_weight = f'{to_signed_nbit_binary(int(instruction_data[4]), 6)}'
-            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
-            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_{'0'*2}_{opcode}\n'
+            BaseAddr_dest = instruction_data[1]
+            BaseAddr_source = instruction_data[2]
+            BaseAddr_acc = instruction_data[3]
+            BaseAddr_weight = instruction_data[4]
+            if(BaseAddr_dest[0] == 'A' or BaseAddr_dest[0] == 'B'):
+                print("WARNING: destination address cannot be in AB bank")
+                return ''
+            if(BaseAddr_acc[0] == 'A' or BaseAddr_acc[0] == 'B'):
+                print("WARNING: accumulation address cannot be in AB bank")
+                return ''
+            if(BaseAddr_source[0] == 'C'):
+                print("WARNING: source address cannot be in C bank")
+                return ''
+            if(BaseAddr_weight[0] == 'C'):
+                print("WARNING: weight address cannot be in C bank")
+                return ''
+            BaseAddr_dest = int(BaseAddr_dest[1:])
+            BaseAddr_source = int(BaseAddr_source[1:])
+            BaseAddr_acc = int(BaseAddr_acc[1:])
+            BaseAddr_weight = int(BaseAddr_weight[1:])
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 3 or BaseAddr_source < 0 or BaseAddr_source > 3 or BaseAddr_acc < 0 or BaseAddr_acc > 3 or BaseAddr_weight < 0 or BaseAddr_weight > 3):
+                print("WARNING: Address out of bounds")
+                return ''
+            BaseAddr_dest = f'{to_signed_nbit_binary(BaseAddr_dest, BASEADDR_W)}000'
+            BaseAddr_source = f'{to_signed_nbit_binary(BaseAddr_source, BASEADDR_W)}000'
+            BaseAddr_acc = f'{to_signed_nbit_binary(BaseAddr_acc, BASEADDR_W)}000'
+            BaseAddr_weight = f'{to_signed_nbit_binary(BaseAddr_weight, BASEADDR_W)}000'
+            machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
+            expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_000000_{opcode}\n'
         case _:
             machine_code = ''
     return machine_code
 
-# print(to_machine_code("NOOP"))
-# print(to_machine_code("WRITE 1 [1, 2, 3, 4, 5, 6, 7, 8]"))
-# print(to_machine_code("TRANSPOSE 5 7"))
-# print(to_machine_code("WRITE_CSR 00000000_00000000_11111111_00000000_00000000_00000000_11111111_00000000"))
-# print(to_machine_code("ERROR_CSR"))
-# print(to_machine_code("ERROR_CSR"))
-# print(to_machine_code("READ_CSR"))
-# print(to_machine_code("READM8 4"))
-# print(to_machine_code("READM16 9"))
-# print(to_machine_code("READV8 54"))
-# print(to_machine_code("READV16 99"))
-# print(to_machine_code("LR 21"))
-# print(to_machine_code("LC 3"))
-# print(to_machine_code("CR 1 2 3"))
-# print(to_machine_code("CC 4 5 6"))
-# print(to_machine_code("LRCR 1 2 63 4"))
-# print(to_machine_code("LCCR 5 6 63 8"))
-# print(to_machine_code("LRCC 9 10 11 12"))
-# print(to_machine_code("LCCC 13 14 15 16"))
+print(to_machine_code("NOOP"))
+print(to_machine_code("WRITE8 A1 [1, 2, 3, 4, 5, 6, 7, 8]"))
+print(to_machine_code("WRITE8 C1 [1, 2, 3, 4, 5, 6, 7, 8]")) # will throw a warning (wrong bank)
+print(to_machine_code("WRITE32 A3 [1, 2, 3, 4, 5, 6, 7, 8]")) # will throw a warning (wrong bank)
+print(to_machine_code("WRITE32 C3 [1, 2, 3, 4, 5, 6, 7, 8]")) 
+print(to_machine_code("TRANSPOSE A5 B7")) # will throw a warning (address out of bounds)
+print(to_machine_code("TRANSPOSE A1 A2"))
+print(to_machine_code("WRITE_CSR 00000000_00000000_11111111_00000000_00000000_00000000_11111111_00000000"))
+print(to_machine_code("ERROR_CSR"))
+print(to_machine_code("READ_CSR"))
+print(to_machine_code("READM8 A4")) # will throw a warning (address out of bounds)
+print(to_machine_code("READM32 C0"))
+print(to_machine_code("READV8 A4")) 
+print(to_machine_code("READV32 B31")) # will throw a warning (wrong bank)
+print(to_machine_code("LR B3"))
+print(to_machine_code("LC C4")) # will throw a warning (address out of bounds)
+print(to_machine_code("CR C1 B2 C3")) 
+print(to_machine_code("CC A1 B0 C0")) # will throw a warning (wrong bank)
+print(to_machine_code("LRCR C3 B1 A1 C0")) # will throw a warning (wrong bank)
+print(to_machine_code("LCCR C3 B1 C0 A1"))
+print(to_machine_code("LRCC C0 A1 C2 B3"))
+print(to_machine_code("LCCC C1 A2 C3 B4")) # will throw a warning (address out of bounds)
 
 
 # def to_machine_code(instruction):
@@ -332,13 +522,13 @@ C12 = A1 @ B2
 # print(WRITEM(A1, 0))
 # print(WRITEM(B2, 1))
 
-with open('scripts/tpu_benchmark1.txt', 'w') as instruction_file:
-    instruction_file.write(WRITEM(A1, 0))
-    instruction_file.write(WRITEM(B2, 1))
-    instruction_file.write(to_machine_code("LR 62"))
-    instruction_file.write(to_machine_code("CR 2 62 63"))
-    instruction_file.write(to_machine_code("READM16 2"))
-    instruction_file.write(to_machine_code("LCCR 3 0 63 1"))
-    instruction_file.write(to_machine_code("READM16 3"))
-    instruction_file.write(to_machine_code("CR 4 0 63"))
-    instruction_file.write(to_machine_code("READM16 4"))
+# with open('scripts/tpu_benchmark1.txt', 'w') as instruction_file:
+#     instruction_file.write(WRITEM(A1, 0))
+#     instruction_file.write(WRITEM(B2, 1))
+#     instruction_file.write(to_machine_code("LR 62"))
+#     instruction_file.write(to_machine_code("CR 2 62 63"))
+#     instruction_file.write(to_machine_code("READM16 2"))
+#     instruction_file.write(to_machine_code("LCCR 3 0 63 1"))
+#     instruction_file.write(to_machine_code("READM16 3"))
+#     instruction_file.write(to_machine_code("CR 4 0 63"))
+#     instruction_file.write(to_machine_code("READM16 4"))
