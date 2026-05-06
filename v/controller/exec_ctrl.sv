@@ -3,12 +3,13 @@ import ctrl_pkg::*;
 import scratchpad_pkg::*;
 
 module exec_ctrl #(
-     parameter int DIM_p = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
-    ,localparam int IFM_W_lp = DIM_p * 8
-    ,localparam int WGT_W_lp = DIM_p * 8
-    ,localparam int PSM_W_lp = DIM_p * 32  // bank-side; sign-ext 16→19 for mesh, truncate 19→16 on writeback
-    ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p * DIM_p)
+     parameter int DIM_p                = scratchpad_pkg::DIM_p
+    ,parameter int NUM_MATRICES_p       = scratchpad_pkg::NUM_MATRICES_p
+    ,localparam int IFM_W_lp            = scratchpad_pkg::IFM_ROW_W_lp
+    ,localparam int WGT_W_lp            = scratchpad_pkg::WGT_ROW_W_lp
+    ,localparam int PSM_W_lp            = scratchpad_pkg::PSM_ROW_W_lp
+    ,localparam int IFM_ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp
+    ,localparam int PSM_ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_PSM_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
 )(
      input  logic          clk_i
@@ -22,21 +23,21 @@ module exec_ctrl #(
     ,output logic          ex_active_o
 
     ,output logic                       ifm_r_v_o
-    ,output logic [ADDR_W_lp-1:0]       ifm_r_addr_o
+    ,output logic [IFM_ADDR_W_lp-1:0]   ifm_r_addr_o
     ,input  logic [IFM_W_lp-1:0]        ifm_r_data_i
     ,output logic                       wgt_r_v_o
-    ,output logic [ADDR_W_lp-1:0]       wgt_r_addr_o
+    ,output logic [IFM_ADDR_W_lp-1:0]   wgt_r_addr_o
     ,input  logic [WGT_W_lp-1:0]        wgt_r_data_i
     ,output logic                       psm_r_v_o
-    ,output logic [ADDR_W_lp-1:0]       psm_r_addr_o
+    ,output logic [PSM_ADDR_W_lp-1:0]   psm_r_addr_o
     ,input  logic [PSM_W_lp-1:0]        psm_r_data_i
 
     ,output logic                       psm_w_v_o
-    ,output logic [ADDR_W_lp-1:0]       psm_w_addr_o
+    ,output logic [PSM_ADDR_W_lp-1:0]   psm_w_addr_o
     ,output logic [PSM_W_lp-1:0]        psm_w_data_o
 
     ,output logic                       ifm_w_v_o
-    ,output logic [ADDR_W_lp-1:0]       ifm_w_addr_o
+    ,output logic [IFM_ADDR_W_lp-1:0]   ifm_w_addr_o
     ,output logic [IFM_W_lp-1:0]        ifm_w_data_o
 
     ,output mesh_req_t                  mreq_o
@@ -208,8 +209,13 @@ module exec_ctrl #(
 
     assign ex_active_o = (st_r != S_IDLE) && (st_r != S_DONE);
 
-    function automatic logic [ADDR_W_lp-1:0]
-            row_addr(input logic [5:0] base, input logic [CYC_W_lp-1:0] k);
+    function automatic logic [IFM_ADDR_W_lp-1:0]
+            ifm_row_addr(input logic [5:0] base, input logic [CYC_W_lp-1:0] k);
+        return base * DIM_p + k;
+    endfunction
+
+    function automatic logic [PSM_ADDR_W_lp-1:0]
+            psm_row_addr(input logic [5:0] base, input logic [CYC_W_lp-1:0] k);
         return base * DIM_p + k;
     endfunction
 
@@ -218,13 +224,13 @@ module exec_ctrl #(
         ifm_r_addr_o = '0;
         if (st_r == S_TP_PRIME && tp_for_a_r) begin
             ifm_r_v_o    = 1'b1;
-            ifm_r_addr_o = row_addr(cmd_r.baddr_src, prime_cnt_r);
+            ifm_r_addr_o = ifm_row_addr(cmd_r.baddr_src, prime_cnt_r);
         end else if (st_r == S_FIRE && do_compute_r && !a_trans_r) begin
             ifm_r_v_o    = mesh_cycle_v_i;
-            ifm_r_addr_o = row_addr(cmd_r.baddr_src, mesh_cycle_i);
+            ifm_r_addr_o = ifm_row_addr(cmd_r.baddr_src, mesh_cycle_i);
         end else if (st_r == S_TP_OP_PRIME) begin
             ifm_r_v_o    = 1'b1;
-            ifm_r_addr_o = row_addr(cmd_r.baddr_src, prime_cnt_r);
+            ifm_r_addr_o = ifm_row_addr(cmd_r.baddr_src, prime_cnt_r);
         end
     end
 
@@ -233,10 +239,10 @@ module exec_ctrl #(
         wgt_r_addr_o = '0;
         if (st_r == S_TP_PRIME && !tp_for_a_r) begin
             wgt_r_v_o    = 1'b1;
-            wgt_r_addr_o = row_addr(cmd_r.baddr_weight, prime_cnt_r);
+            wgt_r_addr_o = ifm_row_addr(cmd_r.baddr_weight, prime_cnt_r);
         end else if (st_r == S_FIRE && do_load_w_r && !d_trans_r) begin
             wgt_r_v_o    = mesh_cycle_v_i;
-            wgt_r_addr_o = row_addr(cmd_r.baddr_weight, mesh_cycle_i);
+            wgt_r_addr_o = ifm_row_addr(cmd_r.baddr_weight, mesh_cycle_i);
         end
     end
 
@@ -245,7 +251,7 @@ module exec_ctrl #(
         psm_r_addr_o = '0;
         if (st_r == S_FIRE && do_compute_r) begin
             psm_r_v_o    = mesh_cycle_v_i;
-            psm_r_addr_o = row_addr(cmd_r.baddr_acc, mesh_cycle_i);
+            psm_r_addr_o = psm_row_addr(cmd_r.baddr_acc, mesh_cycle_i);
         end
     end
 
@@ -281,7 +287,7 @@ module exec_ctrl #(
     endgenerate
 
     assign psm_w_v_o    = mesh_capture_v_i;
-    assign psm_w_addr_o = row_addr(cmd_r.baddr_dest, mesh_capture_idx_i);
+    assign psm_w_addr_o = psm_row_addr(cmd_r.baddr_dest, mesh_capture_idx_i);
     always_comb begin
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
@@ -290,7 +296,7 @@ module exec_ctrl #(
     end
 
     assign ifm_w_v_o    = (st_r == S_TP_OP_DRAIN) && tp_out_valid_i;
-    assign ifm_w_addr_o = row_addr(cmd_r.baddr_dest, tpop_drain_cnt_r);
+    assign ifm_w_addr_o = ifm_row_addr(cmd_r.baddr_dest, tpop_drain_cnt_r);
     always_comb begin
         ifm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin

@@ -3,10 +3,10 @@ import ctrl_pkg::*;
 import scratchpad_pkg::*;
 
 module write_ctrl #(
-     parameter int DIM_p = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
-    ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p*DIM_p)
-    ,localparam int PSM_W_lp = scratchpad_pkg::PSM_ROW_W_lp
+     parameter int DIM_p            = scratchpad_pkg::DIM_p
+    ,parameter int NUM_MATRICES_p   = scratchpad_pkg::NUM_MATRICES_p
+    ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp // widest of each
+    ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
 )(
      input  logic          clk_i
     ,input  logic          reset_i
@@ -27,7 +27,7 @@ module write_ctrl #(
     sp_bank_id_e sel_bank;
     always_comb begin
         if (cmd_i.vaddr[8])  sel_bank = BANK_PSUM;  // int19 region
-        else                  sel_bank = BANK_IFMAP;  // int8 region (mirror to weight in arbiter)
+        else                 sel_bank = BANK_IFMAP;  // int8 region (mirror to weight in arbiter)
     end
 
     assign mem_v_o    = v_i;

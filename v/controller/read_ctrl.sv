@@ -3,13 +3,13 @@ import ctrl_pkg::*;
 import scratchpad_pkg::*;
 
 module read_ctrl #(
-     parameter int DIM_p = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
-    ,parameter int PKT_W_p   = 128  // matches depacketizer packet_width_p
-    ,parameter int FLIT_W_p  = 32                                              // T2SA-CTRL: depacketizer flit width (used to size pkt_size_o)
-    ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p*DIM_p)
-    ,localparam int IFM_W_lp  = scratchpad_pkg::IFM_ROW_W_lp
-    ,localparam int PSM_W_lp  = scratchpad_pkg::PSM_ROW_W_lp
+     parameter int DIM_p            = scratchpad_pkg::DIM_p
+    ,parameter int NUM_MATRICES_p   = scratchpad_pkg::NUM_MATRICES_p
+    ,parameter int PKT_W_p          = scratchpad_pkg::PSM_ROW_W_lp      // packet width is matched to widest
+    ,parameter int FLIT_W_p         = 32                                       // T2SA-CTRL: depacketizer flit width (used to size pkt_size_o)
+    ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp
+    ,localparam int IFM_W_lp        = scratchpad_pkg::IFM_ROW_W_lp
+    ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
     ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p)                 // T2SA-CTRL: 2b for 128b/4-flit, 3b for 256b/8-flit; "0=full" encoding
 )(
@@ -190,6 +190,7 @@ module read_ctrl #(
         end else if (is_v16_r) begin
             data_pkt = buf_r[127:0];
         end else if (is_m8_r) begin
+            // TODO: data_pkt[255:128] might need to be set in same manner? check in simulation
             data_pkt[127:64] = buf_r[(pkt_cnt_r*128)     +: 64];  // row 2k
             data_pkt[63:0]   = buf_r[(pkt_cnt_r*128)+64  +: 64];  // row 2k+1
         end else begin // m16
