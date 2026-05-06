@@ -4,12 +4,12 @@ import scratchpad_pkg::*;
 import PE_pkg::*;
 
 module top_chip #(
-     parameter int DIM_p          = 4
-    ,parameter int NUM_MATRICES_p = 64
+     parameter int DIM_p          = 8
+    ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
     ,parameter int CMDQ_DEPTH_p   = 8
-    ,localparam int IFM_W_lp      = DIM_p * 8
-    ,localparam int WGT_W_lp      = DIM_p * 8
-    ,localparam int PSM_W_lp      = DIM_p * 16  // bank-side; mesh-internal still 19b (m_in/out_psum etc)
+    ,localparam int IFM_W_lp      = scratchpad_pkg::IFM_ROW_W_lp
+    ,localparam int WGT_W_lp      = scratchpad_pkg::WGT_ROW_W_lp
+    ,localparam int PSM_W_lp      = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int BANK_DEPTH_lp = NUM_MATRICES_p * DIM_p
     ,localparam int ADDR_W_lp     = $clog2(BANK_DEPTH_lp)
     ,localparam int CYC_W_lp      = $clog2(DIM_p+1)
@@ -17,36 +17,19 @@ module top_chip #(
      input  logic        clk_i
     ,input  logic        reset_i
 
-    ,input  logic        link_in_v_i
-    ,input  logic [15:0] link_in_data_i
-    ,input  logic        link_in_parity_i
-    ,output logic        link_in_yumi_o
+    ,input  logic [31:0] in_flit
+    ,input  logic        in_flit_v
+    ,input  logic        in_flit_par_ok
+    ,output logic        in_flit_ready
 
     ,output logic        link_out_v_o
-    ,output logic [15:0] link_out_data_o
+    ,output logic [31:0] link_out_data_o
     ,output logic        link_out_parity_o
     ,input  logic        link_out_yumi_i
 );
 
     logic rst_n_i;
     assign rst_n_i = ~reset_i;  // csr.sv uses active-low
-
-    logic [31:0] in_flit;
-    logic        in_flit_v;
-    logic        in_flit_ready;
-    logic        in_flit_par_ok;
-
-    link16_to_flit32 u_in_adapter (
-         .clk_i, .reset_i
-        ,.link_data_i      (link_in_data_i)
-        ,.link_v_i         (link_in_v_i)
-        ,.link_parity_i    (link_in_parity_i)
-        ,.link_yumi_o      (link_in_yumi_o)
-        ,.flit_o           (in_flit)
-        ,.flit_v_o         (in_flit_v)
-        ,.flit_parity_ok_o (in_flit_par_ok)
-        ,.flit_ready_i     (in_flit_ready)
-    );
 
     decoded_cmd_t dec_cmd;
     logic         dec_cmd_v;
@@ -373,16 +356,4 @@ module top_chip #(
         ,.valid_o         (out_flit_v)
         ,.ready_i         (out_flit_ready)
     );
-
-    flit32_to_link16 u_out_adapter (
-         .clk_i, .reset_i
-        ,.flit_i        (out_flit)
-        ,.flit_v_i      (out_flit_v)
-        ,.flit_ready_o  (out_flit_ready)
-        ,.link_data_o   (link_out_data_o)
-        ,.link_v_o      (link_out_v_o)
-        ,.link_parity_o (link_out_parity_o)
-        ,.link_yumi_i   (link_out_yumi_i)
-    );
-
 endmodule

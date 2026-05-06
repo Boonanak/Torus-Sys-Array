@@ -6,28 +6,29 @@ synthesis.inputs.input_files: [
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
   "v/Top_level/bsg_test_node_client.v",
   
-  "v/memory/memory.sv",
-  "v/memory/memory_sync.sv",
-  "v/memory/lvt_mem.sv",
-  "v/memory/partition_mem.sv",
-  "v/memory/mem_pkg.sv",
-  "v/memory/banked_mem.sv",
-
   "v/PE/PE_pkg.sv",
-  #"v/PE/PE.sv",
-  #"v/PE/PE_combine_B_PS.sv",
-  #"v/PE/PE_shared_B.sv",
-  #"v/PE/PE_final.sv",
-  #"v/PE/Pipette_PE.sv",
-  "v/PE/TwistPE.sv",
+  "v/controller/ctrl_pkg.sv",
+  "v/memory/scratchpad_pkg.sv",
 
-  #"v/transpose/dff_en.v",
+  "v/PE/TwistPE.sv",
+  "v/sys_array/TwistMesh.sv",
+
   "v/transpose/shift_reg_simple.sv",
   "v/transpose/tp_node.sv",
   "v/transpose/transpose.sv",
-  #"v/sys_array/col_gen.sv",
-  #"v/sys_array/sys_array.sv",
-  "v/sys_array/TwistMesh.sv",
+
+  "v/controller/mesh_driver.sv",
+  "v/controller/cmd_decoder.sv",
+  "v/controller/cmd_queue.sv",
+  "v/controller/csr_router.sv",
+  "v/controller/dispatch.sv",
+  "v/controller/exec_ctrl.sv",
+  "v/controller/read_ctrl.sv",
+  "v/controller/write_ctrl.sv",
+  "v/controller/mem_arbiter.sv",
+
+  "v/memory/scratchpad.sv",
+  "v/memory/sp_bank.sv",
 
   "v/CSR/csr.sv",
   "v/Top_level/depacketizer.sv",
@@ -35,6 +36,9 @@ synthesis.inputs.input_files: [
   "v/Top_level/parity_generator.sv",
   "v/Top_level/downstream_wrapper.sv",
   "v/Top_level/upstream_wrapper.sv",
+
+  "v/Top_level/depacketizer.sv",
+  "v/Top_level/top_chip.sv",
 
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_hardened.v",
@@ -151,9 +155,6 @@ synthesis.inputs.input_files: [
   "${bsg_root}/bsg_noc/bsg_mesh_router.v",
   "${bsg_root}/bsg_noc/bsg_mesh_router_buffered.v",
   "${bsg_root}/bsg_noc/bsg_mesh_stitch.v",
-
-  "v/Top_level/Top_level.sv",
-
   # bsg_guts and IO sources
   #"../common/v/bsg_guts.v",
   #"../common/v/packaging/bsg_iopad_macros.v",

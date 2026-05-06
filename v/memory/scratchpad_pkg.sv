@@ -1,11 +1,11 @@
 
 package scratchpad_pkg;
 
-    parameter int DIM_p           = 4;
-    parameter int NUM_MATRICES_p  = 64;  // 6-bit BaseAddr
+    parameter int DIM_p           = 8;
+    parameter int NUM_MATRICES_p  = 4;  // 6-bit BaseAddr
     parameter int IFM_WIDTH_p     = 8;
     parameter int WGT_WIDTH_p     = 8;
-    parameter int PSM_WIDTH_p     = 16;  // bank stores 16b; mesh-internal psum is 19b (sign-ext on read into mesh, truncate on write back)
+    parameter int PSM_WIDTH_p     = 32;  // bank stores 16b; mesh-internal psum is 19b (sign-ext on read into mesh, truncate on write back)
 
     parameter int IFM_ROW_W_lp    = DIM_p * IFM_WIDTH_p;
     parameter int WGT_ROW_W_lp    = DIM_p * WGT_WIDTH_p;

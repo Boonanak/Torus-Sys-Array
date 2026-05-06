@@ -14,6 +14,10 @@ sim.inputs.tb_input_files: [
   "v/Top_level/Top_level_tb.sv",
   "v/Top_level/Top_level_tb_twotrace.sv",
   
+  "v/Top_level/top_chip_tb.sv",
+
+  "v/controller/mem_arbiter_tb.sv",
+  "v/controller/controller_tb.sv",
   "v/memory/memory_tb.sv",
   "v/memory/memory_sync_tb.sv",
   "v/memory/banked_mem_tb.sv",
@@ -131,6 +135,11 @@ sim.inputs.tb_input_files_meta: [append, subst]
 
 # List of trace files for the simulation
 sim.inputs.trace_files: [
+  "v/controller/controller_send_trace.tr",
+  "v/controller/controller_recv_trace.tr",
+
+  "v/Top_level/top_chip_send_trace.tr",
+  "v/Top_level/top_chip_recv_trace.tr",
   #"v/PE/trace.tr",
   #"v/PE/trace_separateBPS.tr",
   #"v/PE/shared_B.tr",

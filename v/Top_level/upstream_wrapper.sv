@@ -3,7 +3,7 @@
   Combines: Depacketizer (128 -> 32) + DDR Upstream PHY
 */
 
-`include "bsg_defines.sv"
+`include "bsg_defines.v"
 
 module upstream_wrapper
 #(
