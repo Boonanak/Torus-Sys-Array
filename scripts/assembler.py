@@ -333,7 +333,13 @@ def instructions_to_traces(benchmark_file, send_trace_file):
             elif(line[0] == '#'):
                 send_trace.write(f'{line}\n')
             else:
-                send_trace.write(f'0001_{to_machine_code(line)}\n')
+                if line[:5] == 'WRITE':
+                    line = to_machine_code(line)
+                    enters = line.count('\n')
+                    line = line.replace('\n', '\n0001', enters - 1)
+                    send_trace.write(f'0001_{line}\n')
+                else:
+                    send_trace.write(f'0001_{to_machine_code(line)}\n')
         # for i in range(ADDITIONAL_DELAY):
         #     send_trace.write(f'0000_{to_machine_code('NOOP')}\n')
         # send_trace.write('# END SIMULATION\n')
@@ -357,8 +363,6 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
                     else:
                         recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+5]}\n')
                 else:
-                    print('receive side non-write instruction')
-                    print(f'0010_{to_machine_code(line)}\n')
                     recv_trace.write(f'0010_{to_machine_code(line)}')
                     if line[:4] == 'READ':
                         if line[5] == '8':
@@ -377,7 +381,7 @@ A1 = np.arange(1, 65).reshape(8,8)
 B2 = np.full((8,8), 2)
 C12 = A1 @ B2
 
-#instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
 expected_outputs = [np.identity(8), A1, C12]
 receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
 
