@@ -21,10 +21,13 @@ module sp_bank #(
     ,output logic [WIDTH_p-1:0]      r_data_o
 );
 
-    localparam logic [ADDR_W_lp-1:0] IDENTITY_LO_lp = (62 * DIM_p);
-    localparam logic [ADDR_W_lp-1:0] IDENTITY_HI_lp = (62 * DIM_p) + DIM_p - 1;  // inclusive
-    localparam logic [ADDR_W_lp-1:0] ZERO_LO_lp     = (62 * DIM_p);  // zero spans 62-63 (int19)
-    localparam logic [ADDR_W_lp-1:0] ZERO_HI_lp     = (62 * DIM_p) + 2*DIM_p - 1;  // inclusive
+    localparam int BANK_DEPTH_IFM = scratchpad_pkg::BANK_DEPTH_IFM_lp;
+    localparam int BANK_DEPTH_PSM = scratchpad_pkg::BANK_DEPTH_PSM_lp;
+
+    localparam logic [ADDR_W_lp-1:0] IDENTITY_LO_lp = BANK_DEPTH_IFM - DIM_p;
+    localparam logic [ADDR_W_lp-1:0] IDENTITY_HI_lp = BANK_DEPTH_IFM - 1;
+    localparam logic [ADDR_W_lp-1:0] ZERO_LO_lp     = BANK_DEPTH_PSM - DIM_p;
+    localparam logic [ADDR_W_lp-1:0] ZERO_HI_lp     = BANK_DEPTH_PSM - 1;
 
     logic addr_in_identity_w, addr_in_identity_r;
     logic addr_in_zero_w,     addr_in_zero_r;
