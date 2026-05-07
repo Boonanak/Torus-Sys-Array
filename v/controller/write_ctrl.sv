@@ -4,7 +4,6 @@ import scratchpad_pkg::*;
 
 module write_ctrl #(
      parameter int DIM_p            = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p   = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp // widest of each
     ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
 )(

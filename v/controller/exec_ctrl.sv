@@ -4,7 +4,6 @@ import scratchpad_pkg::*;
 
 module exec_ctrl #(
      parameter int DIM_p                = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p       = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int IFM_W_lp            = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int WGT_W_lp            = scratchpad_pkg::WGT_ROW_W_lp
     ,localparam int PSM_W_lp            = scratchpad_pkg::PSM_ROW_W_lp
@@ -47,11 +46,11 @@ module exec_ctrl #(
 
     ,output logic signed [7:0]          mesh_ifmap_row_o [DIM_p-1:0]
     ,output logic signed [7:0]          mesh_weight_row_o [DIM_p-1:0]
-    ,output logic signed [18:0]         mesh_bias_row_o [DIM_p-1:0]
+    ,output logic signed [31:0]         mesh_bias_row_o [DIM_p-1:0]
     ,input  logic [CYC_W_lp-1:0]        mesh_cycle_i
     ,input  logic                       mesh_cycle_v_i
 
-    ,input  logic signed [18:0]         mesh_psum_row_i  [DIM_p-1:0]
+    ,input  logic signed [31:0]         mesh_psum_row_i  [DIM_p-1:0]
     ,input  logic                       mesh_capture_v_i
     ,input  logic [CYC_W_lp-1:0]        mesh_capture_idx_i
 

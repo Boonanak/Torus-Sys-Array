@@ -4,7 +4,6 @@ import ctrl_pkg::*;
 
 module mem_arbiter #(
      parameter int DIM_p                = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p       = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int IFM_W_lp            = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int WGT_W_lp            = scratchpad_pkg::WGT_ROW_W_lp
     ,localparam int PSM_W_lp            = scratchpad_pkg::PSM_ROW_W_lp

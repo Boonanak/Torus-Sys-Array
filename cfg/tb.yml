@@ -110,4 +110,6 @@ sim.inputs.trace_files: [
 
   "v/Top_level/top_chip_send_trace.tr",
   "v/Top_level/top_chip_recv_trace.tr",
+
+  "v/Top_level/benchmark1_send_trace.tr",
 ]

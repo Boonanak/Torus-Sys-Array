@@ -23,7 +23,8 @@ package scratchpad_pkg;
         BANK_PSUM    = 2'd2
     } sp_bank_id_e;
 
-    function automatic logic [BANK_ADDR_W_lp-1:0]
+    // is this logic used?
+    function automatic logic [BANK_ADDR_W_IFM_lp-1:0]
             base_to_row0(input logic [5:0] base);
         return base * DIM_p;  // synthesizable when DIM_p is pow2
     endfunction

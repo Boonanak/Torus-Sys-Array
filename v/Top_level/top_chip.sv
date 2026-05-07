@@ -4,15 +4,16 @@ import scratchpad_pkg::*;
 import PE_pkg::*;
 
 module top_chip #(
-     parameter int DIM_p          = 8
-    ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
-    ,parameter int CMDQ_DEPTH_p   = 8
-    ,localparam int IFM_W_lp      = scratchpad_pkg::IFM_ROW_W_lp
-    ,localparam int WGT_W_lp      = scratchpad_pkg::WGT_ROW_W_lp
-    ,localparam int PSM_W_lp      = scratchpad_pkg::PSM_ROW_W_lp
-    ,localparam int BANK_DEPTH_lp = NUM_MATRICES_p * DIM_p
-    ,localparam int ADDR_W_lp     = $clog2(BANK_DEPTH_lp)
-    ,localparam int CYC_W_lp      = $clog2(DIM_p+1)
+     parameter int DIM_p                = scratchpad_pkg::DIM_p
+    ,parameter int CMDQ_DEPTH_p         = 8
+    ,localparam int IFM_W_lp            = scratchpad_pkg::IFM_ROW_W_lp
+    ,localparam int WGT_W_lp            = scratchpad_pkg::WGT_ROW_W_lp
+    ,localparam int PSM_W_lp            = scratchpad_pkg::PSM_ROW_W_lp
+    ,localparam int BANK_DEPTH_IFM_lp   = scratchpad_pkg::BANK_DEPTH_IFM_lp
+    ,localparam int BANK_DEPTH_PSM_lp   = scratchpad_pkg::BANK_DEPTH_PSM_lp
+    ,localparam int BANK_ADDR_W_IFM_lp   = scratchpad_pkg::BANK_ADDR_W_IFM_lp
+    ,localparam int BANK_ADDR_W_PSM_lp   = scratchpad_pkg::BANK_ADDR_W_PSM_lp
+    ,localparam int CYC_W_lp            = $clog2(DIM_p+1)
 )(
      input  logic        clk_i
     ,input  logic        reset_i
@@ -79,11 +80,11 @@ module top_chip #(
     );
 
     logic                  wr_mem_v;
-    logic [ADDR_W_lp-1:0]  wr_mem_addr;
+    logic [BANK_ADDR_W_IFM_lp-1:0]  wr_mem_addr;
     logic [PSM_W_lp-1:0]   wr_mem_data;
     sp_bank_id_e           wr_mem_bank;
 
-    write_ctrl #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_wr (
+    write_ctrl #(.DIM_p(DIM_p)) u_wr (
          .clk_i, .reset_i
         ,.cmd_i      (wr_cmd)
         ,.v_i        (wr_v)
@@ -97,15 +98,16 @@ module top_chip #(
 
     logic                  ex_active;
     logic                  ex_ifm_r_v, ex_wgt_r_v, ex_psm_r_v;
-    logic [ADDR_W_lp-1:0]  ex_ifm_r_addr, ex_wgt_r_addr, ex_psm_r_addr;
+    logic [BANK_ADDR_W_IFM_lp-1:0] ex_ifm_r_addr, ex_wgt_r_addr;
+    logic [BANK_ADDR_W_PSM_lp-1:0] ex_psm_r_addr;
     logic [IFM_W_lp-1:0]   ex_ifm_r_data;
     logic [WGT_W_lp-1:0]   ex_wgt_r_data;
     logic [PSM_W_lp-1:0]   ex_psm_r_data;
     logic                  ex_psm_w_v;
-    logic [ADDR_W_lp-1:0]  ex_psm_w_addr;
+    logic [BANK_ADDR_W_PSM_lp-1:0]  ex_psm_w_addr;
     logic [PSM_W_lp-1:0]   ex_psm_w_data;
     logic                  ex_ifm_w_v;  // TRANSPOSE op writeback
-    logic [ADDR_W_lp-1:0]  ex_ifm_w_addr;
+    logic [BANK_ADDR_W_IFM_lp-1:0]  ex_ifm_w_addr;
     logic [IFM_W_lp-1:0]   ex_ifm_w_data;
 
     logic signed [7:0]     tp_in_data   [DIM_p-1:0];
@@ -120,24 +122,24 @@ module top_chip #(
     logic      mreq_v, mreq_ready, mreq_done;
     logic signed [7:0]  mesh_a_row    [DIM_p-1:0];
     logic signed [7:0]  mesh_w_row    [DIM_p-1:0];
-    logic signed [18:0] mesh_b_row    [DIM_p-1:0];
+    logic signed [31:0] mesh_b_row    [DIM_p-1:0];
     logic [CYC_W_lp-1:0] mesh_cycle;
     logic               mesh_cycle_v;
-    logic signed [18:0] mesh_psum_row [DIM_p-1:0];
+    logic signed [31:0] mesh_psum_row [DIM_p-1:0];
     logic               mesh_capture_v;
     logic [CYC_W_lp-1:0] mesh_capture_idx;
 
     logic signed [7:0]  m_in_weight  [DIM_p-1:0];
     logic               m_in_lock    [DIM_p-1:0];
     logic signed [7:0]  m_in_ifmap   [DIM_p-1:0];
-    logic signed [18:0] m_in_psum    [DIM_p-1:0];
+    logic signed [31:0] m_in_psum    [DIM_p-1:0];
     logic               m_in_prop, m_in_valid, m_in_last;
-    logic signed [18:0] m_out_psum   [DIM_p-1:0];
+    logic signed [31:0] m_out_psum   [DIM_p-1:0];
     logic               m_out_valid, m_out_last;
 
     logic ex_transpose_conflict;
 
-    exec_ctrl #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_ex (
+    exec_ctrl #(.DIM_p(DIM_p)) u_ex (
          .clk_i, .reset_i
         ,.cmd_i        (ex_cmd)
         ,.v_i          (ex_v)
@@ -188,7 +190,7 @@ module top_chip #(
 
     logic md_overflow;
 
-    mesh_driver #(.DIM_p(DIM_p), .IFM_W_p(8), .WGT_W_p(8), .PSM_W_p(19)) u_md (
+    mesh_driver #(.DIM_p(DIM_p), .IFM_W_p(8), .WGT_W_p(8), .PSM_W_p(32)) u_md (
          .clk_i, .reset_i
         ,.req_i        (mreq)
         ,.req_v_i      (mreq_v)
@@ -219,7 +221,7 @@ module top_chip #(
          .N_p           (DIM_p)
         ,.INPUT_WIDTH_p (8)
         ,.WEIGHT_WIDTH_p(8)
-        ,.OUTPUT_WIDTH_p(19)
+        ,.OUTPUT_WIDTH_p(32)
     ) u_mesh (
          .clk_i, .reset_i
         ,.in_weight_i   (m_in_weight)
@@ -236,15 +238,15 @@ module top_chip #(
 
     logic                  rd_active;
     logic                  rd_mem_v;
-    logic [ADDR_W_lp-1:0]  rd_mem_addr;
+    logic [BANK_ADDR_W_IFM_lp-1:0]  rd_mem_addr;
     sp_bank_id_e           rd_mem_bank;
     logic [PSM_W_lp-1:0]   rd_mem_data;  // widest
-    logic [127:0]          rd_pkt;
+    logic [255:0]          rd_pkt;
     logic                  rd_pkt_v, rd_pkt_ready;
-    logic [1:0]            rd_pkt_size;
+    logic [2:0]            rd_pkt_size;
     logic [63:0]           csr_data_lo;  // current csr.data_o
 
-    read_ctrl #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_rd (
+    read_ctrl #(.DIM_p(DIM_p)) u_rd (
          .clk_i, .reset_i
         ,.cmd_i      (rd_cmd)
         ,.v_i        (rd_v)
@@ -265,13 +267,14 @@ module top_chip #(
     logic mem_conflict;
 
     logic                  ifm_w_v, ifm_r_v, wgt_w_v, wgt_r_v, psm_w_v, psm_r_v;
-    logic [ADDR_W_lp-1:0]  ifm_w_addr, ifm_r_addr, wgt_w_addr, wgt_r_addr, psm_w_addr, psm_r_addr;
+    logic [BANK_ADDR_W_IFM_lp-1:0] ifm_w_addr, ifm_r_addr, wgt_w_addr, wgt_r_addr;
+    logic [BANK_ADDR_W_PSM_lp-1:0] psm_w_addr, psm_r_addr;
     logic [IFM_W_lp-1:0]   ifm_w_data, ifm_r_data;
     logic [WGT_W_lp-1:0]   wgt_w_data, wgt_r_data;
     logic [PSM_W_lp-1:0]   psm_w_data, psm_r_data;
     logic                  rom_dropped;
 
-    mem_arbiter #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_marb (
+    mem_arbiter #(.DIM_p(DIM_p)) u_marb (
          .clk_i, .reset_i
         ,.ex_active_i      (ex_active)
         ,.ex_ifm_r_v_i     (ex_ifm_r_v),    .ex_ifm_r_addr_i(ex_ifm_r_addr), .ex_ifm_r_data_o(ex_ifm_r_data)
@@ -296,7 +299,7 @@ module top_chip #(
         ,.mem_conflict_o(mem_conflict)
     );
 
-    scratchpad #(.DIM_p(DIM_p), .NUM_MATRICES_p(NUM_MATRICES_p)) u_sp (
+    scratchpad #(.DIM_p(DIM_p)) u_sp (
          .clk_i, .reset_i
         ,.ifm_w_v_i(ifm_w_v), .ifm_w_addr_i(ifm_w_addr), .ifm_w_data_i(ifm_w_data)
         ,.ifm_r_v_i(ifm_r_v), .ifm_r_addr_i(ifm_r_addr), .ifm_r_data_o(ifm_r_data)
@@ -342,7 +345,7 @@ module top_chip #(
     logic        out_flit_v, out_flit_ready;
 
     depacketizer #(
-         .packet_width_p (128)
+         .packet_width_p (256)
         ,.flit_width_p   (32)
         ,.fifo_els_p     (4)
     ) u_depack (

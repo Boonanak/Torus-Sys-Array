@@ -4,7 +4,6 @@ import scratchpad_pkg::*;
 
 module read_ctrl #(
      parameter int DIM_p            = scratchpad_pkg::DIM_p
-    ,parameter int NUM_MATRICES_p   = scratchpad_pkg::NUM_MATRICES_p
     ,parameter int PKT_W_p          = scratchpad_pkg::PSM_ROW_W_lp      // packet width is matched to widest
     ,parameter int FLIT_W_p         = 32                                       // T2SA-CTRL: depacketizer flit width (used to size pkt_size_o)
     ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp
