@@ -1,4 +1,4 @@
-
+import scratchpad_pkg::*;
 package ctrl_pkg;
 
     parameter int baddr_width_p = $clog2(scratchpad_pkg::NUM_MATRICES_IFM_p);
