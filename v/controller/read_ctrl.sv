@@ -177,7 +177,7 @@ module read_ctrl #(
     assign mem_bank_o = bank_sel;
 
     logic [PKT_W_p-1:0] hdr_pkt;
-    assign hdr_pkt = {hdr_flit_r, 96'b0};  // header in top flit
+    assign hdr_pkt = {hdr_flit_r, 224'b0};  // header in top flit
 
     logic [PKT_W_p-1:0] data_pkt;
     always_comb begin
