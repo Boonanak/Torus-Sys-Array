@@ -99,6 +99,14 @@ module top_chip_tb;
     assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
     assign tr_yumi_li     = in_flit_ready & in_flit_v;
 
+    logic tr_ready_lo;
+    logic tr_v_li;
+
+    always_ff @(negedge clk_i) begin 
+        link_out_yumi_i <= tr_ready_lo && link_out_v_o;
+        tr_v_li <= link_out_v_o;
+    end
+
     // --- Receive Trace Replay (Validates link_out) ---
     bsg_fsb_node_trace_replay #(
         .ring_width_p(RECV_WIDTH_lp)
@@ -108,9 +116,9 @@ module top_chip_tb;
         ,.reset_i(reset_i)
         ,.en_i   (1'b1)
 
-        ,.v_i    (link_out_v_o)
+        ,.v_i    (tr_v_li)
         ,.data_i (link_out_data_o)
-        ,.ready_o(link_out_yumi_i) // This ready effectively acts as 'yumi' for the DUT
+        ,.ready_o(tr_ready_lo) // This ready effectively acts as 'yumi' for the DUT
 
         ,.v_o    ()
         ,.data_o ()
