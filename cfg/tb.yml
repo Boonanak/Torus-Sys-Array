@@ -140,38 +140,7 @@ sim.inputs.trace_files: [
 
   "v/Top_level/top_chip_send_trace.tr",
   "v/Top_level/top_chip_recv_trace.tr",
-  #"v/PE/trace.tr",
-  #"v/PE/trace_separateBPS.tr",
-  #"v/PE/shared_B.tr",
-  #"v/PE/PE_final_trace.tr",
-  "v/PE/Pipette_PE.tr",
 
-  #"v/sys_array/sys_array_trace.tr",
-  #"v/sys_array/sys_array_recv_trace.tr",
-  #"v/sys_array/sys_array_send_trace.tr",
-
-  #"v/transpose/dff_en_trace.tr",
-  "v/transpose/shift_reg_trace.tr",
-  "v/transpose/tp_node_trace.tr",
-  #"v/transpose/transpose_trace.tr",
-  "v/transpose/transpose_recv_trace.tr",
-  "v/transpose/transpose_send_trace.tr",
-
-  "v/Top_level/Top_level_recv_trace.tr",
-  "v/Top_level/Top_level_send_trace.tr",
-
-  "v/CSR/csr_trace.tr",
-  "v/Top_level/depacketizer_send_trace.tr",
-  "v/Top_level/depacketizer_recv_trace.tr",
-  "v/Top_level/parity_checker_trace.tr",
-  "v/Top_level/parity_generator_trace.tr",
-  "v/Top_level/downstream_wrapper_send_trace.tr",
-  "v/Top_level/downstream_wrapper_recv_trace.tr",
-  #"v/Top_level/upstream_wrapper_send_trace.tr",
-  #"v/Top_level/upstream_wrapper_recv_trace.tr",
-  "v/Top_level/upstream_downstream_send_trace.tr",
-  "v/Top_level/upstream_downstream_recv_trace.tr",
-
-  "v/sys_array/TwistMesh_send_trace.tr",
-  "v/sys_array/TwistMesh_recv_trace.tr",
+  "v/Top_level/benchmark1_send_trace.tr",
+  "v/Top_level/benchmark1_recv_trace.tr",
 ]

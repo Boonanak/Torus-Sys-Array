@@ -24,13 +24,16 @@ def generate_binary_trace(op, dest=0, src=0, acc=0, weight=0, vaddr=0, imm=0, he
     
     return f"{h}_{pad}_{instr_f}_{imm_f}"
 
-# --- Opcode Constants (Excluding CSR) ---
+# --- Opcode Constants ---
 OP_READM8     = 0b001001
 OP_WRITE      = 0b010000
 OP_TRANSPOSE  = 0b011001
 OP_CC         = 0b100100
 OP_LC         = 0b110000
 OP_LCCC       = 0b110100
+
+# Full 132-bit zero string (Header 0000 + 128 bits of 0s)
+NOOP = "0000_" + "0"*25 + "_" + "_".join(["0"*6]*5) + "_" + "0"*9 + "_" + "_".join(["0"*8]*8)
 
 # --- Sequence with DIM_p = 8, NUM_MATRICES = 4 ---
 trace_sequence = [
@@ -60,18 +63,28 @@ trace_sequence = [
 
     "# Trace 9: Read request for Matrix 0",
     generate_binary_trace(OP_READM8, src=0),
-
-    "# Trace 10: Wait instruction (Header 0000)",
-    "0000_" + "0"*25 + "_" + "_".join(["0"*6]*5) + "_" + "0"*9 + "_" + "_".join(["0"*8]*8),
-
-    "# Trace 11: Finish Simulation (Header 0100)",
-    "0100_" + "0"*25 + "_" + "_".join(["0"*6]*5) + "_" + "0"*9 + "_" + "_".join(["0"*8]*8)
 ]
+
+# --- Insert 20 NOOPs with comment ---
+trace_sequence.append("# wait 20 cycles for input to propagate")
+for _ in range(20):
+    trace_sequence.append(NOOP)
+
+# --- Final Control Traces ---
+trace_sequence.extend([
+    "# Trace 30: Wait instruction (Header 0000)",
+    NOOP,
+
+    "# Trace 31: Finish Simulation (Header 0100)",
+    "0100_" + "0"*25 + "_" + "_".join(["0"*6]*5) + "_" + "0"*9 + "_" + "_".join(["0"*8]*8)
+])
 
 # --- Write to File ---
 file_name = "v/controller/controller_send_trace.tr"
-with open(file_name, "w") as f:
-    for line in trace_sequence:
-        f.write(line + "\n")
-
-print(f"Successfully wrote traces to {file_name}")
+try:
+    with open(file_name, "w") as f:
+        for line in trace_sequence:
+            f.write(line + "\n")
+    print(f"Successfully wrote {len(trace_sequence)} traces to {file_name}")
+except FileNotFoundError:
+    print("Error: Directory 'v/controller/' not found. Please ensure the path exists.")

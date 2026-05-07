@@ -74,6 +74,11 @@ trace_lines.append(f'0001_{generate_32b_bin_flit(11, baddr_src=62)}') # [cite: 3
 trace_lines.append("# ERROR CSR (Clear status flags)")
 trace_lines.append(f'0001_{generate_32b_bin_flit(28)}') # [cite: 35]
 
+# --- 7. Wait input to propagate for 30 cycles ---
+trace_lines.append("# 30 Cycles of NOOP to give more room for simulation probing")
+for i in range(30):
+    trace_lines.append(NOOP)
+
 trace_lines.append("# END SIMULATION")
 trace_lines.append(END)
 

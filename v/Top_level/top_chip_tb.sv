@@ -52,7 +52,6 @@ module top_chip_tb;
     // --- DUT Instantiation ---
     top_chip #(
          .DIM_p(DIM_p)
-        ,.NUM_MATRICES_p(NUM_MATRICES_p)
         ,.CMDQ_DEPTH_p(CMDQ_DEPTH_p)
     ) dut (
          .clk_i   (clk_i)
@@ -67,7 +66,7 @@ module top_chip_tb;
         // Output Path
         ,.link_out_v_o      (link_out_v_o)
         ,.link_out_data_o   (link_out_data_o)
-        ,.link_out_parity_o (link_out_parity_o)
+        //,.link_out_parity_o (link_out_parity_o)
         ,.link_out_yumi_i   (link_out_yumi_i)
     );
 
@@ -124,13 +123,17 @@ module top_chip_tb;
     );
 
     // --- Trace ROMs ---
-    // You will need to regenerate these ROMs to match the flit format
-    top_chip_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
+
+    // top_chip_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
+    //     ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
+    // top_chip_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
+    //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
+
+    benchmark1_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
         ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
 
-    top_chip_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
+    benchmark1_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
         ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
-
     // Finish logic
     always @(posedge clk_i) begin
         if (done_send && done_recv) begin

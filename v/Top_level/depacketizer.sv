@@ -35,7 +35,7 @@ module depacketizer
   // Input from Memory
   , input [packet_width_p-1:0]         packet_i
   , input                              valid_i
-  , input [1:0]                        packet_size_i
+  , input [2:0]                        packet_size_i
   , output logic                       ready_o
 
   // Output to bsg_upstream
@@ -48,7 +48,7 @@ module depacketizer
 
   logic [$clog2(num_flits_lp)-1:0] flit_cnt_r, flit_cnt_n;
   logic [packet_width_p-1:0] packet_r;
-  logic [1:0] packet_size_r;
+  logic [2:0] packet_size_r;
   logic packet_v_r, packet_v_n;
   
   logic fifo_ready_lo;
@@ -69,10 +69,14 @@ always_comb begin
         flit_cnt_n = flit_cnt_r + 1'b1;
 
         case (packet_size_i)
-          2'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
-          2'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
-          2'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
-          default: if (flit_cnt_r == 2'd3) packet_v_n = 1'b0; // Full 4 flits
+          3'd1:    if (flit_cnt_r == 2'd0) packet_v_n = 1'b0;
+          3'd2:    if (flit_cnt_r == 2'd1) packet_v_n = 1'b0;
+          3'd3:    if (flit_cnt_r == 2'd2) packet_v_n = 1'b0;
+          3'd4:    if (flit_cnt_r == 2'd3) packet_v_n = 1'b0;
+          3'd5:    if (flit_cnt_r == 2'd4) packet_v_n = 1'b0;
+          3'd6:    if (flit_cnt_r == 2'd5) packet_v_n = 1'b0;
+          3'd7:    if (flit_cnt_r == 2'd6) packet_v_n = 1'b0;
+          default: if (flit_cnt_r == 2'd7) packet_v_n = 1'b0; // Full 4 flits
         endcase
       end
     end else if (valid_i && ready_o) begin
