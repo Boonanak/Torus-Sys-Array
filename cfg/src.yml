@@ -6,9 +6,10 @@ synthesis.inputs.input_files: [
   # MODIFY TO ADD "${bsg_root}/path to modules as needed if i decide to modify"
   "v/Top_level/bsg_test_node_client.v",
   
+  "v/memory/scratchpad_pkg.sv",
   "v/PE/PE_pkg.sv",
   "v/controller/ctrl_pkg.sv",
-  "v/memory/scratchpad_pkg.sv",
+
 
   "v/PE/TwistPE.sv",
   "v/sys_array/TwistMesh.sv",
