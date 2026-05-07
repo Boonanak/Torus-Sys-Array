@@ -25,7 +25,7 @@ module top_chip #(
 
     ,output logic        link_out_v_o
     ,output logic [31:0] link_out_data_o
-    ,output logic        link_out_parity_o
+    //,output logic        link_out_parity_o
     ,input  logic        link_out_yumi_i
 );
 
@@ -359,4 +359,9 @@ module top_chip #(
         ,.valid_o         (out_flit_v)
         ,.ready_i         (out_flit_ready)
     );
+
+    assign link_out_v_o = out_flit_v;
+    assign link_out_data_o = out_flit;
+    assign out_flit_ready = link_out_yumi_i;
+
 endmodule
