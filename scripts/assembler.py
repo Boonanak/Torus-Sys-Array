@@ -60,7 +60,7 @@ DIM           = 8
 AB_WIDTH      = 8
 C_WIDTH       = 32
 FLIT_WIDTH    = 32
-AB_MEM_DEPTH  = 32
+AB_MEM_DEPTH  = 64
 C_MEM_DEPTH   = 32
 AB_ADDR_W     = int(math.log2(AB_MEM_DEPTH)) # 5
 C_ADDR_W      = int(math.log2(C_MEM_DEPTH)) # 5
@@ -72,6 +72,7 @@ def to_machine_code(instruction):
     expected_output = ''
     instruction_data = instruction.split()
     op = instruction_data[0]
+    #print(op)
     match op:
         case "NOOP":
             opcode = '000000'
@@ -92,9 +93,11 @@ def to_machine_code(instruction):
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
             data = [f'_{to_signed_nbit_binary(int(n), AB_WIDTH)}' for n in data]
             data_string = ''
-            for n in data:
-                data_string += n
-            machine_code = f'{Addr_dest}{f'_{'0'*6}'*3}_00_{opcode}___{data_string}\n'
+            for i in range(len(data)):
+                if (i) % int(FLIT_WIDTH/AB_WIDTH) == 0:
+                    data_string += '\n'
+                data_string += data[i]
+            machine_code = f'{Addr_dest}{f'_{'0'*6}'*3}_00_{opcode}{data_string}\n'
             expected_output = f'{Addr_dest}{f'_{'0'*6}'*3}_00_{opcode}\n'
         case "WRITE32":
             opcode = '010010'
@@ -111,8 +114,10 @@ def to_machine_code(instruction):
             data = instruction[bracket_i+1:bracket_j].split(sep=', ')
             data = [f'_{to_signed_nbit_binary(int(n), C_WIDTH)}' for n in data]
             data_string = ''
-            for n in data:
-                data_string += n
+            for i in range(len(data)):
+                if (i) % int(FLIT_WIDTH/C_WIDTH) == 0:
+                    data_string += '\n'
+                data_string += data[i]
             machine_code = f'{Addr_dest}{f'_{'0'*6}'*3}_00_{opcode}___{data_string}\n'
             expected_output = f'{Addr_dest}{f'_{'0'*6}'*3}_00_{opcode}\n'
         case "TRANSPOSE":
@@ -132,7 +137,8 @@ def to_machine_code(instruction):
         case "WRITE_CSR":
             opcode = '010100'
             data_string = instruction_data[1]
-            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}___{data_string}\n'
+            data_string = f'\n_{data_string[:FLIT_WIDTH+3]}\n{data_string[FLIT_WIDTH+3:]}'
+            machine_code = f'{'0'*(FLIT_WIDTH-6)}_{opcode}{data_string}\n'
             expected_output = f'{'0'*(FLIT_WIDTH-6)}_{opcode}\n'
         case "ERROR_CSR":
             opcode = '011100'
@@ -250,42 +256,63 @@ def to_machine_code(instruction):
             machine_code = ''
     return machine_code
 
-print(to_machine_code("NOOP"))
-print(to_machine_code("WRITE8 1 [1, 2, 3, 4, 5, 6, 7, 8]"))
-print(to_machine_code("WRITE32 31 [1, 2, 3, 4, 5, 6, 7, 8]")) # will throw a warning (cannot overwrite zero matrix)
-print(to_machine_code("TRANSPOSE 5 7")) # will throw a warning (address out of bounds)
-print(to_machine_code("TRANSPOSE 1 2"))
-print(to_machine_code("WRITE_CSR 00000000_00000000_11111111_00000000_00000000_00000000_11111111_00000000"))
-print(to_machine_code("ERROR_CSR"))
-print(to_machine_code("READ_CSR"))
-print(to_machine_code("READM8 4")) # will throw a warning (address out of bounds)
-print(to_machine_code("READM32 0"))
-print(to_machine_code("READV8 4")) 
-print(to_machine_code("READV32 31"))
-print(to_machine_code("LR 3"))
-print(to_machine_code("LC 4")) # will throw a warning (address out of bounds)
-print(to_machine_code("CR 1 2 3")) 
-print(to_machine_code("CC 1 0 0"))
-print(to_machine_code("LRCR 2 1 1 0"))
-print(to_machine_code("LCCR 3 1 0 1")) # will throw a warning (cannot overwrite zero matrix)
-print(to_machine_code("LRCC 0 1 2 3"))
-print(to_machine_code("LCCC 1 2 3 4")) # will throw a warning (address out of bounds)
-
-
+# print(to_machine_code("NOOP"))
+# print(to_machine_code("WRITE8 1 [1, 2, 3, 4, 5, 6, 7, 8]"))
+# print(to_machine_code("WRITE32 20 [1, 2, 3, 4, 5, 6, 7, 8]"))
+# print(to_machine_code("TRANSPOSE 5 7"))
+# print(to_machine_code("TRANSPOSE 1 2"))
+# print(to_machine_code("WRITE_CSR 00000000_00000000_11111111_00000000_00000000_00000000_11111111_00000000"))
+# print(to_machine_code("ERROR_CSR"))
+# print(to_machine_code("READ_CSR"))
+# print(to_machine_code("READM8 8")) # will throw a warning (address out of bounds)
+# print(to_machine_code("READM32 0"))
+# print(to_machine_code("READV8 4")) 
+# print(to_machine_code("READV32 31"))
+# print(to_machine_code("LR 3"))
+# print(to_machine_code("LC 4"))
+# print(to_machine_code("CR 1 2 3")) 
+# print(to_machine_code("CC 1 0 0"))
+# print(to_machine_code("LRCR 2 1 1 0"))
+# print(to_machine_code("LCCR 3 1 0 1")) # will throw a warning (cannot overwrite zero matrix)
+# print(to_machine_code("LRCC 0 1 2 3"))
+# print(to_machine_code("LCCC 1 2 3 4"))
 
 
 ### Some helper methods to convert instructions with matrices into larger instructions'
-def WRITEM(M, Addr):
-    Addr = Addr * 8
+def WRITEM(M, Addr, size):
+    Addr = Addr * DIM
     instructions = ''
     for row in M:
         m_string = f'[{int(row[0])}'
         for n in row[1:]:
             m_string += f', {int(n)}'
         m_string += ']'
-        instructions += to_machine_code(f"WRITE {Addr} {m_string}")
+        if size == 8:
+            instructions += f"WRITE8 {Addr} {m_string}\n"
+        elif size == 32:
+            instructions += f"WRITE32 {Addr} {m_string}\n"
         Addr = Addr + 1
     return instructions
+
+ADDITIONAL_DELAY = 100
+def instructions_to_traces(benchmark_file, send_trace_file):
+    with open(benchmark_file, 'r') as instructions, open(send_trace_file, 'w') as send_trace:
+        for line in instructions:
+            #print(line)
+            line = line.strip()
+            if(line == 'NOOP'):
+                send_trace.write(f'0000_{to_machine_code(line)}\n')
+            elif(line[0] == '#'):
+                send_trace.write(f'{line}\n')
+            else:
+                send_trace.write(f'0001_{to_machine_code(line)}\n')
+        for i in range(ADDITIONAL_DELAY):
+            send_trace.write(f'0000_{to_machine_code('NOOP')}\n')
+        send_trace.write('# END SIMULATION\n')
+        send_trace.write(f'0100_{to_machine_code('NOOP')}\n')
+    return
+
+instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
 
 import random
 import numpy as np
@@ -293,8 +320,8 @@ A1 = np.arange(1, 65).reshape(8,8)
 # print(WRITEM(np.identity(8), 8))
 B2 = np.full((8,8), 2)
 C12 = A1 @ B2
-# print(WRITEM(A1, 0))
-# print(WRITEM(B2, 1))
+# print(WRITEM(A1, 0, 8))
+# print(WRITEM(B2, 1, 8))
 
 # with open('scripts/tpu_benchmark1.txt', 'w') as instruction_file:
 #     instruction_file.write(WRITEM(A1, 0))
