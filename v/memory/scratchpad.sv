@@ -84,7 +84,7 @@ module scratchpad #(
         ,.ROM_IDENTITY_p (0)
         ,.ROM_ZERO_p     (1)
         ,.DIM_p          (DIM_p)
-        ,.ELEM_WIDTH_p   (16)  // psum element width in bank (mesh-internal is 19b)
+        ,.ELEM_WIDTH_p   (32)
     ) u_psum (
          .clk_i, .reset_i
         ,.w_v_i      (psm_w_v_i)
