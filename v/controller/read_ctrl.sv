@@ -10,7 +10,7 @@ module read_ctrl #(
     ,localparam int IFM_W_lp        = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
-    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p)                 // T2SA-CTRL: 2b for 128b/4-flit, 3b for 256b/8-flit; "0=full" encoding
+    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p) + 1               // T2SA-CTRL: 2b for 128b/4-flit, 3b for 256b/8-flit; "0=full" encoding
 )(
      input  logic                       clk_i
     ,input  logic                       reset_i
@@ -74,16 +74,16 @@ module read_ctrl #(
             data_pkt_size = PKT_SIZE_W_lp'(2);                                 // T2SA-CTRL: 64b = 2 flits
         end else if (is_v16) begin
             total_pkts    = 1;
-            // data_pkt_size = 2'd0;  // 128b (size-4 encoded as 0)
-            data_pkt_size = PKT_SIZE_W_lp'(4);                                 // T2SA-CTRL: 128b = 4 flits (PKT_W=128 wraps to 0=full; PKT_W=256 emits 4)
+            // data_pkt_size = 2'd0;  // 256b (size-4 encoded as 0)
+            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b = 4 flits (PKT_W=128 wraps to 0=full; PKT_W=256 emits 4)
         end else if (is_m8) begin
             total_pkts    = (DIM_p + 1) / 2;
             // data_pkt_size = 2'd0;
-            data_pkt_size = PKT_SIZE_W_lp'(4);                                 // T2SA-CTRL: 128b/pkt = 4 flits
+            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b/pkt = 4 flits
         end else begin // m16
             total_pkts    = DIM_p[3:0];
             // data_pkt_size = 2'd0;
-            data_pkt_size = PKT_SIZE_W_lp'(4);                                 // T2SA-CTRL: 128b/pkt = 4 flits
+            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b/pkt = 4 flits
         end
     end
 

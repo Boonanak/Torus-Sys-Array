@@ -243,7 +243,7 @@ module top_chip #(
     logic [PSM_W_lp-1:0]   rd_mem_data;  // widest
     logic [255:0]          rd_pkt;
     logic                  rd_pkt_v, rd_pkt_ready;
-    logic [2:0]            rd_pkt_size;
+    logic [3:0]            rd_pkt_size;
     logic [63:0]           csr_data_lo;  // current csr.data_o
 
     read_ctrl #(.DIM_p(DIM_p)) u_rd (
