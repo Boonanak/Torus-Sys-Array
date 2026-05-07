@@ -214,7 +214,7 @@ def to_machine_code(instruction):
                 print("WARNING: Cannot overwrite zero matrix")
                 return ''
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
-            BaseAddr_source = f'0{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
+            BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
             machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
             expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
@@ -230,7 +230,7 @@ def to_machine_code(instruction):
                 print("WARNING: Cannot overwrite zero matrix")
                 return ''
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
-            BaseAddr_source = f'0{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
+            BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
             machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
             expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
@@ -247,9 +247,9 @@ def to_machine_code(instruction):
                 print("WARNING: Cannot overwrite zero matrix")
                 return ''
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
-            BaseAddr_source = f'0{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
+            BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
-            BaseAddr_weight = f'0{to_signed_nbit_binary(BaseAddr_weight, AB_BASEADDR_W)}000'
+            BaseAddr_weight = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_weight, AB_BASEADDR_W)}000'
             machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_00_{opcode}\n'
             expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{BaseAddr_weight}_00_{opcode}\n'
         case _:
@@ -276,6 +276,34 @@ def to_machine_code(instruction):
 # print(to_machine_code("LCCR 3 1 0 1")) # will throw a warning (cannot overwrite zero matrix)
 # print(to_machine_code("LRCC 0 1 2 3"))
 # print(to_machine_code("LCCC 1 2 3 4"))
+
+def to_flits(output, width=8):
+    if isinstance(output, np.ndarray) and output.ndim == 2:
+        # matrix
+        data = [[f'_{to_signed_nbit_binary(int(n), width)}' for n in row] for row in output]
+        #print(data)
+        data_string = ''
+        i = 0
+        for row in data:
+            for n in row:
+                if (i) % int(FLIT_WIDTH/width) == 0:
+                    data_string += '\n0010_'
+                data_string += n
+                i = i + 1
+    elif isinstance(output, np.ndarray) and output.ndim == 1:
+        # array
+        data = [f'_{to_signed_nbit_binary(int(n), width)}' for n in output]
+        data_string = ''
+        for i in range(len(data)):
+            if (i) % int(FLIT_WIDTH/width) == 0:
+                data_string += '\n0010_'
+            data_string += data[i]
+    else:
+        # string
+        data_string = f'\n_{output[:FLIT_WIDTH+3]}\n{output[FLIT_WIDTH+3:]}'
+    return data_string
+
+
 
 
 ### Some helper methods to convert instructions with matrices into larger instructions'
@@ -306,13 +334,52 @@ def instructions_to_traces(benchmark_file, send_trace_file):
                 send_trace.write(f'{line}\n')
             else:
                 send_trace.write(f'0001_{to_machine_code(line)}\n')
-        for i in range(ADDITIONAL_DELAY):
-            send_trace.write(f'0000_{to_machine_code('NOOP')}\n')
-        send_trace.write('# END SIMULATION\n')
-        send_trace.write(f'0100_{to_machine_code('NOOP')}\n')
+        # for i in range(ADDITIONAL_DELAY):
+        #     send_trace.write(f'0000_{to_machine_code('NOOP')}\n')
+        # send_trace.write('# END SIMULATION\n')
+        # send_trace.write(f'0100_{to_machine_code('NOOP')}\n')
     return
 
-instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+def receive_to_traces(benchmark_file, recv_trace_file, outputs):
+    i = 0
+    with open(benchmark_file, 'r') as instructions, open(recv_trace_file, 'w') as recv_trace:
+        for line in instructions:
+            #print(line)
+            line = line.strip()
+            if(line == 'NOOP'):
+                recv_trace.write(f'0000_{to_machine_code(line)}\n')
+            elif(line[0] == '#'):
+                recv_trace.write(f'{line}\n')
+            else:
+                if line[:5] == 'WRITE':
+                    if line[5] == '_':
+                        recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+1]}\n')
+                    else:
+                        recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+5]}\n')
+                else:
+                    print('receive side non-write instruction')
+                    print(f'0010_{to_machine_code(line)}\n')
+                    recv_trace.write(f'0010_{to_machine_code(line)}')
+                    if line[:4] == 'READ':
+                        if line[5] == '8':
+                            recv_trace.write(f'{to_flits(outputs[i], AB_WIDTH)}\n')
+                        else:
+                            recv_trace.write(f'{to_flits(outputs[i], C_WIDTH)}\n')
+        recv_trace.write('# END SIMULATION\n')
+        recv_trace.write(f'0100_{to_machine_code('NOOP')}\n')
+    return
+
+
+import random
+import numpy as np
+A1 = np.arange(1, 65).reshape(8,8)
+# print(WRITEM(np.identity(8), 8))
+B2 = np.full((8,8), 2)
+C12 = A1 @ B2
+
+#instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+expected_outputs = [np.identity(8), A1, C12]
+receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
 
 import random
 import numpy as np
@@ -322,6 +389,9 @@ B2 = np.full((8,8), 2)
 C12 = A1 @ B2
 # print(WRITEM(A1, 0, 8))
 # print(WRITEM(B2, 1, 8))
+# print(to_flits(C12, 32))
+# print(to_flits(C12[0], 8))
+# print(to_flits('00000000_00000000_11111111_00000000_00000000_00000000_11111111_00000000'))
 
 # with open('scripts/tpu_benchmark1.txt', 'w') as instruction_file:
 #     instruction_file.write(WRITEM(A1, 0))
