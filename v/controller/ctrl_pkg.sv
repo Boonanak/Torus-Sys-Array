@@ -1,6 +1,9 @@
 
 package ctrl_pkg;
 
+    parameter int baddr_width_p = $clog2(scratchpad_pkg::NUM_MATRICES_IFM_p);
+    parameter int vaddr_width_p = scratchpad_pkg::BANK_ADDR_W_IFM_lp;
+
     typedef enum logic [5:0] {
         OP_NOOP      = 6'b000000,
         OP_READV8    = 6'b001000,

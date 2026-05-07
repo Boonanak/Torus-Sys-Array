@@ -17,6 +17,9 @@ module cmd_decoder (
     ,output err_pulse_t                 err_o
 );
 
+    localparam int vaddr_width_p = ctrl_pkg::vaddr_width_p;
+    localparam int baddr_width_p = ctrl_pkg::baddr_width_p;
+    
     typedef enum logic [1:0] { S_HEAD, S_DATA0, S_DATA1 } state_e;
     state_e st_r, st_n;
 
@@ -25,20 +28,20 @@ module cmd_decoder (
     err_pulse_t   err_n;
 
     opcode_e     hdr_op;
-    logic [5:0]  hdr_dest, hdr_src, hdr_acc, hdr_weight;
-    logic [8:0]  hdr_vaddr;
+    logic [baddr_width_p-1:0]  hdr_dest, hdr_src, hdr_acc, hdr_weight;
+    logic [vaddr_width_p-1:0]  hdr_vaddr;
 
     assign hdr_op     = opcode_e'(flit_i[5:0]);
-    assign hdr_dest   = flit_i[31:26];  // BaseAddr_dest
-    assign hdr_src    = flit_i[25:20];  // BaseAddr_source
-    assign hdr_acc    = flit_i[19:14];  // BaseAddr_acc
-    assign hdr_weight = flit_i[13: 8];  // BaseAddr_weight
+    assign hdr_dest   = flit_i[31 -: baddr_width_p];  // BaseAddr_dest
+    assign hdr_src    = flit_i[25 -: baddr_width_p];  // BaseAddr_source
+    assign hdr_acc    = flit_i[19 -: baddr_width_p];  // BaseAddr_acc
+    assign hdr_weight = flit_i[13 -: baddr_width_p];  // BaseAddr_weight
     logic is_writeish, is_readv;
     assign is_writeish = (hdr_op == OP_WRITE)      ||
                          (hdr_op == OP_WRITE_CSR);
     assign is_readv    = (hdr_op == OP_READV8) || (hdr_op == OP_READV16);
-    assign hdr_vaddr   = is_writeish ? flit_i[31:23] :
-                         is_readv    ? flit_i[25:17] : 9'd0;
+    assign hdr_vaddr   = is_writeish ? flit_i[31 -: vaddr_width_p] :
+                         is_readv    ? flit_i[25 -: vaddr_width_p] : 9'd0;
 
     logic hdr_known;
     always_comb begin

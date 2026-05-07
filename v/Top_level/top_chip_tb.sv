@@ -101,10 +101,12 @@ module top_chip_tb;
 
     logic tr_ready_lo;
     logic tr_v_li;
+    logic[31:0] link_out_data_o_r;
 
     always_ff @(negedge clk_i) begin 
         link_out_yumi_i <= tr_ready_lo && link_out_v_o;
         tr_v_li <= link_out_v_o;
+        link_out_data_o_r <= link_out_data_o;
     end
 
     // --- Receive Trace Replay (Validates link_out) ---
@@ -117,7 +119,7 @@ module top_chip_tb;
         ,.en_i   (1'b1)
 
         ,.v_i    (tr_v_li)
-        ,.data_i (link_out_data_o)
+        ,.data_i (link_out_data_o_r)
         ,.ready_o(tr_ready_lo) // This ready effectively acts as 'yumi' for the DUT
 
         ,.v_o    ()
