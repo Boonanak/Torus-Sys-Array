@@ -29,7 +29,7 @@
 import numpy as np
 
 AB_WIDTH = 8
-C_WIDTH = 16
+C_WIDTH = 32
 MATRIX_SIZE = 8
 DELAY = 7
 
