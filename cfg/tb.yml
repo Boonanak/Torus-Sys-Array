@@ -143,4 +143,7 @@ sim.inputs.trace_files: [
 
   "v/Top_level/benchmark1_send_trace.tr",
   "v/Top_level/benchmark1_recv_trace.tr",
+
+  "v/sys_array/TwistMesh_send_trace.tr",
+  "v/sys_array/TwistMesh_recv_trace.tr",
 ]
