@@ -1,5 +1,7 @@
 `timescale 1ns/1ps
 
+import mem_pkg::*;
+
 module banked_mem_tb;
 
     initial begin 
