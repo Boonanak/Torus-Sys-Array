@@ -19,6 +19,8 @@ sim.inputs.tb_input_files: [
   "v/controller/mem_arbiter_tb.sv",
   "v/controller/controller_tb.sv",
 
+  "v/sys_array/test2/TwistMesh_tb_twotrace.sv",
+
   "v/CSR/csr_tb.sv",
 
     # BSG utilities
@@ -113,4 +115,8 @@ sim.inputs.trace_files: [
 
   "v/Top_level/benchmark1_send_trace.tr",
   "v/Top_level/benchmark1_recv_trace.tr",
+  
+  "v/sys_array/test2/TwistMesh_send_trace.tr",
+  "v/sys_array/test2/TwistMesh_recv_trace.tr",
+
 ]
