@@ -7,7 +7,8 @@ module exec_ctrl #(
     ,parameter int NUM_MATRICES_p = scratchpad_pkg::NUM_MATRICES_p
     ,localparam int IFM_W_lp = DIM_p * 8
     ,localparam int WGT_W_lp = DIM_p * 8
-    ,localparam int PSM_W_lp = DIM_p * 16  // bank-side; sign-ext 16→19 for mesh, truncate 19→16 on writeback
+    // ,localparam int PSM_W_lp = DIM_p * 16  // bank-side; sign-ext 16→19 for mesh, truncate 19→16 on writeback
+    ,localparam int PSM_W_lp = DIM_p * 32  // T2SA-CTRL: bank-side now 32b/elem (psum unified to int32 end-to-end; no sign-ext or truncate needed)
     ,localparam int ADDR_W_lp = $clog2(NUM_MATRICES_p * DIM_p)
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
 )(
@@ -46,11 +47,13 @@ module exec_ctrl #(
 
     ,output logic signed [7:0]          mesh_ifmap_row_o [DIM_p-1:0]
     ,output logic signed [7:0]          mesh_weight_row_o [DIM_p-1:0]
-    ,output logic signed [18:0]         mesh_bias_row_o [DIM_p-1:0]
+    // ,output logic signed [18:0]         mesh_bias_row_o [DIM_p-1:0]
+    ,output logic signed [31:0]         mesh_bias_row_o [DIM_p-1:0]                  // T2SA-CTRL: int19 → int32 (psum unified to 32b)
     ,input  logic [CYC_W_lp-1:0]        mesh_cycle_i
     ,input  logic                       mesh_cycle_v_i
 
-    ,input  logic signed [18:0]         mesh_psum_row_i  [DIM_p-1:0]
+    // ,input  logic signed [18:0]         mesh_psum_row_i  [DIM_p-1:0]
+    ,input  logic signed [31:0]         mesh_psum_row_i  [DIM_p-1:0]                 // T2SA-CTRL: int19 → int32 (psum unified to 32b)
     ,input  logic                       mesh_capture_v_i
     ,input  logic [CYC_W_lp-1:0]        mesh_capture_idx_i
 
@@ -275,8 +278,9 @@ module exec_ctrl #(
             assign mesh_weight_row_o[gr2] =
                 (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
                                             : wgt_r_data_i[gr2*8 +: 8];
-            assign mesh_bias_row_o[gr2]   =
-                {{3{psm_r_data_i[gr2*16+15]}}, psm_r_data_i[gr2*16 +: 16]};
+            // assign mesh_bias_row_o[gr2]   =
+            //     {{3{psm_r_data_i[gr2*16+15]}}, psm_r_data_i[gr2*16 +: 16]};
+            assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];               // T2SA-CTRL: bank now stores int32 directly; no sign-ext needed
         end
     endgenerate
 
@@ -285,7 +289,8 @@ module exec_ctrl #(
     always_comb begin
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
-            psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
+            // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
+            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
         end
     end
 
