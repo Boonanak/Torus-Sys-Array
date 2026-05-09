@@ -185,8 +185,8 @@ def to_machine_code(instruction):
             machine_code = f'{'0'*6}_{Addr_source}{f'_{'0'*6}'*2}_00_{opcode}\n'
             expected_output = f'{'0'*6}_{Addr_source}{f'_{'0'*6}'*2}_00_{opcode}___{'x'*8*C_WIDTH}\n'
         case "LR":
-            #opcode = '111000'
-            opcode = '110000'
+            opcode = '111000'
+            #opcode = '110000'
             BaseAddr_weight = int(instruction_data[1])
             if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
                 print("WARNING: Address out of bounds")
@@ -195,8 +195,8 @@ def to_machine_code(instruction):
             machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
             expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
         case "LC":
-            #opcode = '110000'
-            opcode = '111000'
+            opcode = '110000'
+            #opcode = '111000'
             BaseAddr_weight = int(instruction_data[1])
             if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
                 print("WARNING: Address out of bounds")
@@ -205,8 +205,8 @@ def to_machine_code(instruction):
             machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
             expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
         case "CR":
-            #opcode = '100110'
-            opcode = '100100'
+            opcode = '100110'
+            #opcode = '100100'
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
@@ -222,8 +222,8 @@ def to_machine_code(instruction):
             machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
             expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
         case "CC":
-            #opcode = '100100'
-            opcode = '100110'
+            opcode = '100100'
+            #opcode = '100110'
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
@@ -239,8 +239,8 @@ def to_machine_code(instruction):
             machine_code = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
             expected_output = f'{BaseAddr_dest}_{BaseAddr_source}_{BaseAddr_acc}_{'0'*6}_00_{opcode}\n'
         case "LRCR" | "LCCR" | "LRCC" | "LCCC":
-            #opcode = f'11{int(op[1] == 'R')}1{int(op[3] == 'R')}0'
-            opcode = f'11{int(op[1] == 'C')}1{int(op[3] == 'C')}0'
+            opcode = f'11{int(op[1] == 'R')}1{int(op[3] == 'R')}0'
+            #opcode = f'11{int(op[1] == 'C')}1{int(op[3] == 'C')}0'
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
