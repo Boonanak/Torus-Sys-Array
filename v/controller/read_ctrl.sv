@@ -189,11 +189,13 @@ module read_ctrl #(
         end else if (is_v16_r) begin
             data_pkt = buf_r[127:0];
         end else if (is_m8_r) begin
-            // TODO: data_pkt[255:128] might need to be set in same manner? check in simulation
-            data_pkt[127:64] = buf_r[(pkt_cnt_r*128)     +: 64];  // row 2k
-            data_pkt[63:0]   = buf_r[(pkt_cnt_r*128)+64  +: 64];  // row 2k+1
+            // parameterization
+            data_pkt[192 +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)      +: 64];  // row 4k
+            data_pkt[128 +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+64   +: 64];  // row 4k+1
+            data_pkt[64  +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+128  +: 64];  // row 4k+2
+            data_pkt[0   +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+196  +: 64];  // row 4k+3
         end else begin // m16
-            data_pkt = buf_r[pkt_cnt_r*128 +: 128];
+            data_pkt = buf_r[pkt_cnt_r*PSM_ROW_W_lp +: PSM_ROW_W_lp];
         end
     end
 
