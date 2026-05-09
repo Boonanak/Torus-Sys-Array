@@ -91,7 +91,7 @@ module read_ctrl #(
     always_comb begin
         hdr_flit = '0;
         hdr_flit[5:0] = cmd_i.op;
-        if (is_m8 || is_m16) hdr_flit[25:20] = cmd_i.baddr_src;
+        if (is_m8 || is_m16) hdr_flit[25:20] = cmd_i.baddr_src << 3;
         if (is_v8 || is_v16) hdr_flit[25:17] = cmd_i.vaddr;
     end
 
