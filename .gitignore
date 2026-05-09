@@ -29,3 +29,4 @@ Verdi.*
 
 # ignore files created for svlangserver
 .vscode/*
+.rules.verible_lint
