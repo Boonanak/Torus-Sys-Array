@@ -27,12 +27,12 @@ module TwistMesh_tb_twotrace;
   localparam IW = 8;
   localparam WW = 8;
   // localparam OW = 16;
-  localparam OW = 32;                                                        // T2SA-MESH: int32 psum
-  localparam OUTPUT_DATA_SIZE = N * OW;
-  localparam INPUT_DATA_SIZE = 1 + N + N*IW + N*WW + N*OW;
-  localparam IFMAP_START = INPUT_DATA_SIZE-2-N;
-  localparam WEIGHT_START = IFMAP_START-8*IW;
-  localparam PSUM_START = OUTPUT_DATA_SIZE - 1;
+  localparam OW = 32; // T2SA-MESH: int32 psum
+  localparam OUTPUT_DATA_SIZE = N * OW; // 256
+  localparam INPUT_DATA_SIZE = 1 + N + N*IW + N*WW + N*OW; // 393
+  localparam IFMAP_START = INPUT_DATA_SIZE-2-N; // 383
+  localparam WEIGHT_START = IFMAP_START-8*IW; // 319
+  localparam PSUM_START = OUTPUT_DATA_SIZE - 1; // 255
 
   logic dut_v_lo, dut_v_r;
   logic [OUTPUT_DATA_SIZE-1:0] dut_data_lo, dut_data_r;
@@ -107,8 +107,8 @@ module TwistMesh_tb_twotrace;
 
   always_ff @(negedge clk) begin
     dut_ready_r <= dut_ready_lo;
-    tr_yumi_li   <= dut_ready_r & tr_v_lo;
-    // tr_yumi_li  <= '1;
+    // tr_yumi_li   <= dut_ready_r & tr_v_lo;
+    tr_yumi_li  <= '1;
     dut_v_r     <= dut_v_lo;
     dut_data_r  <= dut_data_lo;
   end
