@@ -1,0 +1,21 @@
+# Testing each instruction can be sent in the expected format and 
+# returns data in the expected format (all x's, but properly formatted)
+NOOP
+WRITE8 0 [1, 1, 1, 1, 1, 1, 1, 1]
+WRITE32 0 [2, 2, 2, 2, 2, 2, 2, 2]
+TRANSPOSE 0 7
+WRITE_CSR 00000000_00001111_11110000_01010101_10101010_00110011_11001100_11111111
+ERROR_CSR
+READ_CSR
+READM8 0
+READM32 0
+READV8 0
+READV32 0
+LR 0
+LC 0
+LRCR 0 1 2 3
+LCCR 0 1 2 3
+LRCC 0 1 2 3
+LCCC 0 1 2 3
+CR 0 1 2
+CC 0 1 2

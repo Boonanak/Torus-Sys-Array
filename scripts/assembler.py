@@ -305,7 +305,24 @@ def to_flits(output, width=8):
             data_string += data[i]
     else:
         # string
-        data_string = f'\n_{output[:FLIT_WIDTH+3]}\n{output[FLIT_WIDTH+3:]}'
+        data_string = ''
+        i = -1
+        #print(output)
+        for c in output:
+            #print(c)
+            if c != '_' and c != '\n':
+                i = i + 1
+                #print('index incremented')
+            if (i) % int(FLIT_WIDTH) == 0:
+                #print(i, 'entered')
+                #print(int(FLIT_WIDTH))
+                if(i == 0):
+                    data_string += '0010_'
+                else:
+                    data_string += '\n0010_'
+            data_string += c
+            
+        #data_string = f'\n_{output[:FLIT_WIDTH+3]}\n{output[FLIT_WIDTH+3:]}'
     return data_string
 
 
@@ -390,9 +407,19 @@ A1 = np.arange(1, 65).reshape(8,8)
 B2 = np.full((8,8), 2)
 C12 = A1 @ B2
 
-instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
-expected_outputs = [np.identity(8), A1, C12]
-receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
+# instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+# expected_outputs = [np.identity(8), A1, C12]
+# receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
+
+instructions_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_send_trace.tr')
+csr_out = f'{'x'*64}'
+M8_out = f'{f'{'xxxxxxxx'*4}'*16}'
+M32_out = f'{f'{'x'*32}'*64}'
+V8_out = f'{f'{'xxxxxxxx'*4}'*2}'
+V32_out = f'{f'{'x'*32}'*8}'
+expected_outputs2 = [csr_out, M8_out, M32_out, V8_out, V32_out]
+# , M8_out, M32_out, V8_out, V32_out
+receive_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_recv_trace.tr', expected_outputs2)
 
 import random
 import numpy as np
