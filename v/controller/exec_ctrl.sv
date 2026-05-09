@@ -65,7 +65,7 @@ module exec_ctrl #(
     ,output logic                       transpose_conflict_o
 );
 
-    logic do_compute, do_load_w, a_trans, d_trans, is_transpose;
+    logic do_compute, do_load_w, a_trans, d_trans, is_transpose, prev_load_w_r;
     always_comb begin
         do_compute   = 1'b0; do_load_w = 1'b0;
         a_trans      = 1'b0; d_trans   = 1'b0;
@@ -165,7 +165,7 @@ module exec_ctrl #(
             cmd_r          <= '0;
             prime_cnt_r    <= '0;
             tpop_drain_cnt_r <= '0;
-            do_compute_r   <= 1'b0; do_load_w_r <= 1'b0;
+            do_compute_r   <= 1'b0; do_load_w_r <= 1'b0; prev_load_w_r <= 1'b0;
             a_trans_r      <= 1'b0; d_trans_r   <= 1'b0;
             is_transpose_r <= 1'b0;
             use_tp_r       <= 1'b0; tp_for_a_r  <= 1'b0;
@@ -177,6 +177,7 @@ module exec_ctrl #(
             if (accept_now) begin
                 do_compute_r   <= do_compute;
                 do_load_w_r    <= do_load_w;
+                prev_load_w_r  <= do_load_w_r;
                 a_trans_r      <= a_trans;
                 d_trans_r      <= d_trans;
                 is_transpose_r <= is_transpose;
@@ -197,7 +198,7 @@ module exec_ctrl #(
         mreq_o                = '0;
         mreq_o.do_compute     = do_compute_r;
         mreq_o.do_load_weight = do_load_w_r;
-        mreq_o.flip_propagate = do_compute_r; //do_load_w_r; << this asserted flip_propagate incorrectly. testing new things
+        mreq_o.flip_propagate = prev_load_w_r && do_compute_r; // should only be on compute AFTER a load.
         mreq_o.src_a_base     = cmd_r.baddr_src;
         mreq_o.src_bias_base  = cmd_r.baddr_acc;
         mreq_o.src_wgt_base   = cmd_r.baddr_weight;
