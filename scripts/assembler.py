@@ -369,6 +369,7 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
                             recv_trace.write(f'{to_flits(outputs[i], AB_WIDTH)}\n')
                         else:
                             recv_trace.write(f'{to_flits(outputs[i], C_WIDTH)}\n')
+                        i = i + 1
         recv_trace.write('# END SIMULATION\n')
         recv_trace.write(f'0100_{to_machine_code('NOOP')}\n')
     return
