@@ -29,7 +29,7 @@
 import numpy as np
 
 AB_WIDTH = 8
-C_WIDTH = 16
+C_WIDTH = 32
 MATRIX_SIZE = 8
 DELAY = 7
 
@@ -272,8 +272,12 @@ acc_1 = np.zeros((8,8)) + 1
 inc_0_63_plus_1 = inc_0_63 + 1
 overflow = np.zeros((8,8)) + 127
 overflow_neg = overflow * -1
-overflowed_positive = np.zeros((8,8)) + 32767
-overflowed_negative = np.zeros((8,8)) - 32768
+overflowed16_positive = overflow @ overflow
+overflowed16_negative = overflow_neg @ overflow + 1
+acc_overflow = np.zeros((8,8)) + 2147470000
+acc_overflow_neg = acc_overflow * -1
+overflowed_positive = np.zeros((8,8)) + 2147483647
+overflowed_negative = np.zeros((8,8)) - 2147483648
 
 
 
@@ -286,9 +290,10 @@ TwistMesh = [
     [['compute', inc_0_63, None, None], ['recv', None, None, inc_0_63_squared]],
     [['compute', inc_0_63_neg, None, None], ['recv', None, None, inc_0_63_squared_neg]],
     [['load_compute', I, overflow, acc_1], ['recv', None, None, inc_0_63_plus_1]],
-    [['compute', overflow, None, Z], ['recv', None, None, overflowed_positive]],
-    [['compute', overflow_neg, None, acc_1], ['recv', None, None, overflowed_negative]]
-
+    [['compute', overflow, None, Z], ['recv', None, None, overflowed16_positive]],
+    [['compute', overflow_neg, None, acc_1], ['recv', None, None, overflowed16_negative]],
+    [['compute', overflow, None, acc_overflow], ['recv', None, None, overflowed_positive]],
+    [['compute', overflow_neg, None, acc_overflow_neg], ['recv', None, None, overflowed_negative]]
 ]
 
 with open('v/sys_array/TwistMesh_send_trace.tr', 'w') as trace_send, open('v/sys_array/TwistMesh_recv_trace.tr', 'w') as trace_recv:
