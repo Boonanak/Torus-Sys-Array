@@ -95,7 +95,7 @@ module read_ctrl #(
         if (is_v8 || is_v16) hdr_flit[25:17] = cmd_i.vaddr;
     end
 
-    localparam int BUF_W_lp = DIM_p * 128;  // worst case 8 × 128b
+    localparam int BUF_W_lp = DIM_p * scratchpad_pkg::PSM_ROW_W_lp;  // worst case 8 × 256b
     logic [BUF_W_lp-1:0] buf_r, buf_n;
 
     logic [CYC_W_lp-1:0] row_cnt_r, row_cnt_n;
