@@ -272,6 +272,8 @@ module exec_ctrl #(
     assign tp_out_ready_o = ((st_r == S_FIRE) && mesh_cycle_v_i)  // mesh in S_FIRE consuming
                           || (st_r == S_TP_OP_DRAIN);  // TRANSPOSE drains 1/cyc
 
+
+    // TODO: This needs to be updated to int32 data
     genvar gr2;
     generate
         for (gr2 = 0; gr2 < DIM_p; gr2++) begin : g_mesh_mux
@@ -290,7 +292,7 @@ module exec_ctrl #(
     always_comb begin
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
-            psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
+            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr][31:0];
         end
     end
 
