@@ -197,7 +197,7 @@ module exec_ctrl #(
         mreq_o                = '0;
         mreq_o.do_compute     = do_compute_r;
         mreq_o.do_load_weight = do_load_w_r;
-        mreq_o.flip_propagate = do_load_w_r;
+        mreq_o.flip_propagate = do_compute_r; //do_load_w_r; << this asserted flip_propagate incorrectly. testing new things
         mreq_o.src_a_base     = cmd_r.baddr_src;
         mreq_o.src_bias_base  = cmd_r.baddr_acc;
         mreq_o.src_wgt_base   = cmd_r.baddr_weight;
