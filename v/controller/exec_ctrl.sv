@@ -283,8 +283,9 @@ module exec_ctrl #(
             assign mesh_weight_row_o[gr2] =
                 (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
                                             : wgt_r_data_i[gr2*8 +: 8];
-            assign mesh_bias_row_o[gr2]   =
-                {{3{psm_r_data_i[gr2*16+15]}}, psm_r_data_i[gr2*16 +: 16]};
+            // assign mesh_bias_row_o[gr2]   =
+            //     {{3{psm_r_data_i[gr2*16+15]}}, psm_r_data_i[gr2*16 +: 16]};
+            assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];               // T2SA-CTRL: bank now stores int32 directly; no sign-ext needed
         end
     endgenerate
 
@@ -293,7 +294,8 @@ module exec_ctrl #(
     always_comb begin
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
-            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr][31:0];
+            // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
+            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
         end
     end
 
