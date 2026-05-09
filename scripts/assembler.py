@@ -359,12 +359,15 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
             else:
                 if line[:5] == 'WRITE':
                     if line[5] == '_':
-                        recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+1]}\n')
+                        #recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+1]}\n')
+                        recv_trace.write('')
                     else:
-                        recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+5]}\n')
+                        #recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+5]}\n')
+                        recv_trace.write('')
                 else:
-                    recv_trace.write(f'0010_{to_machine_code(line)}')
+                    #recv_trace.write(f'0010_{to_machine_code(line)}')
                     if line[:4] == 'READ':
+                        recv_trace.write(f'0010_{to_machine_code(line)}')
                         if line[5] == '8':
                             recv_trace.write(f'{to_flits(outputs[i], AB_WIDTH)}\n')
                         else:
