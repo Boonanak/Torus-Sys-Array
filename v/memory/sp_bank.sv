@@ -56,7 +56,7 @@ module sp_bank #(
         int row_idx;
         v = '0;
         row_idx = addr - IDENTITY_LO_lp;
-        v[row_idx*ELEM_WIDTH_p +: ELEM_WIDTH_p] = 1;
+        v[(DIM_p - 1 - row_idx)*ELEM_WIDTH_p +: ELEM_WIDTH_p] = 1;
         return v;
     endfunction
 
