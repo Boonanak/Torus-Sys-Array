@@ -120,7 +120,7 @@ module mesh_driver #(
     logic in_run_phase;
     assign in_run_phase = (st_r == S_FIRE) || (st_r == S_DRAIN);
 
-    assign mesh_in_valid_o = in_run_phase;
+    assign mesh_in_valid_o = in_fire_phase; //in_run_phase;
 
     assign mesh_in_last_o = (st_r == S_DRAIN) &&
                             (drain_cnt_r == DIM_p[CYC_W_lp-1:0] - 2);
@@ -130,17 +130,17 @@ module mesh_driver #(
     genvar gr;
     generate
         for (gr = 0; gr < DIM_p; gr++) begin : g_drive
-            assign mesh_in_weight_o[DIM_p - 1 - gr] =
+            assign mesh_in_weight_o[gr] =
                 (in_fire_phase && req_r.do_load_weight) ? weight_row_i[gr] : '0;
 
-            assign mesh_in_lock_o[DIM_p - 1 - gr] =
+            assign mesh_in_lock_o[gr] =
                 (in_fire_phase && req_r.do_load_weight
                  && fire_cnt_r == gr[CYC_W_lp-1:0]);
 
-            assign mesh_in_ifmap_o[DIM_p - 1 - gr] =
+            assign mesh_in_ifmap_o[gr] =
                 (in_fire_phase && req_r.do_compute) ? ifmap_row_i[gr] : '0;
 
-            assign mesh_in_psum_o[DIM_p - 1 - gr] =
+            assign mesh_in_psum_o[gr] =
                 (in_fire_phase && req_r.do_compute) ? bias_row_i[gr] : '0;
         end
     endgenerate

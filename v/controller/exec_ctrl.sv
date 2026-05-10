@@ -71,14 +71,14 @@ module exec_ctrl #(
         a_trans      = 1'b0; d_trans   = 1'b0;
         is_transpose = 1'b0;
         unique case (cmd_i.op)
-            OP_LR:    begin do_load_w=1; d_trans=1; end  // Load Row-major
-            OP_LC:    begin do_load_w=1; d_trans=0; end  // Load Col-major
-            OP_CR:    begin do_compute=1; a_trans=1; end  // Compute Row-major A
-            OP_CC:    begin do_compute=1; a_trans=0; end  // Compute Col-major A
-            OP_LRCR:  begin do_compute=1; do_load_w=1; a_trans=1; d_trans=1; end  // both need TP → CONFLICT
-            OP_LCCR:  begin do_compute=1; do_load_w=1; a_trans=1; d_trans=0; end
-            OP_LRCC:  begin do_compute=1; do_load_w=1; a_trans=0; d_trans=1; end
-            OP_LCCC:  begin do_compute=1; do_load_w=1; a_trans=0; d_trans=0; end
+            OP_LR:    begin do_load_w=1; d_trans=0; end  // Load Row-major
+            OP_LC:    begin do_load_w=1; d_trans=1; end  // Load Col-major
+            OP_CR:    begin do_compute=1; a_trans=0; end  // Compute Row-major A
+            OP_CC:    begin do_compute=1; a_trans=1; end  // Compute Col-major A
+            OP_LRCR:  begin do_compute=1; do_load_w=1; a_trans=0; d_trans=0; end  // both need TP → CONFLICT
+            OP_LCCR:  begin do_compute=1; do_load_w=1; a_trans=0; d_trans=1; end
+            OP_LRCC:  begin do_compute=1; do_load_w=1; a_trans=1; d_trans=0; end
+            OP_LCCC:  begin do_compute=1; do_load_w=1; a_trans=1; d_trans=1; end
             OP_TRANSPOSE: is_transpose = 1'b1;
             default: ;
         endcase
