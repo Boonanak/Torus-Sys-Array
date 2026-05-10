@@ -120,7 +120,7 @@ module mesh_driver #(
     logic in_run_phase;
     assign in_run_phase = (st_r == S_FIRE) || (st_r == S_DRAIN);
 
-    assign mesh_in_valid_o = in_run_phase;
+    assign mesh_in_valid_o = in_fire_phase; //in_run_phase;
 
     assign mesh_in_last_o = (st_r == S_DRAIN) &&
                             (drain_cnt_r == DIM_p[CYC_W_lp-1:0] - 2);
