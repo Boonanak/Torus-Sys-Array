@@ -1,0 +1,91 @@
+# List of all Verilog source files to include in this build.
+# Used by both synthesis and RTL simulation.
+synthesis.inputs.input_files: [
+  # ----------------------------------------------------------------------
+  # BaseJump STL subset needed by bsg_link_ddr_upstream / downstream.
+  # ${bsg_root} is set by module_top.mk's $(OBJ_DIR)/paths.yml from the
+  # Makefile's BASEJUMP_STL_PATH variable (default: third_party/basejump_stl).
+  # Run `make setup-bsg` once to populate that path.
+  # ----------------------------------------------------------------------
+  "${bsg_root}/bsg_misc/bsg_defines.v",
+  "${bsg_root}/bsg_misc/bsg_dff.v",
+  "${bsg_root}/bsg_misc/bsg_dff_en.v",
+  "${bsg_root}/bsg_misc/bsg_counter_clear_up.v",
+  "${bsg_root}/bsg_misc/bsg_circular_ptr.v",
+  "${bsg_root}/bsg_misc/bsg_scan.v",
+  "${bsg_root}/bsg_misc/bsg_gray_to_binary.v",
+
+  "${bsg_root}/bsg_async/bsg_async_ptr_gray.v",
+  "${bsg_root}/bsg_async/bsg_async_credit_counter.v",
+  "${bsg_root}/bsg_async/bsg_async_fifo.v",
+  "${bsg_root}/bsg_async/bsg_launch_sync_sync.v",
+  "${bsg_root}/bsg_async/bsg_sync_sync.v",
+
+  "${bsg_root}/bsg_dataflow/bsg_fifo_tracker.v",
+  "${bsg_root}/bsg_dataflow/bsg_one_fifo.v",
+  "${bsg_root}/bsg_dataflow/bsg_two_fifo.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small.v",
+  "${bsg_root}/bsg_dataflow/bsg_parallel_in_serial_out.v",
+  "${bsg_root}/bsg_dataflow/bsg_serial_in_parallel_out.v",
+  "${bsg_root}/bsg_dataflow/bsg_serial_in_parallel_out_full.v",
+  "${bsg_root}/bsg_dataflow/bsg_round_robin_1_to_n.v",
+
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w_synth.v",
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w.v",
+
+  "${bsg_root}/bsg_link/bsg_link_ddr_downstream.v",
+  "${bsg_root}/bsg_link/bsg_link_ddr_upstream.v",
+  "${bsg_root}/bsg_link/bsg_link_iddr_phy.v",
+  "${bsg_root}/bsg_link/bsg_link_oddr_phy.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_downstream.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_upstream.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_upstream_sync.v",
+
+  # ----------------------------------------------------------------------
+  # Project RTL: BLE waveform generator + SPI slave + bsg_link wrapper +
+  # top.v (student-editable SoC) + chip_top.sv (pad ring + bsg + scan).
+  # chip_top.sv must be last so its `chip_top` module is the synthesis top.
+  # ----------------------------------------------------------------------
+  #"zeroscatter/BLEpacket.sv",
+  #"zeroscatter/squarewave.sv",
+  #"zeroscatter/squarewavemod.sv",
+  #"zeroscatter/spi_slave.sv",
+  #"zeroscatter/bsg_link_wrapper.sv",
+  # "zeroscatter/top.v",
+  # our version of bsg_link_wrapper, uses same module name internally
+  "../Torus-Sys-Array/v/Top_level/parity_checker.sv",
+  "../Torus-Sys-Array/v/Top_level/parity_generator.sv",
+  "../Torus-Sys-Array/v/Top_level/bsg_link_parity_wrapper.sv",
+  "../Torus-Sys-Array/v/CSR/csr.sv",
+  "../Torus-Sys-Array/v/PE/PE_pkg.sv",
+  "../Torus-Sys-Array/v/memory/scratchpad_pkg.sv",
+  "../Torus-Sys-Array/v/controller/ctrl_pkg.sv",
+  "../Torus-Sys-Array/v/PE/TwistPE.sv",
+  "../Torus-Sys-Array/v/Top_level/top_chip.sv",
+  "../Torus-Sys-Array/v/Top_level/depacketizer.sv",
+  "../Torus-Sys-Array/v/controller/cmd_decoder.sv",
+  "../Torus-Sys-Array/v/controller/cmd_queue.sv",
+  "../Torus-Sys-Array/v/controller/csr_router.sv",
+  "../Torus-Sys-Array/v/controller/dispatch.sv",
+  "../Torus-Sys-Array/v/controller/exec_ctrl.sv",
+  "../Torus-Sys-Array/v/controller/mem_arbiter.sv",
+  "../Torus-Sys-Array/v/controller/mesh_driver.sv",
+  "../Torus-Sys-Array/v/controller/read_ctrl.sv",
+  "../Torus-Sys-Array/v/controller/write_ctrl.sv",
+  #"../Torus-Sys-Array/v/controller/link16_to_flit32.sv",
+  #"../Torus-Sys-Array/v/controller/flit32_to_link16.sv",
+  "../Torus-Sys-Array/v/memory/scratchpad.sv",
+  "../Torus-Sys-Array/v/memory/sp_bank.sv",
+  "../Torus-Sys-Array/v/sys_array/TwistMesh.sv",
+  "../Torus-Sys-Array/v/transpose/shift_reg_simple.sv",
+  "../Torus-Sys-Array/v/transpose/tp_node.sv",
+  "../Torus-Sys-Array/v/transpose/transpose.sv",
+  "zeroscatter/chip_top.sv",
+]
+synthesis.inputs.input_files_meta: [append, subst]
+
+# Add synthesis input files to simulation inputs (only for RTL sim).
+sim.inputs.input_files: synthesis.inputs.input_files
+sim.inputs.input_files_meta: [crossref, subst]
+sim.inputs.options: [+notimingchecks]
