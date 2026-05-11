@@ -1,4 +1,3 @@
-
 import ctrl_pkg::*;
 
 module cmd_decoder (
@@ -20,30 +19,30 @@ module cmd_decoder (
     localparam int vaddr_width_p = ctrl_pkg::vaddr_width_p;
     localparam int baddr_width_p = ctrl_pkg::baddr_width_p;
     
-    typedef enum logic [1:0] { S_HEAD, S_DATA0, S_DATA1 } state_e;
+    // Four-state FSM definition
+    typedef enum logic [1:0] { S_HEAD, S_DATA0, S_DATA1, S_SEND } state_e;
     state_e st_r, st_n;
 
     decoded_cmd_t cmd_r, cmd_n;
-    logic         emit_r, emit_n;
     err_pulse_t   err_n;
 
-    opcode_e     hdr_op;
-    logic [baddr_width_p-1:0]  hdr_dest, hdr_src, hdr_acc, hdr_weight;
-    logic [vaddr_width_p-1:0]  hdr_vaddr;
+    // Header decoding wires
+    opcode_e                  hdr_op;
+    logic [baddr_width_p-1:0] hdr_dest, hdr_src, hdr_acc, hdr_weight;
+    logic [vaddr_width_p-1:0] hdr_vaddr;
+    logic                     is_writeish, is_readv, hdr_known;
 
     assign hdr_op     = opcode_e'(flit_i[5:0]);
-    assign hdr_dest   = flit_i[31 -: baddr_width_p];  // BaseAddr_dest
-    assign hdr_src    = flit_i[25 -: baddr_width_p];  // BaseAddr_source
-    assign hdr_acc    = flit_i[19 -: baddr_width_p];  // BaseAddr_acc
-    assign hdr_weight = flit_i[13 -: baddr_width_p];  // BaseAddr_weight
-    logic is_writeish, is_readv;
-    assign is_writeish = (hdr_op == OP_WRITE)      ||
-                         (hdr_op == OP_WRITE_CSR);
+    assign hdr_dest   = flit_i[31 -: baddr_width_p];
+    assign hdr_src    = flit_i[25 -: baddr_width_p];
+    assign hdr_acc    = flit_i[19 -: baddr_width_p];
+    assign hdr_weight = flit_i[13 -: baddr_width_p];
+
+    assign is_writeish = (hdr_op == OP_WRITE) || (hdr_op == OP_WRITE_CSR);
     assign is_readv    = (hdr_op == OP_READV8) || (hdr_op == OP_READV16);
     assign hdr_vaddr   = is_writeish ? flit_i[31 -: vaddr_width_p] :
-                         is_readv    ? flit_i[25 -: vaddr_width_p] : 9'd0;
+                         is_readv    ? flit_i[25 -: vaddr_width_p] : '0;
 
-    logic hdr_known;
     always_comb begin
         case (hdr_op)
             OP_NOOP, OP_READV8, OP_READM8, OP_READV16, OP_READM16,
@@ -54,80 +53,79 @@ module cmd_decoder (
         endcase
     end
 
-//    assign flit_ready_o = 1'b1;                                       // BUG: never back-pressures upstream — new flit overwrites cmd_n while emit_r=1 holds prior command
-    assign flit_ready_o = !emit_r || cmd_ready_i;                     // T2SA-CTRL: stall upstream while a decoded cmd is held but downstream not ready, so the queued cmd is not silently overwritten
+    // Handshake logic
+    assign flit_ready_o = (st_r != S_SEND);
+    assign cmd_v_o      = (st_r == S_SEND);
+    assign cmd_o        = cmd_r;
+    assign err_o        = err_n;
 
     always_comb begin
-        st_n   = st_r;
-        cmd_n  = cmd_r;
-        emit_n = 1'b0;
-        err_n  = '0;
-
-        if (emit_r && cmd_ready_i) emit_n = 1'b0;
-        else                       emit_n = emit_r;
+        st_n  = st_r;
+        cmd_n = cmd_r;
+        err_n = '0;
 
         case (st_r)
-            S_HEAD: if (flit_v_i) begin
-                if (!flit_parity_ok_i) begin
-                    err_n.parity_fail = 1'b1;  // drop flit
-                end else if (!hdr_known) begin
-                    err_n.invalid_op  = 1'b1;  // drop flit
-                end else begin
-                    cmd_n.op           = hdr_op;
-                    cmd_n.baddr_dest   = hdr_dest;
-                    cmd_n.baddr_src    = hdr_src;
-                    cmd_n.baddr_acc    = hdr_acc;
-                    cmd_n.baddr_weight = hdr_weight;
-                    cmd_n.vaddr        = hdr_vaddr;
-                    cmd_n.imm_data     = '0;
-                    if (is_writeish) st_n = S_DATA0;
-                    else begin
-                        emit_n = 1'b1;
-                        st_n   = S_HEAD;
+            S_HEAD: begin
+                if (flit_v_i) begin
+                    if (!flit_parity_ok_i) begin
+                        err_n.parity_fail = 1'b1;
+                    end else if (!hdr_known) begin
+                        err_n.invalid_op  = 1'b1;
+                    end else begin
+                        cmd_n.op           = hdr_op;
+                        cmd_n.baddr_dest   = hdr_dest;
+                        cmd_n.baddr_src    = hdr_src;
+                        cmd_n.baddr_acc    = hdr_acc;
+                        cmd_n.baddr_weight = hdr_weight;
+                        cmd_n.vaddr        = hdr_vaddr;
+                        cmd_n.imm_data     = '0;
+                        
+                        st_n = is_writeish ? S_DATA0 : S_SEND;
                     end
                 end
             end
 
-            S_DATA0: if (flit_v_i) begin
-                if (!flit_parity_ok_i) begin
-                    err_n.parity_fail = 1'b1;
-                    st_n              = S_HEAD;  // abort pending instr
-                end else begin
-                    cmd_n.imm_data[63:32] = flit_i;
-                    st_n                  = S_DATA1;
+            S_DATA0: begin
+                if (flit_v_i) begin
+                    if (!flit_parity_ok_i) begin
+                        err_n.parity_fail = 1'b1;
+                        st_n              = S_HEAD;
+                    end else begin
+                        cmd_n.imm_data[63:32] = flit_i;
+                        st_n                  = S_DATA1;
+                    end
                 end
             end
 
-            S_DATA1: if (flit_v_i) begin
-                if (!flit_parity_ok_i) begin
-                    err_n.parity_fail = 1'b1;
-                    st_n              = S_HEAD;
-                end else begin
-                    cmd_n.imm_data[31:0] = flit_i;
-                    emit_n                = 1'b1;
-                    st_n                  = S_HEAD;
+            S_DATA1: begin
+                if (flit_v_i) begin
+                    if (!flit_parity_ok_i) begin
+                        err_n.parity_fail = 1'b1;
+                        st_n              = S_HEAD;
+                    end else begin
+                        cmd_n.imm_data[31:0] = flit_i;
+                        st_n                 = S_SEND;
+                    end
+                end
+            end
+
+            S_SEND: begin
+                if (cmd_ready_i) begin
+                    st_n = S_HEAD;
                 end
             end
 
             default: st_n = S_HEAD;
         endcase
-
-        if (emit_r && !cmd_ready_i) emit_n = 1'b1;
     end
-
-    assign cmd_o   = cmd_r;
-    assign cmd_v_o = emit_r;
-    assign err_o   = err_n;  // 1-cycle pulses
 
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
-            st_r   <= S_HEAD;
-            cmd_r  <= '0;
-            emit_r <= 1'b0;
+            st_r  <= S_HEAD;
+            cmd_r <= '0;
         end else begin
-            st_r   <= st_n;
-            cmd_r  <= cmd_n;
-            emit_r <= emit_n;
+            st_r  <= st_n;
+            cmd_r <= cmd_n;
         end
     end
 
