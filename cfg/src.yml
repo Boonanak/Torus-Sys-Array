@@ -28,6 +28,7 @@ synthesis.inputs.input_files: [
   "v/controller/write_ctrl.sv",
   "v/controller/mem_arbiter.sv",
 
+
   "v/memory/scratchpad.sv",
   "v/memory/sp_bank.sv",
 
@@ -38,6 +39,7 @@ synthesis.inputs.input_files: [
   "v/Top_level/downstream_wrapper.sv",
   "v/Top_level/upstream_wrapper.sv",
 
+  "v/Top_level/depacketizer_mux.sv",
   "v/Top_level/depacketizer.sv",
   "v/Top_level/top_chip.sv",
 

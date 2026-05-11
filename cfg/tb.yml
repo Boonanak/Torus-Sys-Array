@@ -148,6 +148,9 @@ sim.inputs.trace_files: [
   "v/Top_level/benchmark2_send_trace.tr",
   "v/Top_level/benchmark2_recv_trace.tr",
   
+  "v/Top_level/benchmark1_header_send_trace.tr",
+  "v/Top_level/benchmark1_header_recv_trace.tr",
+  
   "v/Top_level/benchmark2_send_trace.tr",
   "v/Top_level/benchmark2_recv_trace.tr",
 

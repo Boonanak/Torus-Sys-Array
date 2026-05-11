@@ -20,6 +20,9 @@ module write_ctrl #(
     ,output logic [ADDR_W_lp-1:0]    mem_addr_o
     ,output logic [PSM_W_lp-1:0]     mem_data_o
     ,output sp_bank_id_e             mem_bank_o
+
+    ,output logic [31:0]   header_packet
+    ,output logic          header_packet_valid
 );
 
     assign ready_o = 1'b1;  // always accept
@@ -36,6 +39,13 @@ module write_ctrl #(
     assign mem_data_o = (sel_bank == BANK_IFMAP) ? {{(PSM_W_lp-64){1'b0}}, cmd_i.imm_data[IFM_W_lp-1:0]}
                                                  : cmd_i.imm_data;
     assign mem_bank_o = sel_bank;
+
+    always_comb begin 
+        header_packet = '0;
+        header_packet[5:0] = cmd_i.op;
+        header_packet[31 -: 9] = cmd_i.vaddr << 3;
+        header_packet_valid = mem_v_o;
+    end
 
     logic accept_r;
     always_ff @(posedge clk_i) begin

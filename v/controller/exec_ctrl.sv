@@ -63,6 +63,9 @@ module exec_ctrl #(
     ,input  logic signed [7:0]          tp_out_data_i  [DIM_p-1:0]
 
     ,output logic                       transpose_conflict_o
+
+    ,output logic [31:0]                packet
+    ,output logic                       packet_v
 );
 
     logic do_compute, do_load_w, a_trans, d_trans, is_transpose, prev_load_w_r;
@@ -309,5 +312,15 @@ module exec_ctrl #(
     end
 
     assign done_o = (st_r == S_DONE);
+
+    always_comb begin 
+        packet = '0;
+        packet[5:0]     = cmd_i.op;
+        packet[31 -: 6] = cmd_i.baddr_dest << 3;
+        packet[25 -: 6] = cmd_i.baddr_src << 3;
+        packet[19 -: 6] = cmd_i.baddr_acc << 3;
+        packet[13 -: 6] = cmd_i.baddr_weight << 3;
+    end
+    assign packet_v = done_o;
 
 endmodule

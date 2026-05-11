@@ -84,6 +84,9 @@ module top_chip #(
     logic [PSM_W_lp-1:0]   wr_mem_data;
     sp_bank_id_e           wr_mem_bank;
 
+    logic [31:0] wr_pkt;
+    logic wr_pkt_v; 
+
     write_ctrl #(.DIM_p(DIM_p)) u_wr (
          .clk_i, .reset_i
         ,.cmd_i      (wr_cmd)
@@ -94,6 +97,8 @@ module top_chip #(
         ,.mem_addr_o (wr_mem_addr)
         ,.mem_data_o (wr_mem_data)
         ,.mem_bank_o (wr_mem_bank)
+        ,.header_packet         (wr_pkt)
+        ,.header_packet_valid   (wr_pkt_v)
     );
 
     logic                  ex_active;
@@ -138,6 +143,8 @@ module top_chip #(
     logic               m_out_valid, m_out_last;
 
     logic ex_transpose_conflict;
+    logic [31:0] ex_pkt;
+    logic ex_pkt_v;
 
     exec_ctrl #(.DIM_p(DIM_p)) u_ex (
          .clk_i, .reset_i
@@ -171,6 +178,8 @@ module top_chip #(
         ,.mesh_capture_v_i   (mesh_capture_v)
         ,.mesh_capture_idx_i (mesh_capture_idx)
         ,.transpose_conflict_o (ex_transpose_conflict)
+        ,.packet (ex_pkt) 
+        ,.packet_v(ex_pkt_v)
     );
 
     transpose #(
@@ -344,6 +353,33 @@ module top_chip #(
     logic [31:0] out_flit;
     logic        out_flit_v, out_flit_ready;
 
+    logic [255:0]          mux_pkt;
+    logic                  mux_pkt_v, mux_pkt_ready;
+    logic [3:0]            mux_pkt_size;
+
+    depacketizer_mux # (
+         .packet_width_p (256)
+        ,.flit_width_p   (32)
+    ) u_dpmux (
+         .read_packet_i(rd_pkt)
+        ,.read_valid_i(rd_pkt_v)
+        ,.read_packet_size_i(rd_pkt_size)
+        ,.read_ready_o(rd_pkt_ready)
+
+        ,.write_packet_i(wr_pkt)
+        ,.write_valid_i(wr_pkt_v)
+        ,.write_ready_o()
+
+        ,.exec_packet_i(ex_pkt)
+        ,.exec_valid_i(ex_pkt_v)
+        ,.exec_ready_o()
+        
+        ,.packet_o(mux_pkt)
+        ,.valid_o(mux_pkt_v)
+        ,.packet_size_o(mux_pkt_size)
+        ,.ready_i(mux_pkt_ready)
+    );
+
     depacketizer #(
          .packet_width_p (256)
         ,.flit_width_p   (32)
@@ -351,10 +387,10 @@ module top_chip #(
     ) u_depack (
          .clk_i           (clk_i)
         ,.reset_i         (reset_i)
-        ,.packet_i        (rd_pkt)
-        ,.valid_i         (rd_pkt_v)
-        ,.packet_size_i   (rd_pkt_size)
-        ,.ready_o         (rd_pkt_ready)
+        ,.packet_i        (mux_pkt)
+        ,.valid_i         (mux_pkt_v)
+        ,.packet_size_i   (mux_pkt_size)
+        ,.ready_o         (mux_pkt_ready)
         ,.flit_o          (out_flit)
         ,.valid_o         (out_flit_v)
         ,.ready_i         (out_flit_ready)
