@@ -23,15 +23,16 @@ module write_ctrl #(
 
     ,output logic [31:0]   header_packet
     ,output logic          header_packet_valid
+    ,input  logic          header_packet_ready
 );
 
-    assign ready_o = 1'b1;  // always accept
+    assign ready_o = header_packet_ready;  // dont accept if we haven't finished previous write
 
     sp_bank_id_e sel_bank;
     always_comb begin
         if      (cmd_i.op == OP_WRITE_32)   sel_bank = BANK_PSUM;
         else if (cmd_i.op == OP_WRITE_8)    sel_bank = BANK_IFMAP;
-        else                                sel_bank = 'X;  // make it visible to simulation
+        else                                sel_bank = BANK_IFMAP;  // default
     end
 
     assign mem_v_o    = v_i;
@@ -50,7 +51,7 @@ module write_ctrl #(
     logic accept_r;
     always_ff @(posedge clk_i) begin
         if (reset_i) accept_r <= 1'b0;
-        else         accept_r <= v_i;
+        else         accept_r <= v_i && header_packet_ready;
     end
     assign done_o = accept_r;
 
