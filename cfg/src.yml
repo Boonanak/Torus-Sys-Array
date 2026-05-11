@@ -28,11 +28,13 @@ synthesis.inputs.input_files: [
   "v/controller/write_ctrl.sv",
   "v/controller/mem_arbiter.sv",
 
+
   "v/memory/scratchpad.sv",
   "v/memory/sp_bank.sv",
 
   "v/CSR/csr.sv",
 
+  "v/Top_level/depacketizer_mux.sv",
   "v/Top_level/depacketizer.sv",
   "v/Top_level/top_chip.sv",
 
