@@ -1,16 +1,15 @@
-
 import ctrl_pkg::*;
 import scratchpad_pkg::*;
 
 module read_ctrl #(
      parameter int DIM_p            = scratchpad_pkg::DIM_p
-    ,parameter int PKT_W_p          = scratchpad_pkg::PSM_ROW_W_lp      // packet width is matched to widest
-    ,parameter int FLIT_W_p         = 32                                       // T2SA-CTRL: depacketizer flit width (used to size pkt_size_o)
+    ,parameter int PKT_W_p          = scratchpad_pkg::PSM_ROW_W_lp
+    ,parameter int FLIT_W_p         = 32
     ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp
     ,localparam int IFM_W_lp        = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
-    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p) + 1               // T2SA-CTRL: 2b for 128b/4-flit, 3b for 256b/8-flit; "0=full" encoding
+    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p) + 1 
 )(
      input  logic                       clk_i
     ,input  logic                       reset_i
@@ -25,17 +24,17 @@ module read_ctrl #(
     ,output logic                       mem_v_o
     ,output logic [ADDR_W_lp-1:0]       mem_addr_o
     ,output sp_bank_id_e                mem_bank_o
-    ,input  logic [PSM_W_lp-1:0]        mem_data_i  // widest path
+    ,input  logic [PSM_W_lp-1:0]        mem_data_i 
 
     ,input  logic [63:0]                csr_data_i
 
     ,output logic [PKT_W_p-1:0]         pkt_o
     ,output logic                       pkt_v_o
-    // ,output logic [1:0]                 pkt_size_o                          // original: 2b (4-flit packets only)
-    ,output logic [PKT_SIZE_W_lp-1:0]   pkt_size_o                             // T2SA-CTRL: width tracks PKT_W_p/FLIT_W_p (3b for 256b/8-flit)
+    ,output logic [PKT_SIZE_W_lp-1:0]   pkt_size_o
     ,input  logic                       pkt_ready_i
 );
 
+    // --- Command Decoding ---
     logic is_v8, is_v16, is_m8, is_m16, is_csr;
     always_comb begin
         is_v8  = (cmd_i.op == OP_READV8);
@@ -48,121 +47,92 @@ module read_ctrl #(
     sp_bank_id_e bank_sel;
     always_comb begin
         if (is_v16 || is_m16)  bank_sel = BANK_PSUM;
-        else                    bank_sel = BANK_IFMAP;  // V8/M8 read int8 (mirrored)
+        else                   bank_sel = BANK_IFMAP;
     end
 
     logic [ADDR_W_lp-1:0] base_row;
     always_comb begin
         if (is_v8 || is_v16) base_row = cmd_i.vaddr[ADDR_W_lp-1:0];
-        else                  base_row = cmd_i.baddr_src * DIM_p;
+        else                 base_row = cmd_i.baddr_src * DIM_p;
     end
 
-    logic [CYC_W_lp-1:0] rows_to_read;
+    // --- Loop Control ---
+    // total_pkts defines how many times we cycle through GATHER -> SEND
+    logic [3:0] total_pkts;
     always_comb begin
-        if (is_csr)                          rows_to_read = '0;
-        else if (is_m8 || is_m16)            rows_to_read = DIM_p[CYC_W_lp-1:0];
-        else                                  rows_to_read = 1;
+        if (is_csr || is_v8 || is_v16) total_pkts = 4'd1;
+        else                           total_pkts = DIM_p[3:0]; // M8 and M16 read DIM_p rows
     end
 
-    logic [3:0] total_pkts;  // enough for 0..15
-    // logic [1:0] data_pkt_size;                                              // original 2-bit
-    logic [PKT_SIZE_W_lp-1:0] data_pkt_size;                                   // T2SA-CTRL: width tracks PKT_W_p/FLIT_W_p
+    // pkt_size encoding for the data payload
+    logic [PKT_SIZE_W_lp-1:0] data_pkt_size;
     always_comb begin
-        if (is_v8 || is_csr) begin
-            total_pkts    = 1;
-            // data_pkt_size = 2'd2;  // 64b payload
-            data_pkt_size = PKT_SIZE_W_lp'(2);                                 // T2SA-CTRL: 64b = 2 flits
-        end else if (is_v16) begin
-            total_pkts    = 1;
-            // data_pkt_size = 2'd0;  // 256b (size-4 encoded as 0)
-            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b = 4 flits (PKT_W=128 wraps to 0=full; PKT_W=256 emits 4)
-        end else if (is_m8) begin
-            total_pkts    = (DIM_p + 1) / 2;
-            // data_pkt_size = 2'd0;
-            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b/pkt = 4 flits
-        end else begin // m16
-            total_pkts    = DIM_p[3:0];
-            // data_pkt_size = 2'd0;
-            data_pkt_size = PKT_SIZE_W_lp'(8);                                 // T2SA-CTRL: 128b/pkt = 4 flits
+        if (is_v8 || is_m8 || is_csr) begin
+            data_pkt_size = PKT_SIZE_W_lp'(2); // 64 bits = 2 flits
+        end else begin 
+            data_pkt_size = PKT_SIZE_W_lp'(8); // 256 bits = 8 flits (or 0 if encoded as full)
         end
     end
 
-    logic [31:0] hdr_flit;
-    always_comb begin
-        hdr_flit = '0;
-        hdr_flit[5:0] = cmd_i.op;
-        if (is_m8 || is_m16) hdr_flit[25:20] = cmd_i.baddr_src << 3;
-        if (is_v8 || is_v16) hdr_flit[25:17] = cmd_i.vaddr;
-    end
-
-    localparam int BUF_W_lp = DIM_p * scratchpad_pkg::PSM_ROW_W_lp;  // worst case 8 × 256b
-    logic [BUF_W_lp-1:0] buf_r, buf_n;
-
-    logic [CYC_W_lp-1:0] row_cnt_r, row_cnt_n;
-    logic [3:0]          pkt_cnt_r, pkt_cnt_n;
-
-    logic                is_v8_r, is_v16_r, is_m8_r, is_m16_r, is_csr_r;
-    logic [3:0]          total_pkts_r;
-    // logic [1:0]          data_pkt_size_r;                                   // original 2-bit
-    logic [PKT_SIZE_W_lp-1:0] data_pkt_size_r;                                 // T2SA-CTRL: width tracks PKT_W_p/FLIT_W_p
-    logic [31:0]         hdr_flit_r;
-
+    // --- State Machine ---
     typedef enum logic [2:0] {
-        S_IDLE, S_GATHER, S_SEND_HDR, S_SEND_DATA, S_DONE
+        S_IDLE, 
+        S_SEND_HDR, 
+        S_GATHER, 
+        S_SEND_DATA, 
+        S_DONE
     } st_e;
+
     st_e st_r, st_n;
+    logic [PKT_W_p-1:0] buf_r, buf_n;
+    logic [3:0]         pkt_cnt_r, pkt_cnt_n;
+    
+    // Captured command state
+    logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r;
+    logic [3:0]         total_pkts_r;
+    logic [31:0]        hdr_flit_r;
+    logic [PKT_SIZE_W_lp-1:0] data_pkt_size_r;
+    logic [ADDR_W_lp-1:0]     base_row_r;
 
     assign ready_o     = (st_r == S_IDLE);
     assign rd_active_o = (st_r != S_IDLE);
-
-    function automatic logic [PSM_W_lp-1:0] psum_row_pad(input logic [PSM_W_lp-1:0] r);
-        logic [PSM_W_lp-1:0] v;
-        v = '0;
-        v[PSM_W_lp-1:0] = r;  // already 16b/elem
-        return v;
-    endfunction
+    assign done_o       = (st_r == S_DONE);
 
     always_comb begin
-        st_n            = st_r;
-        buf_n           = buf_r;
-        row_cnt_n       = row_cnt_r;
-        pkt_cnt_n       = pkt_cnt_r;
+        st_n      = st_r;
+        buf_n     = buf_r;
+        pkt_cnt_n = pkt_cnt_r;
 
         case (st_r)
             S_IDLE: if (v_i) begin
-                buf_n     = '0;
-                row_cnt_n = '0;
                 pkt_cnt_n = '0;
-                if (is_csr)              st_n = S_SEND_HDR;  // skip gather
-                else if (rows_to_read==0)st_n = S_SEND_HDR;  // safety
-                else                      st_n = S_GATHER;
-            end
-
-            S_GATHER: begin
-                if (is_m16_r || is_v16_r) begin
-                    buf_n[row_cnt_r*PSM_W_lp +: PSM_W_lp] =
-                        psum_row_pad(mem_data_i);
-                end else begin
-                    buf_n[row_cnt_r*64 +: 64] = mem_data_i[IFM_W_lp-1:0];
-                end
-                if (row_cnt_r == rows_to_read - 1) begin
-                    st_n      = S_SEND_HDR;
-                    row_cnt_n = '0;
-                end else begin
-                    row_cnt_n = row_cnt_r + 1;
-                end
+                st_n      = S_SEND_HDR;
             end
 
             S_SEND_HDR: if (pkt_ready_i) begin
-                st_n      = S_SEND_DATA;
-                pkt_cnt_n = '0;
+                if (is_csr_r) st_n = S_SEND_DATA;
+                else          st_n = S_GATHER;
+            end
+
+            S_GATHER: begin
+                // In the "1 row = 1 packet" model, we just grab the memory bus
+                // We pad/align here so buf_r is always ready for pkt_o
+                buf_n = '0;
+                if (is_m16_r || is_v16_r) begin
+                    buf_n = mem_data_i;
+                end else begin
+                    // V8 and M8: row is 64 bits
+                    buf_n[63:0] = mem_data_i[IFM_W_lp-1:0];
+                end
+                st_n = S_SEND_DATA;
             end
 
             S_SEND_DATA: if (pkt_ready_i) begin
-                if (pkt_cnt_r == total_pkts_r - 1) begin
+                pkt_cnt_n = pkt_cnt_r + 1;
+                if (pkt_cnt_n == total_pkts_r) begin
                     st_n = S_DONE;
                 end else begin
-                    pkt_cnt_n = pkt_cnt_r + 1;
+                    st_n = S_GATHER;
                 end
             end
 
@@ -172,84 +142,67 @@ module read_ctrl #(
         endcase
     end
 
+    // --- Physical Interfaces ---
     assign mem_v_o    = (st_r == S_GATHER);
-    assign mem_addr_o = base_row + row_cnt_r;  // base captured below via stored cmd
-    assign mem_bank_o = bank_sel;
-
-    logic [PKT_W_p-1:0] hdr_pkt;
-    assign hdr_pkt = {hdr_flit_r, 224'b0};  // header in top flit
-
-    logic [PKT_W_p-1:0] data_pkt;
-    always_comb begin
-        data_pkt = '0;
-        if (is_csr_r) begin
-            data_pkt[PKT_W_p-1 -: 64] = csr_data_i;
-        end else if (is_v8_r) begin
-            data_pkt[PKT_W_p-1 -: 64] = buf_r[63:0];
-        end else if (is_v16_r) begin
-            data_pkt = buf_r[127:0];
-        end else if (is_m8_r) begin
-            // parameterization
-            data_pkt[192 +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)      +: 64];  // row 4k
-            data_pkt[128 +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+64   +: 64];  // row 4k+1
-            data_pkt[64  +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+128  +: 64];  // row 4k+2
-            data_pkt[0   +: 64] = buf_r[(pkt_cnt_r*PSM_ROW_W_lp)+196  +: 64];  // row 4k+3
-        end else begin // m16
-            data_pkt = buf_r[pkt_cnt_r*PSM_ROW_W_lp +: PSM_ROW_W_lp];
-        end
-    end
+    assign mem_addr_o = base_row_r + ADDR_W_lp'(pkt_cnt_r);
+    assign mem_bank_o = (is_v16_r || is_m16_r) ? BANK_PSUM : BANK_IFMAP;
 
     always_comb begin
         pkt_o      = '0;
-        // pkt_size_o = 2'd0;  // "size 0" = full 4 flits
-        pkt_size_o = '0;                                                       // T2SA-CTRL: default (only meaningful when pkt_v_o=1; 0 = full encoding)
         pkt_v_o    = 1'b0;
+        pkt_size_o = '0;
+
         case (st_r)
             S_SEND_HDR: begin
-                pkt_o      = hdr_pkt;
-                // pkt_size_o = 2'd1;  // 1 valid flit
-                pkt_size_o = PKT_SIZE_W_lp'(1);                                // T2SA-CTRL: header = 1 flit
                 pkt_v_o    = 1'b1;
+                pkt_o      = {hdr_flit_r, {(PKT_W_p-32){1'b0}}};
+                pkt_size_o = PKT_SIZE_W_lp'(1);
             end
             S_SEND_DATA: begin
-                pkt_o      = data_pkt;
-                pkt_size_o = data_pkt_size_r;
                 pkt_v_o    = 1'b1;
+                pkt_size_o = data_pkt_size_r;
+                if (is_csr_r) pkt_o[63:0] = csr_data_i;
+                else          pkt_o       = buf_r;
             end
             default: ;
         endcase
     end
 
-    assign done_o = (st_r == S_DONE);
-
+    // --- Sequential Logic ---
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
             st_r            <= S_IDLE;
             buf_r           <= '0;
-            row_cnt_r       <= '0;
             pkt_cnt_r       <= '0;
-            is_v8_r         <= 1'b0;
-            is_v16_r        <= 1'b0;
-            is_m8_r         <= 1'b0;
-            is_m16_r        <= 1'b0;
-            is_csr_r        <= 1'b0;
+            is_v16_r        <= '0;
+            is_m16_r        <= '0;
+            is_v8_r         <= '0;
+            is_m8_r         <= '0;
+            is_csr_r        <= '0;
             total_pkts_r    <= '0;
             data_pkt_size_r <= '0;
             hdr_flit_r      <= '0;
+            base_row_r      <= '0;
         end else begin
-            st_r            <= st_n;
-            buf_r           <= buf_n;
-            row_cnt_r       <= row_cnt_n;
-            pkt_cnt_r       <= pkt_cnt_n;
+            st_r      <= st_n;
+            buf_r     <= buf_n;
+            pkt_cnt_r <= pkt_cnt_n;
+            
             if (st_r == S_IDLE && v_i) begin
-                is_v8_r         <= is_v8;
                 is_v16_r        <= is_v16;
-                is_m8_r         <= is_m8;
                 is_m16_r        <= is_m16;
+                is_v8_r         <= is_v8;
+                is_m8_r         <= is_m8;
                 is_csr_r        <= is_csr;
                 total_pkts_r    <= total_pkts;
                 data_pkt_size_r <= data_pkt_size;
-                hdr_flit_r      <= hdr_flit;
+                base_row_r      <= base_row;
+                
+                // Header Flit Construction
+                hdr_flit_r      <= '0;
+                hdr_flit_r[5:0] <= cmd_i.op;
+                if (is_m8 || is_m16) hdr_flit_r[25:20] <= cmd_i.baddr_src << 3;
+                if (is_v8 || is_v16) hdr_flit_r[25:17] <= cmd_i.vaddr;
             end
         end
     end
