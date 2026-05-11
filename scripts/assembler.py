@@ -418,9 +418,9 @@ C12 = A1 @ B2
 # instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
 # expected_outputs = [np.identity(8), A1, C12]
 # receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
-instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_send_trace.tr')
-expected_outputs = [np.identity(8), A1, C12]
-receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_recv_trace.tr', expected_outputs)
+# instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_send_trace.tr')
+# expected_outputs = [np.identity(8), A1, C12]
+# receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_recv_trace.tr', expected_outputs)
 
 # instructions_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_send_trace.tr')
 # csr_out = f'{'x'*64}'
@@ -436,22 +436,23 @@ receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_r
 
 # instructions_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_send_trace.tr')
 # ZERO = np.zeros((8, 8))
-# C0 = np.array([
-#     [0, 1, 1, 2, 3, 5, 8, 13],
-#     [21, 34, 55, 89, 144, 233, 377, 610],
-#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
-#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269],
-#     [0, 1, 1, 2, 3, 5, 8, 13],
-#     [21, 34, 55, 89, 144, 233, 377, 610],
-#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
-#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
-# ])
+C0 = np.array([
+    [0, 1, 1, 2, 3, 5, 8, 13],
+    [21, 34, 55, 89, 144, 233, 377, 610],
+    [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+    [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269],
+    [0, 1, 1, 2, 3, 5, 8, 13],
+    [21, 34, 55, 89, 144, 233, 377, 610],
+    [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+    [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
+])
 # C_MAX = np.zeros((8, 8)) + 2147470000
 # C_MIN = np.zeros((8, 8)) - 2147470000
 # MAX = np.zeros((8,8)) + 2147483647
 # MIN = np.zeros((8,8)) - 2147483648
-# inc = np.arange(1, 65).reshape(8,8)
-# C1 = inc @ inc + C0
+inc = np.arange(1, 65).reshape(8,8)
+C1 = inc @ inc + C0
+print(C1)
 # A_rand_1 = np.array(
 #     [[99, -34, -108, -80, 32, 60, 122, 19], 
 #      [-77, -86, 84, -72, -49, -70, 26, 61], 
@@ -530,10 +531,10 @@ receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_r
 # receive_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_recv_trace.tr', expected_outputs2)
 
 
-A1 = np.arange(1, 65).reshape(8,8)
+# A1 = np.arange(1, 65).reshape(8,8)
 # print(WRITEM(np.identity(8), 8))
-B2 = np.full((8,8), 2)
-C12 = A1 @ B2
+# B2 = np.full((8,8), 2)
+# C12 = A1 @ B2
 # print(WRITEM(A1, 0, 8))
 # print(WRITEM(B2, 1, 8))
 # print(to_flits(C12, 32))
