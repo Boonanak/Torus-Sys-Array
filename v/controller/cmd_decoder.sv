@@ -19,14 +19,16 @@ module cmd_decoder (
     localparam int vaddr_width_p = ctrl_pkg::vaddr_width_p;
     localparam int baddr_width_p = ctrl_pkg::baddr_width_p;
     
-    // Four-state FSM definition
-    typedef enum logic [1:0] { S_HEAD, S_DATA0, S_DATA1, S_SEND } state_e;
+    typedef enum logic [1:0] { S_HEAD, S_DATA, S_SEND } state_e;
     state_e st_r, st_n;
 
     decoded_cmd_t cmd_r, cmd_n;
     err_pulse_t   err_n;
 
-    // Header decoding wires
+    // Counter to track remaining flits for multi-flit instructions
+    logic [3:0] flit_cnt_r, flit_cnt_n;
+
+    // Header decoding
     opcode_e                  hdr_op;
     logic [baddr_width_p-1:0] hdr_dest, hdr_src, hdr_acc, hdr_weight;
     logic [vaddr_width_p-1:0] hdr_vaddr;
@@ -38,7 +40,10 @@ module cmd_decoder (
     assign hdr_acc    = flit_i[19 -: baddr_width_p];
     assign hdr_weight = flit_i[13 -: baddr_width_p];
 
-    assign is_writeish = (hdr_op == OP_WRITE) || (hdr_op == OP_WRITE_CSR);
+    assign is_writeish = (hdr_op == OP_WRITE_8) || 
+                         (hdr_op == OP_WRITE_CSR) || 
+                         (hdr_op == OP_WRITE_32);
+                         
     assign is_readv    = (hdr_op == OP_READV8) || (hdr_op == OP_READV16);
     assign hdr_vaddr   = is_writeish ? flit_i[31 -: vaddr_width_p] :
                          is_readv    ? flit_i[25 -: vaddr_width_p] : '0;
@@ -46,7 +51,7 @@ module cmd_decoder (
     always_comb begin
         case (hdr_op)
             OP_NOOP, OP_READV8, OP_READM8, OP_READV16, OP_READM16,
-            OP_READ_CSR, OP_WRITE, OP_WRITE_CSR, OP_TRANSPOSE,
+            OP_READ_CSR, OP_WRITE_8, OP_WRITE_CSR, OP_WRITE_32, OP_TRANSPOSE,
             OP_ERROR_CSR, OP_CC, OP_CR, OP_LC, OP_LCCC, OP_LCCR,
             OP_LR, OP_LRCC, OP_LRCR:  hdr_known = 1'b1;
             default:                  hdr_known = 1'b0;
@@ -60,9 +65,10 @@ module cmd_decoder (
     assign err_o        = err_n;
 
     always_comb begin
-        st_n  = st_r;
-        cmd_n = cmd_r;
-        err_n = '0;
+        st_n       = st_r;
+        cmd_n      = cmd_r;
+        flit_cnt_n = flit_cnt_r;
+        err_n      = '0;
 
         case (st_r)
             S_HEAD: begin
@@ -80,31 +86,33 @@ module cmd_decoder (
                         cmd_n.vaddr        = hdr_vaddr;
                         cmd_n.imm_data     = '0;
                         
-                        st_n = is_writeish ? S_DATA0 : S_SEND;
+                        if (is_writeish) begin
+                            st_n = S_DATA;
+                            // Set count based on opcode
+                            flit_cnt_n = (hdr_op == OP_WRITE_32) ? 4'd8 : 4'd2;
+                        end else begin
+                            st_n = S_SEND;
+                        end
                     end
                 end
             end
 
-            S_DATA0: begin
+            S_DATA: begin
                 if (flit_v_i) begin
                     if (!flit_parity_ok_i) begin
                         err_n.parity_fail = 1'b1;
                         st_n              = S_HEAD;
                     end else begin
-                        cmd_n.imm_data[63:32] = flit_i;
-                        st_n                  = S_DATA1;
-                    end
-                end
-            end
-
-            S_DATA1: begin
-                if (flit_v_i) begin
-                    if (!flit_parity_ok_i) begin
-                        err_n.parity_fail = 1'b1;
-                        st_n              = S_HEAD;
-                    end else begin
-                        cmd_n.imm_data[31:0] = flit_i;
-                        st_n                 = S_SEND;
+                        // Shift in flit data. 
+                        // With flit_cnt_r counting down, we fill from MSB to LSB.
+                        // For cnt=8, we fill [255:224]. For cnt=1, we fill [31:0].
+                        cmd_n.imm_data[(flit_cnt_r * 32) - 1 -: 32] = flit_i;
+                        
+                        if (flit_cnt_r == 4'd1) begin
+                            st_n = S_SEND;
+                        end else begin
+                            flit_cnt_n = flit_cnt_r - 4'd1;
+                        end
                     end
                 end
             end
@@ -121,11 +129,13 @@ module cmd_decoder (
 
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
-            st_r  <= S_HEAD;
-            cmd_r <= '0;
+            st_r       <= S_HEAD;
+            cmd_r      <= '0;
+            flit_cnt_r <= '0;
         end else begin
-            st_r  <= st_n;
-            cmd_r <= cmd_n;
+            st_r       <= st_n;
+            cmd_r      <= cmd_n;
+            flit_cnt_r <= flit_cnt_n;
         end
     end
 

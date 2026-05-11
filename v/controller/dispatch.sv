@@ -34,7 +34,7 @@ module dispatch (
     always_comb begin
         is_wr = 1'b0; is_rd = 1'b0; is_ex = 1'b0; is_cs = 1'b0;
         unique case (cmd_i.op)
-            OP_WRITE:                                           is_wr=1;
+            OP_WRITE_8, OP_WRITE_32:                                           is_wr=1;
             OP_READV8, OP_READV16, OP_READM8, OP_READM16:       is_rd=1;
             OP_LR,  OP_LC,
             OP_CR,  OP_CC,

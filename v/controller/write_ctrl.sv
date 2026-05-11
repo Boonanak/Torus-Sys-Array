@@ -5,6 +5,7 @@ import scratchpad_pkg::*;
 module write_ctrl #(
      parameter int DIM_p            = scratchpad_pkg::DIM_p
     ,localparam int ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp // widest of each
+    ,localparam int IFM_W_lp        = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
 )(
      input  logic          clk_i
@@ -25,13 +26,15 @@ module write_ctrl #(
 
     sp_bank_id_e sel_bank;
     always_comb begin
-        if (cmd_i.vaddr[8])  sel_bank = BANK_PSUM;  // int19 region
-        else                 sel_bank = BANK_IFMAP;  // int8 region (mirror to weight in arbiter)
+        if      (cmd_i.op == OP_WRITE_32)   sel_bank = BANK_PSUM;
+        else if (cmd_i.op == OP_WRITE_8)    sel_bank = BANK_IFMAP;
+        else                                sel_bank = 'X;  // make it visible to simulation
     end
 
     assign mem_v_o    = v_i;
     assign mem_addr_o = cmd_i.vaddr[ADDR_W_lp-1:0];
-    assign mem_data_o = {{(PSM_W_lp-64){1'b0}}, cmd_i.imm_data};
+    assign mem_data_o = (sel_bank == BANK_IFMAP) ? {{(PSM_W_lp-64){1'b0}}, cmd_i.imm_data[IFM_W_lp-1:0]}
+                                                 : cmd_i.imm_data;
     assign mem_bank_o = sel_bank;
 
     logic accept_r;

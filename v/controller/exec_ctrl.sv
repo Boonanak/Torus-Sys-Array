@@ -295,7 +295,7 @@ module exec_ctrl #(
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
             // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
-            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
+            psm_w_data_o[(DIM_p - 1 - rr)*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
         end
     end
 

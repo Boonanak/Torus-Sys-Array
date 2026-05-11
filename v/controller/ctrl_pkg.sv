@@ -3,6 +3,7 @@ package ctrl_pkg;
 
     parameter int baddr_width_p = $clog2(scratchpad_pkg::NUM_MATRICES_IFM_p);
     parameter int vaddr_width_p = scratchpad_pkg::BANK_ADDR_W_IFM_lp;
+    parameter int PSM_ROW_W_p = scratchpad_pkg::PSM_ROW_W_lp;
 
     typedef enum logic [5:0] {
         OP_NOOP      = 6'b000000,
@@ -11,7 +12,8 @@ package ctrl_pkg;
         OP_READV16   = 6'b001010,
         OP_READM16   = 6'b001011,
         OP_READ_CSR  = 6'b001100,
-        OP_WRITE     = 6'b010000,
+        OP_WRITE_8   = 6'b010000,
+        OP_WRITE_32  = 6'b010010,
         OP_WRITE_CSR = 6'b010100,
         OP_TRANSPOSE = 6'b011001,
         OP_ERROR_CSR = 6'b011100,
@@ -32,7 +34,7 @@ package ctrl_pkg;
         logic [5:0]  baddr_acc;  // CR/CC/LxCx bias C
         logic [5:0]  baddr_weight;  // LR/LC/LxCx weight
         logic [8:0]  vaddr;  // READV/WRITE 9-bit vector addr
-        logic [63:0] imm_data;  // WRITE / WRITE_CSR payload
+        logic [PSM_ROW_W_p:0] imm_data;  // WRITE / WRITE_CSR payload
     } decoded_cmd_t;
 
     typedef struct packed {
