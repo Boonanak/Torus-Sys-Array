@@ -221,7 +221,7 @@ module chip_top (
     // RX data: gather 16 bits from interleaved PAD indices.
     genvar dn_i;
     generate
-        for (dn_i = 0; dn_i < 16; dn_i = dn_i + 1) begin : gen_dn_data
+        for (dn_i = 0; dn_i < 17; dn_i = dn_i + 1) begin : gen_dn_data  // increment to 17 for parity bit
             assign dn_data[dn_i] = C[dn_data_pad(dn_i)];
         end
     endgenerate
