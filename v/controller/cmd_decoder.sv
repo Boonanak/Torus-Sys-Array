@@ -38,7 +38,7 @@ module cmd_decoder (
     assign hdr_acc    = flit_i[19 -: baddr_width_p];
     assign hdr_weight = flit_i[13 -: baddr_width_p];
 
-    assign is_writeish = (hdr_op == OP_WRITE) || (hdr_op == OP_WRITE_CSR);
+    assign is_writeish = (hdr_op == OP_WRITE_8) || (hdr_op == OP_WRITE_32) || (hdr_op == OP_WRITE_CSR);
     assign is_readv    = (hdr_op == OP_READV8) || (hdr_op == OP_READV16);
     assign hdr_vaddr   = is_writeish ? flit_i[31 -: vaddr_width_p] :
                          is_readv    ? flit_i[25 -: vaddr_width_p] : '0;
@@ -46,7 +46,7 @@ module cmd_decoder (
     always_comb begin
         case (hdr_op)
             OP_NOOP, OP_READV8, OP_READM8, OP_READV16, OP_READM16,
-            OP_READ_CSR, OP_WRITE, OP_WRITE_CSR, OP_TRANSPOSE,
+            OP_READ_CSR, OP_WRITE_8, OP_WRITE_32, OP_WRITE_CSR, OP_TRANSPOSE,
             OP_ERROR_CSR, OP_CC, OP_CR, OP_LC, OP_LCCC, OP_LCCR,
             OP_LR, OP_LRCC, OP_LRCR:  hdr_known = 1'b1;
             default:                  hdr_known = 1'b0;
