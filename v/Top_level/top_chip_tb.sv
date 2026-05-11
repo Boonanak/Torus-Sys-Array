@@ -139,10 +139,10 @@ module top_chip_tb;
     // top_chip_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
     //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
-    benchmark1_header_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
+    benchmark2_header_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
         ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
 
-    benchmark1_header_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
+    benchmark2_header_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
         ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
     // Finish logic
     always @(posedge clk_i) begin
