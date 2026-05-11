@@ -130,16 +130,17 @@ module mesh_driver #(
     genvar gr;
     generate
         for (gr = 0; gr < DIM_p; gr++) begin : g_drive
-            assign mesh_in_weight_o[gr] =
+            assign mesh_in_weight_o[DIM_p - 1 - gr] =
                 (in_fire_phase && req_r.do_load_weight) ? weight_row_i[gr] : '0;
 
-            assign mesh_in_lock_o[gr] =
+            assign mesh_in_lock_o[DIM_p - 1 - gr] =
                 (in_fire_phase && req_r.do_load_weight
                  && fire_cnt_r == gr[CYC_W_lp-1:0]);
 
-            assign mesh_in_ifmap_o[gr] =
+            assign mesh_in_ifmap_o[DIM_p - 1 - gr] =
                 (in_fire_phase && req_r.do_compute) ? ifmap_row_i[gr] : '0;
 
+            // WTF???? WHY DOES THIS WORK
             assign mesh_in_psum_o[gr] =
                 (in_fire_phase && req_r.do_compute) ? bias_row_i[gr] : '0;
         end

@@ -249,7 +249,7 @@ module TwistMesh #(
     //   io.out_last     := col_last(n-1)
     // ================================================================
     for (genvar r = 0; r < N_p; r++) begin : gen_output
-        assign out_psum_o[N_p - 1 - r] = pe_out_psum[r][N_p-1];
+        assign out_psum_o[r] = pe_out_psum[r][N_p-1];
     end
     assign out_valid_o = col_valid_r[N_p-1];
     assign out_last_o  = col_last_r[N_p-1];
