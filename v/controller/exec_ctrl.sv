@@ -66,6 +66,7 @@ module exec_ctrl #(
 
     ,output logic [31:0]                packet
     ,output logic                       packet_v
+    ,input  logic                       packet_r
 );
 
     logic do_compute, do_load_w, a_trans, d_trans, is_transpose, prev_load_w_r;
@@ -101,7 +102,7 @@ module exec_ctrl #(
         S_TP_OP_DRAIN,     // TRANSPOSE: drain TP, write dst
         S_DONE
     } st_e;
-    st_e st_r, st_n;
+    st_e st_r, st_n, st_prev;
 
     decoded_cmd_t cmd_r, cmd_n;
     logic do_compute_r, do_load_w_r, a_trans_r, d_trans_r;
@@ -156,7 +157,7 @@ module exec_ctrl #(
                     && tp_out_valid_i) st_n = S_DONE;
             end
 
-            S_DONE: st_n = S_IDLE;
+            S_DONE: st_n = (packet_r) ? S_IDLE : S_DONE;
 
             default: st_n = S_IDLE;
         endcase
@@ -173,6 +174,7 @@ module exec_ctrl #(
             is_transpose_r <= 1'b0;
             use_tp_r       <= 1'b0; tp_for_a_r  <= 1'b0;
         end else begin
+            st_prev        <= st_r;
             st_r           <= st_n;
             cmd_r          <= cmd_n;
             prime_cnt_r    <= prime_cnt_n;
@@ -298,7 +300,7 @@ module exec_ctrl #(
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
             // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
-            psm_w_data_o[(DIM_p - 1 - rr)*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
+            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
         end
     end
 
@@ -311,7 +313,7 @@ module exec_ctrl #(
         end
     end
 
-    assign done_o = (st_r == S_DONE);
+    assign done_o = (st_r == S_IDLE && st_prev == S_DONE);
 
     always_comb begin 
         packet = '0;
@@ -321,6 +323,6 @@ module exec_ctrl #(
         packet[19 -: 6] = cmd_i.baddr_acc << 3;
         packet[13 -: 6] = cmd_i.baddr_weight << 3;
     end
-    assign packet_v = done_o;
+    assign packet_v = (st_r == S_DONE);
 
 endmodule
