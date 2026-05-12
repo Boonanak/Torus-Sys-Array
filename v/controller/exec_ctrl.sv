@@ -283,14 +283,30 @@ module exec_ctrl #(
     genvar gr2;
     generate
         for (gr2 = 0; gr2 < DIM_p; gr2++) begin : g_mesh_mux
+            // T2SA-CTRL start: reverse element index when slicing bank words for mesh inputs.
+            // Why: the host (assembler + WRITE_8/WRITE_32 + cmd_decoder) packs the user's
+            // element 0 into the HIGH bits of imm_data, and write_ctrl stores imm_data
+            // verbatim in the LOW 64b of the bank row. Bank's row therefore has elem 0
+            // at [HIGH] and elem (N-1) at [LOW]. The naive slice [gr*W +: W] reads elem
+            // gr from LOW bits => returns elem (N-1-gr) under the host convention.
+            // Using (DIM_p-1-gr2)*W +: W realigns mesh-side index 0 to host's elem 0.
+            // Reference: bug seen in benchmark2 test (got 0x2c4 vs expected 0x564 for
+            // C[0][0] of A*A; the actual MAC summed A[0][7-k]*A[k][0] which is exactly
+            // the column-reversed version of the intended computation).
+            //
+            // assign mesh_ifmap_row_o[gr2]  =                                             // original (LOW-index slice)
+            //     a_trans_r ? tp_out_data_i[gr2] : ifm_r_data_i[gr2*8 +: 8];
+            // assign mesh_weight_row_o[gr2] =                                             // original (LOW-index slice)
+            //     (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
+            //                                 : wgt_r_data_i[gr2*8 +: 8];
+            // assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];                 // original (LOW-index slice)
             assign mesh_ifmap_row_o[gr2]  =
-                a_trans_r ? tp_out_data_i[gr2] : ifm_r_data_i[gr2*8 +: 8];
+                a_trans_r ? tp_out_data_i[gr2] : ifm_r_data_i[(DIM_p-1-gr2)*8 +: 8];     // T2SA-CTRL: reversed slice to match host packing
             assign mesh_weight_row_o[gr2] =
                 (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
-                                            : wgt_r_data_i[gr2*8 +: 8];
-            // assign mesh_bias_row_o[gr2]   =
-            //     {{3{psm_r_data_i[gr2*16+15]}}, psm_r_data_i[gr2*16 +: 16]};
-            assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];               // T2SA-CTRL: bank now stores int32 directly; no sign-ext needed
+                                            : wgt_r_data_i[(DIM_p-1-gr2)*8 +: 8];        // T2SA-CTRL: reversed slice
+            assign mesh_bias_row_o[gr2]   = psm_r_data_i[(DIM_p-1-gr2)*32 +: 32];        // T2SA-CTRL: reversed slice (int32)
+            // T2SA-CTRL end
         end
     endgenerate
 
@@ -299,8 +315,9 @@ module exec_ctrl #(
     always_comb begin
         psm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
-            // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];
-            psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                         // T2SA-CTRL: write full int32 back; no truncation
+            // psm_w_data_o[rr*16 +: 16] = mesh_psum_row_i[rr][15:0];                 // pre-int32 original
+            // psm_w_data_o[rr*32 +: 32] = mesh_psum_row_i[rr];                       // T2SA-CTRL (LOW-index slice, mismatched with host packing)
+            psm_w_data_o[(DIM_p-1-rr)*32 +: 32] = mesh_psum_row_i[rr];                // T2SA-CTRL: reversed slice to match host packing (mesh elem 0 -> bank HIGH bits)
         end
     end
 
@@ -309,7 +326,8 @@ module exec_ctrl #(
     always_comb begin
         ifm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
-            ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];
+            // ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];                              // original (LOW-index slice, mismatched with host packing)
+            ifm_w_data_o[(DIM_p-1-rr)*8 +: 8] = tp_out_data_i[rr];                     // T2SA-CTRL: reversed slice (OP_TRANSPOSE writeback, host-elem-0 -> bank HIGH bits)
         end
     end
 
