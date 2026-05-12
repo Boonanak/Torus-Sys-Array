@@ -327,7 +327,7 @@ module exec_ctrl #(
         ifm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
             // ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];                              // original (LOW-index slice, mismatched with host packing)
-            ifm_w_data_o[(DIM_p-1-rr)*8 +: 8] = tp_out_data_i[rr];                     // T2SA-CTRL: reversed slice (OP_TRANSPOSE writeback, host-elem-0 -> bank HIGH bits)
+            ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];                     
         end
     end
 
