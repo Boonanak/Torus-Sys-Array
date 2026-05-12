@@ -85,7 +85,7 @@ module top_chip #(
     sp_bank_id_e           wr_mem_bank;
 
     logic [31:0] wr_pkt;
-    logic wr_pkt_v; 
+    logic wr_pkt_v, wr_pkt_r; 
 
     write_ctrl #(.DIM_p(DIM_p)) u_wr (
          .clk_i, .reset_i
@@ -99,6 +99,7 @@ module top_chip #(
         ,.mem_bank_o (wr_mem_bank)
         ,.header_packet         (wr_pkt)
         ,.header_packet_valid   (wr_pkt_v)
+        ,.header_packet_ready   (wr_pkt_r)
     );
 
     logic                  ex_active;
@@ -144,7 +145,7 @@ module top_chip #(
 
     logic ex_transpose_conflict;
     logic [31:0] ex_pkt;
-    logic ex_pkt_v;
+    logic ex_pkt_v, ex_pkt_r;
 
     exec_ctrl #(.DIM_p(DIM_p)) u_ex (
          .clk_i, .reset_i
@@ -180,6 +181,7 @@ module top_chip #(
         ,.transpose_conflict_o (ex_transpose_conflict)
         ,.packet (ex_pkt) 
         ,.packet_v(ex_pkt_v)
+        ,.packet_r(ex_pkt_r)
     );
 
     transpose #(
@@ -368,11 +370,11 @@ module top_chip #(
 
         ,.write_packet_i(wr_pkt)
         ,.write_valid_i(wr_pkt_v)
-        ,.write_ready_o()
+        ,.write_ready_o(wr_pkt_r)
 
         ,.exec_packet_i(ex_pkt)
         ,.exec_valid_i(ex_pkt_v)
-        ,.exec_ready_o()
+        ,.exec_ready_o(ex_pkt_r)
         
         ,.packet_o(mux_pkt)
         ,.valid_o(mux_pkt_v)
