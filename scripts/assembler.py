@@ -369,8 +369,8 @@ def instructions_to_traces(benchmark_file, send_trace_file):
             line = line.strip()
             if(line == ''):
                 send_trace.write('')
-            # elif(line == 'NOOP'):
-            #     send_trace.write(f'0000_{to_machine_code(line)}\n')
+            elif(line == 'NOOP'):
+                send_trace.write(f'0000_{to_machine_code(line)}\n')
             elif(line[0] == '#'):
                 send_trace.write(f'{line}\n')
             else:
@@ -395,8 +395,8 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
             line = line.strip()
             if(line == ''):
                 recv_trace.write('')
-            # elif(line == 'NOOP'):
-            #     recv_trace.write(f'0000_{to_machine_code(line)}\n')
+            elif(line == 'NOOP'):
+                recv_trace.write(f'0000_{to_machine_code(line)}\n')
             elif(line != '' and line[0] == '#'):
                 recv_trace.write(f'{line}\n')
             else:
