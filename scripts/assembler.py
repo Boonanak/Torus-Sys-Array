@@ -563,7 +563,7 @@ inc_T = inc.T
 V8 = np.arange(1,9)
 V0 = np.zeros(8)
 C = inc @ inc
-CSR = '11111111_11111111_11111111_11111111_11111111_11111111_11111111_11111111'
+CSR = '11111111_11111111_11111111_11111111_11111111_11111111_11111111_10000001'
 expected_outputs3 = [inc_T, C0, V8, V0, inc, inc, inc, inc, C, C, CSR]
 receive_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_recv_trace.tr', expected_outputs3)
 
