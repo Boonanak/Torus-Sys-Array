@@ -64,6 +64,7 @@ synthesis.inputs.input_files: [
   "../Torus-Sys-Array/v/PE/TwistPE.sv",
   "../Torus-Sys-Array/v/Top_level/top_chip.sv",
   "../Torus-Sys-Array/v/Top_level/depacketizer.sv",
+  "../Torus-Sys-Array/v/Top_level/depacketizer_mux.sv",
   "../Torus-Sys-Array/v/controller/cmd_decoder.sv",
   "../Torus-Sys-Array/v/controller/cmd_queue.sv",
   "../Torus-Sys-Array/v/controller/csr_router.sv",
