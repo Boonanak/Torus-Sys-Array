@@ -19,16 +19,22 @@ module depacketizer_mux #(
     ,input logic [flit_width_p-1:0]           exec_packet_i
     ,input logic                              exec_valid_i
     ,output logic                             exec_ready_o
-    
+
+    ,input logic [63:0]                       csr_packet_i
+    ,input logic [2:0]                        csr_packet_size_i
+    ,input logic                              csr_valid_i
+    ,output logic                             csr_ready_o  
+
     ,output logic [packet_width_p-1:0]        packet_o
     ,output logic                             valid_o
     ,output logic [flit_cnt_width_lp-1:0]     packet_size_o
     ,input  logic                             ready_i
 );
 
-    assign read_ready_o = ready_i;
-    assign write_ready_o = ready_i;
-    assign exec_ready_o = ready_i;
+    assign read_ready_o     = ready_i;
+    assign write_ready_o    = ready_i;
+    assign exec_ready_o     = ready_i;
+    assign csr_ready_o      = ready_i;
 
     always_comb begin 
         packet_o = '0;
@@ -46,6 +52,10 @@ module depacketizer_mux #(
         end else if (exec_valid_i) begin 
             packet_o = {exec_packet_i, 224'b0};
             packet_size_o = 1;
+            valid_o = '1;
+        end else if (csr_valid_i) begin 
+            packet_o = {csr_packet_i, 192'b0};
+            packet_size_o = csr_packet_size_i;
             valid_o = '1;
         end
     end
