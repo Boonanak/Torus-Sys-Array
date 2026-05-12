@@ -163,7 +163,7 @@ module read_ctrl #(
                 if ((cmd_i.op == OP_READM8) || (cmd_i.op == OP_READM16))
                     hdr_flit_r[25:20] <= cmd_i.baddr_src << 3;
                 if ((cmd_i.op == OP_READV8) || (cmd_i.op == OP_READV16))
-                    hdr_flit_r[25:17] <= cmd_i.vaddr;
+                    hdr_flit_r[25:17] <= cmd_i.vaddr << 3;
             end
         end
     end

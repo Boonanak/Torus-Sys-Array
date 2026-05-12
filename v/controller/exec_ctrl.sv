@@ -301,9 +301,9 @@ module exec_ctrl #(
             //                                 : wgt_r_data_i[gr2*8 +: 8];
             // assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];                 // original (LOW-index slice)
             assign mesh_ifmap_row_o[gr2]  =
-                a_trans_r ? tp_out_data_i[gr2] : ifm_r_data_i[(DIM_p-1-gr2)*8 +: 8];     // T2SA-CTRL: reversed slice to match host packing
+                a_trans_r ? tp_out_data_i[(DIM_p-1-gr2)] : ifm_r_data_i[(DIM_p-1-gr2)*8 +: 8];     // T2SA-CTRL: reversed slice to match host packing
             assign mesh_weight_row_o[gr2] =
-                (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
+                (d_trans_r && !tp_for_a_r) ? tp_out_data_i[(DIM_p-1-gr2)]
                                             : wgt_r_data_i[(DIM_p-1-gr2)*8 +: 8];        // T2SA-CTRL: reversed slice
             assign mesh_bias_row_o[gr2]   = psm_r_data_i[(DIM_p-1-gr2)*32 +: 32];        // T2SA-CTRL: reversed slice (int32)
             // T2SA-CTRL end
