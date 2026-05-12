@@ -85,7 +85,7 @@ module top_chip #(
     sp_bank_id_e           wr_mem_bank;
 
     logic [31:0] wr_pkt;
-    logic wr_pkt_v, wr_pkt_r; 
+    logic wr_pkt_v, wr_pkt_r;
 
     write_ctrl #(.DIM_p(DIM_p)) u_wr (
          .clk_i, .reset_i
@@ -179,7 +179,7 @@ module top_chip #(
         ,.mesh_capture_v_i   (mesh_capture_v)
         ,.mesh_capture_idx_i (mesh_capture_idx)
         ,.transpose_conflict_o (ex_transpose_conflict)
-        ,.packet (ex_pkt) 
+        ,.packet (ex_pkt)
         ,.packet_v(ex_pkt_v)
         ,.packet_r(ex_pkt_r)
     );
@@ -375,7 +375,7 @@ module top_chip #(
         ,.exec_packet_i(ex_pkt)
         ,.exec_valid_i(ex_pkt_v)
         ,.exec_ready_o(ex_pkt_r)
-        
+
         ,.packet_o(mux_pkt)
         ,.valid_o(mux_pkt_v)
         ,.packet_size_o(mux_pkt_size)

@@ -1,11 +1,11 @@
 // A pipelined transpose module for a DIM_p x DIM_p matrix with WIDTH_p bit elements
 // Takes in a full row of an input matrix and outputs a full column of the transposed matrix
-module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
-                    parameter WIDTH_p = 8) // Width of data
-                  ( input logic clk_i, 
+module transpose #( parameter int DIM_p = 4, // Dimensions of the matrix (DIM_p x DIM_p) (MUST BE POWER OF 2)
+                    parameter int WIDTH_p = 8) // Width of data
+                  ( input logic clk_i,
                     input logic rst_n_i, // Active low reset
                     input logic [WIDTH_p-1:0] in_data [DIM_p-1:0], // Full row input data
-                    input logic valid_i, // if the input data is valid 
+                    input logic valid_i, // if the input data is valid
                     input logic ready_i, // the output module is ready to consume data
                     input logic transpose, // to transpose or not transpose, assert on read
                     ///////////////////////////////////////////////////////////////////////////////
@@ -14,7 +14,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
                     output logic [WIDTH_p-1:0] out_data [DIM_p-1:0] // full column output data
                   );
 
-    localparam DIM_CLOG2_p = $clog2(DIM_p);
+    localparam int DIM_CLOG2_p = $clog2(DIM_p);
 
     // Counter values
     logic direction; // The current direction of shifting
@@ -24,8 +24,8 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     logic [DIM_CLOG2_p:0] write_counter; // how many values we have written, rolls over every DIM_p writes and is used to determine the direction and count for shifting
 
     // Enable line for each row or col. Techinally could be a 1 bit signal, but making it individual for each row/col improves timing for synthesis
-    logic [DIM_p-1:0] row_enable; 
-    logic [DIM_p-1:0] col_enable; 
+    logic [DIM_p-1:0] row_enable;
+    logic [DIM_p-1:0] col_enable;
 
     // Control signals
     logic [DIM_p-1:0] valid; // which row or column has valid data. Shared for both directions
@@ -85,14 +85,14 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     endgenerate
 
     // Shift register to store what columns/rows have valid data. Single array used for both directions
-    shift_reg_simple #(.WIDTH_p(1), 
+    shift_reg_simple #(.WIDTH_p(1),
                        .LENGTH_p(DIM_p))
         valid_tracker (
                        .clk_i(clk_i),
-                       .rst_n_i(rst_n_i),  
-                       .enable_i(enable), 
-                       .shift_in_i(valid_i), 
-                       .data_out_o(valid) 
+                       .rst_n_i(rst_n_i),
+                       .enable_i(enable),
+                       .shift_in_i(valid_i),
+                       .data_out_o(valid)
                       );
 
     // Ready-valid handshake logic based on current state
@@ -117,7 +117,7 @@ module transpose #( parameter DIM_p = 4, // Dimensions of the matrix (DIM_p x DI
     genvar i;
     generate
         for (i = 0; i < DIM_p; i++) begin : output_loop
-            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];  
+            assign out_data[i] = (direction) ? tp_bus[DIM_p-1][i] : tp_bus[i][DIM_p-1];
         end
     endgenerate
 

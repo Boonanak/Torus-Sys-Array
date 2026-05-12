@@ -41,7 +41,7 @@ module write_ctrl #(
                                                  : cmd_i.imm_data;
     assign mem_bank_o = sel_bank;
 
-    always_comb begin 
+    always_comb begin
         header_packet = '0;
         header_packet[5:0] = cmd_i.op;
         header_packet[31 -: 9] = cmd_i.vaddr << 3;

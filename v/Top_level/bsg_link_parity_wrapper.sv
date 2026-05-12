@@ -47,7 +47,7 @@ module bsg_link_wrapper #(
     // Mapping: [33]=P_high, [32:17]=Data_high, [16]=P_low, [15:0]=Data_low
     logic [33:0] tx_data_combined_li;
     logic [33:0] rx_data_combined_lo;
-    
+
     logic tx_parity_low, tx_parity_high;
     logic rx_ok_low, rx_ok_high;
 
@@ -64,9 +64,9 @@ module bsg_link_wrapper #(
     );
 
     assign tx_data_combined_li = {
-        tx_parity_high, 
-        tx_data_i[31:16], 
-        tx_parity_low, 
+        tx_parity_high,
+        tx_data_i[31:16],
+        tx_parity_low,
         tx_data_i[15:0]
     };
 
@@ -124,7 +124,7 @@ module bsg_link_wrapper #(
 
     // Reassemble final 32-bit flit for the core
     assign rx_data_o = {rx_data_combined_lo[32:17], rx_data_combined_lo[15:0]};
-    
+
     // Error logic: High if valid data has bad parity in either half
     assign rx_parity_error_o = rx_valid_o && (!rx_ok_low || !rx_ok_high);
 

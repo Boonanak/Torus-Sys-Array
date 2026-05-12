@@ -9,7 +9,7 @@ module read_ctrl #(
     ,localparam int IFM_W_lp        = scratchpad_pkg::IFM_ROW_W_lp
     ,localparam int PSM_W_lp        = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int CYC_W_lp  = $clog2(DIM_p+1)
-    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p) + 1 
+    ,localparam int PKT_SIZE_W_lp = $clog2(PKT_W_p / FLIT_W_p) + 1
 )(
      input  logic                       clk_i
     ,input  logic                       reset_i
@@ -24,7 +24,7 @@ module read_ctrl #(
     ,output logic                       mem_v_o
     ,output logic [ADDR_W_lp-1:0]       mem_addr_o
     ,output sp_bank_id_e                mem_bank_o
-    ,input  logic [PSM_W_lp-1:0]        mem_data_i 
+    ,input  logic [PSM_W_lp-1:0]        mem_data_i
 
     ,input  logic [63:0]                csr_data_i
 
@@ -36,17 +36,17 @@ module read_ctrl #(
 
     // --- Internal Registers & State ---
     typedef enum logic [2:0] {
-        S_IDLE, 
-        S_SEND_HDR, 
-        S_GATHER, 
-        S_SEND_DATA, 
+        S_IDLE,
+        S_SEND_HDR,
+        S_GATHER,
+        S_SEND_DATA,
         S_DONE
     } st_e;
 
     st_e st_r, st_n;
     logic [PKT_W_p-1:0] buf_r, buf_n;
     logic [3:0]         pkt_cnt_r, pkt_cnt_n;
-    
+
     // Captured command context
     logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r;
     logic [3:0]         total_pkts_r;
@@ -131,24 +131,24 @@ module read_ctrl #(
     always_ff @(posedge clk_i) begin
         if (reset_i) begin
             st_r <= S_IDLE;
-            {buf_r, pkt_cnt_r, is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r, 
+            {buf_r, pkt_cnt_r, is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r,
              total_pkts_r, data_pkt_size_r, hdr_flit_r, base_row_r} <= '0;
         end else begin
             st_r      <= st_n;
             buf_r     <= buf_n;
             pkt_cnt_r <= pkt_cnt_n;
-            
+
             if (st_r == S_IDLE && v_i) begin
                 is_v16_r     <= (cmd_i.op == OP_READV16);
                 is_m16_r     <= (cmd_i.op == OP_READM16);
                 is_v8_r      <= (cmd_i.op == OP_READV8);
                 is_m8_r      <= (cmd_i.op == OP_READM8);
                 is_csr_r     <= (cmd_i.op == OP_READ_CSR);
-                base_row_r   <= ((cmd_i.op == OP_READV8) || (cmd_i.op == OP_READV16)) ? 
+                base_row_r   <= ((cmd_i.op == OP_READV8) || (cmd_i.op == OP_READV16)) ?
                                  cmd_i.vaddr[ADDR_W_lp-1:0] : (cmd_i.baddr_src * DIM_p);
-                
+
                 // Pre-calculate packet loop counts
-                total_pkts_r <= ((cmd_i.op == OP_READM8) || (cmd_i.op == OP_READM16)) ? 
+                total_pkts_r <= ((cmd_i.op == OP_READM8) || (cmd_i.op == OP_READM16)) ?
                                  DIM_p[3:0] : 4'd1;
 
                 // Pre-calculate packet sizes

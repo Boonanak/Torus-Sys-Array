@@ -333,7 +333,7 @@ module exec_ctrl #(
 
     assign done_o = (st_r == S_IDLE && st_prev == S_DONE);
 
-    always_comb begin 
+    always_comb begin
         packet = '0;
         packet[5:0]     = cmd_i.op;
         packet[31 -: 6] = cmd_i.baddr_dest << 3;

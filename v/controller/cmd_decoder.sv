@@ -18,7 +18,7 @@ module cmd_decoder (
 
     localparam int vaddr_width_p = ctrl_pkg::vaddr_width_p;
     localparam int baddr_width_p = ctrl_pkg::baddr_width_p;
-    
+
     typedef enum logic [1:0] { S_HEAD, S_DATA, S_SEND } state_e;
     state_e st_r, st_n;
 
@@ -40,10 +40,10 @@ module cmd_decoder (
     assign hdr_acc    = flit_i[19 -: baddr_width_p];
     assign hdr_weight = flit_i[13 -: baddr_width_p];
 
-    assign is_writeish = (hdr_op == OP_WRITE_8) || 
-                         (hdr_op == OP_WRITE_CSR) || 
+    assign is_writeish = (hdr_op == OP_WRITE_8) ||
+                         (hdr_op == OP_WRITE_CSR) ||
                          (hdr_op == OP_WRITE_32);
-                         
+
     assign is_readv    = (hdr_op == OP_READV8) || (hdr_op == OP_READV16);
     assign hdr_vaddr   = is_writeish ? flit_i[31 -: vaddr_width_p] :
                          is_readv    ? flit_i[25 -: vaddr_width_p] : '0;
@@ -85,7 +85,7 @@ module cmd_decoder (
                         cmd_n.baddr_weight = hdr_weight;
                         cmd_n.vaddr        = hdr_vaddr;
                         cmd_n.imm_data     = '0;
-                        
+
                         if (is_writeish) begin
                             st_n = S_DATA;
                             // Set count based on opcode
@@ -103,11 +103,11 @@ module cmd_decoder (
                         err_n.parity_fail = 1'b1;
                         st_n              = S_HEAD;
                     end else begin
-                        // Shift in flit data. 
+                        // Shift in flit data.
                         // With flit_cnt_r counting down, we fill from MSB to LSB.
                         // For cnt=8, we fill [255:224]. For cnt=1, we fill [31:0].
                         cmd_n.imm_data[(flit_cnt_r * 32) - 1 -: 32] = flit_i;
-                        
+
                         if (flit_cnt_r == 4'd1) begin
                             st_n = S_SEND;
                         end else begin

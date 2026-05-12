@@ -5,7 +5,7 @@
 // 10: Clear mode - if a bit is 1 in data_i, set it to 0 in the csr, else keep it the same
 // 11: Assign mode - directly assigns the CSR register to data_i
 // data_o is sychrnonous and not write-through (reads out the old value not the new value).
-module csr #(   parameter WIDTH_p = 64,
+module csr #(   parameter int WIDTH_p = 64,
                 parameter [WIDTH_p-1:0] RESET_VALUE_p = '0 // Default reset value for the CSR register
             ) (
                 input logic clk_i,
@@ -30,7 +30,7 @@ module csr #(   parameter WIDTH_p = 64,
             // data_o <= csr_reg; // Output the current value of the CSR register synchronously (not write-through)
         end
     end
-    
+
     assign data_o = csr_reg;
 
 endmodule

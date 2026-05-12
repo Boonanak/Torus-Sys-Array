@@ -18,18 +18,18 @@ Params:
   packet_width_p: packet width parameter
   flit_width_p: fifo width parameter
   fifo_els_p: fifo depth parameter
-Description: 
+Description:
   depacketizer module that is used to get lines of input (128 bit) from memory, break them into
   flits (32 bit) and then send said flits to the bsg_link_upstream terminal to be sent out of
   the chip. Includes a fifo to just hold qunatities before sending them out.
 */
-module depacketizer 
+module depacketizer
 #(
-    parameter packet_width_p = 128
-  , parameter flit_width_p = 32
-  , parameter fifo_els_p   = 4
-  , localparam num_flits_lp = packet_width_p / flit_width_p
-  , localparam flit_cnt_width_lp = $clog2(num_flits_lp) + 1
+    parameter int packet_width_p = 128
+  , parameter int flit_width_p = 32
+  , parameter int fifo_els_p   = 4
+  , localparam int num_flits_lp = packet_width_p / flit_width_p
+  , localparam int flit_cnt_width_lp = $clog2(num_flits_lp) + 1
 ) (
   input                                clk_i
   , input                              reset_i
@@ -55,12 +55,12 @@ module depacketizer
   assign valid_o = (flit_cnt_r < packet_size_r);
   assign flit_o = packet_r[((num_flits_lp - 1) - flit_cnt_r) * flit_width_p +: flit_width_p];
 
-  always_comb begin 
+  always_comb begin
     packet_n = packet_r;
     flit_cnt_n = flit_cnt_r;
     packet_size_n = packet_size_r;
 
-    if (valid_i && ready_o) begin // new packet 
+    if (valid_i && ready_o) begin // new packet
       packet_n = packet_i;
       packet_size_n = packet_size_i;
       flit_cnt_n = 0;
@@ -69,12 +69,12 @@ module depacketizer
     end
   end
 
-  always_ff @(posedge clk_i) begin 
-    if (reset_i) begin 
+  always_ff @(posedge clk_i) begin
+    if (reset_i) begin
       flit_cnt_r <= '0;
       packet_r <= '0;
       packet_size_r <= '0;
-    end else begin 
+    end else begin
       flit_cnt_r <= flit_cnt_n;
       packet_r <= packet_n;
       packet_size_r <= packet_size_n;

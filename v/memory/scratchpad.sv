@@ -7,7 +7,7 @@ module scratchpad #(
     ,localparam int WGT_W_lp            = scratchpad_pkg::WGT_ROW_W_lp
     ,localparam int PSM_W_lp            = scratchpad_pkg::PSM_ROW_W_lp
     ,localparam int BANK_DEPTH_IFM_lp   = scratchpad_pkg::BANK_DEPTH_IFM_lp
-    ,localparam int BANK_DEPTH_PSM_lp   = scratchpad_pkg::BANK_DEPTH_PSM_lp    
+    ,localparam int BANK_DEPTH_PSM_lp   = scratchpad_pkg::BANK_DEPTH_PSM_lp
     ,localparam int IFM_ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_IFM_lp
     ,localparam int PSM_ADDR_W_lp       = scratchpad_pkg::BANK_ADDR_W_PSM_lp
 )(

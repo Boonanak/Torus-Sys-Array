@@ -41,7 +41,7 @@ module cmd_queue #(
             rptr_r  <= '0;
             wptr_r  <= '0;
             count_r <= '0;
-            for (int i = 0; i < DEPTH_p; i++) begin 
+            for (int i = 0; i < DEPTH_p; i++) begin
                 fifo_r[i]  <= '0;
             end
         end else begin
