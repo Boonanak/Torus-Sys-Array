@@ -48,7 +48,7 @@ module read_ctrl #(
     logic [3:0]         pkt_cnt_r, pkt_cnt_n;
 
     // Captured command context
-    logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r; // is_csr_r;
+    logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r;
     logic [3:0]         total_pkts_r;
     logic [31:0]        hdr_flit_r;
     logic [PKT_SIZE_W_lp-1:0] data_pkt_size_r;
