@@ -301,9 +301,9 @@ module exec_ctrl #(
             //                                 : wgt_r_data_i[gr2*8 +: 8];
             // assign mesh_bias_row_o[gr2]   = psm_r_data_i[gr2*32 +: 32];                 // original (LOW-index slice)
             assign mesh_ifmap_row_o[gr2]  =
-                a_trans_r ? tp_out_data_i[gr2] : ifm_r_data_i[(DIM_p-1-gr2)*8 +: 8];     // T2SA-CTRL: reversed slice to match host packing
+                a_trans_r ? tp_out_data_i[(DIM_p-1-gr2)] : ifm_r_data_i[(DIM_p-1-gr2)*8 +: 8];     // T2SA-CTRL: reversed slice to match host packing
             assign mesh_weight_row_o[gr2] =
-                (d_trans_r && !tp_for_a_r) ? tp_out_data_i[gr2]
+                (d_trans_r && !tp_for_a_r) ? tp_out_data_i[(DIM_p-1-gr2)]
                                             : wgt_r_data_i[(DIM_p-1-gr2)*8 +: 8];        // T2SA-CTRL: reversed slice
             assign mesh_bias_row_o[gr2]   = psm_r_data_i[(DIM_p-1-gr2)*32 +: 32];        // T2SA-CTRL: reversed slice (int32)
             // T2SA-CTRL end
@@ -327,7 +327,7 @@ module exec_ctrl #(
         ifm_w_data_o = '0;
         for (int rr = 0; rr < DIM_p; rr++) begin
             // ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];                              // original (LOW-index slice, mismatched with host packing)
-            ifm_w_data_o[(DIM_p-1-rr)*8 +: 8] = tp_out_data_i[rr];                     // T2SA-CTRL: reversed slice (OP_TRANSPOSE writeback, host-elem-0 -> bank HIGH bits)
+            ifm_w_data_o[rr*8 +: 8] = tp_out_data_i[rr];                     
         end
     end
 

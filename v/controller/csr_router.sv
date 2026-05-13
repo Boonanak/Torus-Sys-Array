@@ -22,9 +22,62 @@ module csr_router (
 
     ,output logic [63:0]  read_csr_data_o
     ,output logic         read_csr_v_o
+
+    ,output logic [63:0]  packet_o
+    ,output logic         packet_v_o
+    ,output logic [2:0]   packet_size_o
+    ,input  logic         packet_r_i
 );
 
-    assign ready_o = 1'b1;
+    typedef enum logic [1:0] {
+        S_IDLE,
+        S_SEND_HDR,
+        S_SEND_DATA,
+        S_DONE
+    } st_e;
+
+    st_e st_r, st_n;
+
+    logic is_write;
+    assign is_write = (cmd_i.op == OP_WRITE_CSR) || (cmd_i.op == OP_ERROR_CSR);
+
+    always_comb begin 
+        st_n = st_r;
+        case(st_r)
+            S_IDLE:         st_n = v_i ? S_SEND_HDR : S_IDLE;
+            S_SEND_HDR:     st_n = packet_r_i ? (is_write ? S_DONE : S_SEND_DATA) : S_SEND_HDR;
+            S_SEND_DATA:    st_n = packet_r_i ? S_DONE : S_SEND_DATA;
+            S_DONE:         st_n = S_IDLE;
+            default:        st_n = S_IDLE;
+        endcase
+    end
+
+    logic [31:0] header_packet;
+
+    always_comb begin 
+        packet_o = '0;
+        packet_size_o = '0;
+        header_packet = '0;
+        case(st_r)
+            S_SEND_HDR: begin 
+                header_packet[5:0] = cmd_i.op;
+                packet_o = {header_packet, 32'b0};
+                packet_size_o = 1;
+            end
+            S_SEND_DATA: begin 
+                packet_o = csr_data_i;
+                packet_size_o = 2;
+            end
+            default: ;
+        endcase
+    end
+
+    assign packet_v_o = (st_r == S_SEND_HDR) || (st_r == S_SEND_DATA);
+    
+
+
+    assign ready_o = (st_r == S_IDLE);
+    assign done_o  = (st_r == S_DONE);
 
     logic [63:0] err_set_word;
     always_comb begin
@@ -71,9 +124,14 @@ module csr_router (
 
     logic accept_r;
     always_ff @(posedge clk_i) begin
-        if (reset_i) accept_r <= 1'b0;
-        else         accept_r <= v_i;
+        if (reset_i) begin 
+            accept_r <= 1'b0;
+            st_r <= S_IDLE;
+        end
+        else begin 
+            accept_r <= v_i;
+            st_r <= st_n;
+        end
     end
-    assign done_o = accept_r;
 
 endmodule

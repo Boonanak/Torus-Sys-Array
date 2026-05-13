@@ -143,16 +143,21 @@ sim.inputs.trace_files: [
   "v/Top_level/top_chip_send_trace.tr",
   "v/Top_level/top_chip_recv_trace.tr",
 
-  "v/Top_level/benchmark1_send_trace.tr",
-  "v/Top_level/benchmark1_recv_trace.tr",
   "v/Top_level/benchmark2_send_trace.tr",
   "v/Top_level/benchmark2_recv_trace.tr",
+
+  "v/Top_level/benchmark1_4x8_send_trace.tr",
+  "v/Top_level/benchmark1_4x8_recv_trace.tr",
+  "v/Top_level/benchmark2_4x8_send_trace.tr",
+  "v/Top_level/benchmark2_4x8_recv_trace.tr",
   
-  "v/Top_level/benchmark1_header_send_trace.tr",
-  "v/Top_level/benchmark1_header_recv_trace.tr",
+  "v/Top_level/benchmark1_noheader_send_trace.tr",
+  "v/Top_level/benchmark1_noheader_recv_trace.tr",
   
   "v/Top_level/benchmark2_send_trace.tr",
   "v/Top_level/benchmark2_recv_trace.tr",
+  "v/Top_level/benchmark3_send_trace.tr",
+  "v/Top_level/benchmark3_recv_trace.tr",
 
   "v/sys_array/test2/TwistMesh_send_trace.tr",
   "v/sys_array/test2/TwistMesh_recv_trace.tr",

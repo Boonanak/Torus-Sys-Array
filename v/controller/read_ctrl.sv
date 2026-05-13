@@ -48,7 +48,7 @@ module read_ctrl #(
     logic [3:0]         pkt_cnt_r, pkt_cnt_n;
 
     // Captured command context
-    logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r, is_csr_r;
+    logic               is_v16_r, is_m16_r, is_v8_r, is_m8_r; // is_csr_r;
     logic [3:0]         total_pkts_r;
     logic [31:0]        hdr_flit_r;
     logic [PKT_SIZE_W_lp-1:0] data_pkt_size_r;
@@ -71,7 +71,7 @@ module read_ctrl #(
             end
 
             S_SEND_HDR: if (pkt_ready_i) begin
-                st_n = is_csr_r ? S_SEND_DATA : S_GATHER;
+                st_n = S_GATHER;
             end
 
             S_GATHER: begin
@@ -116,12 +116,7 @@ module read_ctrl #(
             S_SEND_DATA: begin
                 pkt_v_o    = 1'b1;
                 pkt_size_o = data_pkt_size_r;
-                if (is_csr_r) begin
-                    // Align CSR 64b to the top
-                    pkt_o[PKT_W_p-1 -: 64] = csr_data_i;
-                end else begin
-                    pkt_o = buf_r;
-                end
+                pkt_o = buf_r;
             end
             default: ;
         endcase
@@ -163,7 +158,7 @@ module read_ctrl #(
                 if ((cmd_i.op == OP_READM8) || (cmd_i.op == OP_READM16))
                     hdr_flit_r[25:20] <= cmd_i.baddr_src << 3;
                 if ((cmd_i.op == OP_READV8) || (cmd_i.op == OP_READV16))
-                    hdr_flit_r[25:17] <= cmd_i.vaddr;
+                    hdr_flit_r[25:17] <= cmd_i.vaddr << 3;
             end
         end
     end

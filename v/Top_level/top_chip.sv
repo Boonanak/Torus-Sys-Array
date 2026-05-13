@@ -326,6 +326,10 @@ module top_chip #(
     logic [63:0] _csr_read_data_o_unused;  // redundant — read_ctrl uses csr_data_lo
     logic        _csr_read_v_o_unused;
 
+    logic [63:0] csr_pkt;
+    logic [2:0] csr_pkt_size;
+    logic csr_pkt_v, csr_pkt_r;
+
     csr_router u_csr_r (
          .clk_i, .reset_i
         ,.cmd_i           (cs_cmd)
@@ -342,6 +346,10 @@ module top_chip #(
         ,.csr_data_i      (csr_data_lo)
         ,.read_csr_data_o (_csr_read_data_o_unused)
         ,.read_csr_v_o    (_csr_read_v_o_unused)
+        ,.packet_o        (csr_pkt)
+        ,.packet_v_o      (csr_pkt_v)
+        ,.packet_size_o   (csr_pkt_size)
+        ,.packet_r_i      (csr_pkt_r)
     );
 
     csr #(.WIDTH_p(64)) u_csr_reg (
@@ -376,6 +384,11 @@ module top_chip #(
         ,.exec_valid_i(ex_pkt_v)
         ,.exec_ready_o(ex_pkt_r)
 
+        ,.csr_packet_i(csr_pkt)
+        ,.csr_packet_size_i(csr_pkt_size)
+        ,.csr_valid_i(csr_pkt_v)
+        ,.csr_ready_o(csr_pkt_r)
+        
         ,.packet_o(mux_pkt)
         ,.valid_o(mux_pkt_v)
         ,.packet_size_o(mux_pkt_size)
