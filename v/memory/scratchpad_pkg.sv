@@ -2,8 +2,8 @@
 package scratchpad_pkg;
 
     parameter int DIM_p           = 8;
-    parameter int NUM_MATRICES_IFM_p = 8;
-    parameter int NUM_MATRICES_PSM_p = 4;
+    parameter int NUM_MATRICES_IFM_p = 5;
+    parameter int NUM_MATRICES_PSM_p = 3;
     parameter int IFM_WIDTH_p     = 8;
     parameter int WGT_WIDTH_p     = 8;
     parameter int PSM_WIDTH_p     = 32;  // bank stores 16b; mesh-internal psum is 19b (sign-ext on read into mesh, truncate on write back)
