@@ -85,10 +85,10 @@ def to_machine_code(instruction):
             opcode = '010000'
             Addr_dest = int(instruction_data[1])
             if(Addr_dest < 0 or Addr_dest > AB_MEM_DEPTH - 1):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_dest > AB_MEM_DEPTH - 1 - DIM*4):
-                print("WARNING: Cannot overwrite identity matrix")
+                print(instruction, "WARNING: Cannot overwrite identity matrix")
                 return ''
             Addr_dest = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(Addr_dest, AB_ADDR_W)}'
             bracket_i = instruction.find('[')
@@ -106,10 +106,10 @@ def to_machine_code(instruction):
             opcode = '010010'
             Addr_dest = int(instruction_data[1])
             if(Addr_dest < 0 or Addr_dest > C_MEM_DEPTH - 1):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_dest > C_MEM_DEPTH - 1 - DIM*2):
-                print("WARNING: Cannot overwrite zero matrix")
+                print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
             Addr_dest = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(Addr_dest, C_ADDR_W)}'
             bracket_i = instruction.find('[')
@@ -128,12 +128,12 @@ def to_machine_code(instruction):
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             if(BaseAddr_dest < 0 or BaseAddr_dest > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_source > (AB_MEM_DEPTH/DIM - 5)):
                 BaseAddr_source = 7
             if(BaseAddr_dest > (AB_MEM_DEPTH/DIM - 5)):
-                print("WARNING: Cannot overwrite identity matrix")
+                print(instruction, "WARNING: Cannot overwrite identity matrix")
                 return ''
             BaseAddr_dest = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
@@ -157,7 +157,7 @@ def to_machine_code(instruction):
             opcode = '001001'
             BaseAddr_source = int(instruction_data[1])
             if(BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_source > 3):
                 BaseAddr_source = 7
@@ -168,10 +168,10 @@ def to_machine_code(instruction):
             opcode = '001011'
             BaseAddr_source = int(instruction_data[1])
             if(BaseAddr_source < 0 or BaseAddr_source > (C_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_source > 1):
-                BaseAddr_source = 7
+                BaseAddr_source = 3
             BaseAddr_source = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, C_BASEADDR_W)}000'
             machine_code = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}\n'
             expected_output = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}___{'x'*64*C_WIDTH}\n'
@@ -179,7 +179,7 @@ def to_machine_code(instruction):
             opcode = '001000'
             Addr_source = int(instruction_data[1])
             if(Addr_source < 0 or Addr_source > AB_MEM_DEPTH - 1):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_source > 31):
                 Addr_source = 63
@@ -190,7 +190,7 @@ def to_machine_code(instruction):
             opcode = '001010'
             Addr_source = int(instruction_data[1])
             if(Addr_source < 0 or Addr_source > C_MEM_DEPTH - 1):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_source > 15):
                 Addr_source = 31
@@ -202,7 +202,7 @@ def to_machine_code(instruction):
             #opcode = '110000'
             BaseAddr_weight = int(instruction_data[1])
             if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_weight > 3):
                 BaseAddr_weight = 7
@@ -214,7 +214,7 @@ def to_machine_code(instruction):
             #opcode = '111000'
             BaseAddr_weight = int(instruction_data[1])
             if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_weight > 3):
                 BaseAddr_weight = 7
@@ -228,11 +228,15 @@ def to_machine_code(instruction):
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
             if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 2)):
-                print("WARNING: Cannot overwrite zero matrix")
+            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+                print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
+            if(BaseAddr_source > 3):
+                BaseAddr_source = 7
+            if(BaseAddr_acc > 1):
+                BaseAddr_acc = 3
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
@@ -245,11 +249,15 @@ def to_machine_code(instruction):
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
             if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 2)):
-                print("WARNING: Cannot overwrite zero matrix")
+            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+                print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
+            if(BaseAddr_source > 3):
+                BaseAddr_source = 7
+            if(BaseAddr_acc > 1):
+                BaseAddr_acc = 3
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
@@ -263,11 +271,17 @@ def to_machine_code(instruction):
             BaseAddr_acc = int(instruction_data[3])
             BaseAddr_weight = int(instruction_data[4])
             if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1) or BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
-                print("WARNING: Address out of bounds")
+                print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 2)):
-                print("WARNING: Cannot overwrite zero matrix")
+            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+                print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
+            if(BaseAddr_source > 3):
+                BaseAddr_source = 7
+            if(BaseAddr_acc > 1):
+                BaseAddr_acc = 3
+            if(BaseAddr_weight > 3):
+                BaseAddr_weight = 7
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
@@ -376,9 +390,10 @@ def instructions_to_traces(benchmark_file, send_trace_file):
             else:
                 if line[:5] == 'WRITE':
                     line = to_machine_code(line)
-                    enters = line.count('\n')
-                    line = line.replace('\n', '\n0001', enters - 1)
-                    send_trace.write(f'0001_{line}\n')
+                    if(line != ''):
+                        enters = line.count('\n')
+                        line = line.replace('\n', '\n0001', enters - 1)
+                        send_trace.write(f'0001_{line}\n')
                 else:
                     send_trace.write(f'0001_{to_machine_code(line)}\n')
         # for i in range(ADDITIONAL_DELAY):
@@ -399,7 +414,7 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
                 recv_trace.write(f'0000_{to_machine_code(line)}\n')
             elif(line != '' and line[0] == '#'):
                 recv_trace.write(f'{line}\n')
-            else:
+            elif(to_machine_code(line) != ''):
                 if line[:5] == 'WRITE':
                     if line[5] == '_':
                         recv_trace.write(f'0010_{to_machine_code(line)[:FLIT_WIDTH+1]}\n') # COMMENT OUT IF NO HEADERS
@@ -410,7 +425,7 @@ def receive_to_traces(benchmark_file, recv_trace_file, outputs):
                 else:
                     recv_trace.write(f'0010_{to_machine_code(line)}') # COMMENT OUT IF NO HEADERS 
                     if line[:4] == 'READ':
-                        print(line)
+                        #print(line)
                         #recv_trace.write(f'0010_{to_machine_code(line)}') # UNCOMMENT IF NO HEADERS
                         if line[5] == '8':
                             recv_trace.write(f'{to_flits(outputs[i], AB_WIDTH)}\n')
@@ -547,9 +562,32 @@ C12 = A1 @ B2
 # expected_outputs2 = [ZERO, ZERO, ZERO, C0, MAX, MIN, C1, ABC_rand_1, ABC_rand_2]
 # receive_to_traces('scripts/tpu_benchmark2.txt', 'v/Top_level/benchmark2_recv_trace.tr', expected_outputs2)
 
-instructions_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_send_trace.tr')
-inc = np.arange(1, 65).reshape(8,8)
-C0 = np.array([
+# instructions_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_send_trace.tr')
+# inc = np.arange(1, 65).reshape(8,8)
+# C0 = np.array([
+#     [0, 1, 1, 2, 3, 5, 8, 13],
+#     [21, 34, 55, 89, 144, 233, 377, 610],
+#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269],
+#     [0, 1, 1, 2, 3, 5, 8, 13],
+#     [21, 34, 55, 89, 144, 233, 377, 610],
+#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
+# ])
+# inc_T = inc.T
+# V8 = np.arange(1,9)
+# V0 = np.zeros(8)
+# C = inc @ inc
+# CSR = '11111111_11111111_11111111_11111111_11111111_11111111_11111111_10000001'
+# expected_outputs3 = [inc_T, C0, V8, V0, inc, inc, inc, inc, C, C, CSR]
+# receive_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_recv_trace.tr', expected_outputs3)
+
+# Benchmark 4
+AB0 = np.arange(1, 65).reshape(8,8)
+AB1 = np.full((8,8), 2)
+AB2 = -1 * AB0
+AB3 = -1 * AB1
+C1 = np.array([
     [0, 1, 1, 2, 3, 5, 8, 13],
     [21, 34, 55, 89, 144, 233, 377, 610],
     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
@@ -559,14 +597,22 @@ C0 = np.array([
     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
 ])
-inc_T = inc.T
-V8 = np.arange(1,9)
-V0 = np.zeros(8)
-C = inc @ inc
-CSR = '11111111_11111111_11111111_11111111_11111111_11111111_11111111_10000001'
-expected_outputs3 = [inc_T, C0, V8, V0, inc, inc, inc, inc, C, C, CSR]
-receive_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_recv_trace.tr', expected_outputs3)
-
+# print(WRITEM(AB0, 0, 8))
+# print(WRITEM(AB1, 1, 8))
+# print(WRITEM(AB2, 2, 8))
+# print(WRITEM(AB3, 3, 8))
+# print(WRITEM(C1, 1, 32))
+# print(WRITEM(AB0, 4, 8))
+# print(WRITEM(AB0, 7, 8))
+# print(WRITEM(C1, 3, 32))
+# print(WRITEM(C1, 4, 32))
+instructions_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_send_trace.tr')
+I = np.identity(8)
+Z = np.zeros((8,8))
+C2 = AB0 @ AB0 + AB0
+C3 = AB0 @ AB0
+expected_outputs4 = [I, AB0, C2, C3, Z, AB1, Z]
+receive_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_recv_trace.tr', expected_outputs4)
 
 # A1 = np.arange(1, 65).reshape(8,8)
 # print(WRITEM(np.identity(8), 8))
