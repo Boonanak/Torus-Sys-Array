@@ -84,10 +84,10 @@ def to_machine_code(instruction):
         case "WRITE8":
             opcode = '010000'
             Addr_dest = int(instruction_data[1])
-            if(Addr_dest < 0 or Addr_dest > AB_MEM_DEPTH - 1):
+            if(Addr_dest < 0 or Addr_dest > 39):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(Addr_dest > AB_MEM_DEPTH - 1 - DIM*4):
+            if(Addr_dest > 31):
                 print(instruction, "WARNING: Cannot overwrite identity matrix")
                 return ''
             Addr_dest = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(Addr_dest, AB_ADDR_W)}'
@@ -105,10 +105,10 @@ def to_machine_code(instruction):
         case "WRITE32":
             opcode = '010010'
             Addr_dest = int(instruction_data[1])
-            if(Addr_dest < 0 or Addr_dest > C_MEM_DEPTH - 1):
+            if(Addr_dest < 0 or Addr_dest > 23):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(Addr_dest > C_MEM_DEPTH - 1 - DIM*2):
+            if(Addr_dest > 15):
                 print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
             Addr_dest = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(Addr_dest, C_ADDR_W)}'
@@ -127,12 +127,10 @@ def to_machine_code(instruction):
             opcode = '011001'
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
-            if(BaseAddr_dest < 0 or BaseAddr_dest > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 4 or BaseAddr_source < 0 or BaseAddr_source > 4):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_source > (AB_MEM_DEPTH/DIM - 5)):
-                BaseAddr_source = 7
-            if(BaseAddr_dest > (AB_MEM_DEPTH/DIM - 5)):
+            if(BaseAddr_dest > 3):
                 print(instruction, "WARNING: Cannot overwrite identity matrix")
                 return ''
             BaseAddr_dest = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
@@ -156,29 +154,25 @@ def to_machine_code(instruction):
         case "READM8":
             opcode = '001001'
             BaseAddr_source = int(instruction_data[1])
-            if(BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_source < 0 or BaseAddr_source > 4):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_source > 3):
-                BaseAddr_source = 7
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             machine_code = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}\n'
             expected_output = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}___{'x'*64*AB_WIDTH}\n'
         case "READM32":
             opcode = '001011'
             BaseAddr_source = int(instruction_data[1])
-            if(BaseAddr_source < 0 or BaseAddr_source > (C_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_source < 0 or BaseAddr_source > 2):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_source > 1):
-                BaseAddr_source = 3
             BaseAddr_source = f'{'0'*(6-C_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, C_BASEADDR_W)}000'
             machine_code = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}\n'
             expected_output = f'{'0'*6}_{BaseAddr_source}{f'_{'0'*6}'*2}_00_{opcode}___{'x'*64*C_WIDTH}\n'
         case "READV8":
             opcode = '001000'
             Addr_source = int(instruction_data[1])
-            if(Addr_source < 0 or Addr_source > AB_MEM_DEPTH - 1):
+            if(Addr_source < 0 or Addr_source > 39):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_source > 31):
@@ -189,7 +183,7 @@ def to_machine_code(instruction):
         case "READV32":
             opcode = '001010'
             Addr_source = int(instruction_data[1])
-            if(Addr_source < 0 or Addr_source > C_MEM_DEPTH - 1):
+            if(Addr_source < 0 or Addr_source > 23):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(Addr_source > 15):
@@ -201,11 +195,9 @@ def to_machine_code(instruction):
             opcode = '111000'
             #opcode = '110000'
             BaseAddr_weight = int(instruction_data[1])
-            if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_weight < 0 or BaseAddr_weight > 4):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_weight > 3):
-                BaseAddr_weight = 7
             BaseAddr_weight = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_weight, AB_BASEADDR_W)}000'
             machine_code = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
             expected_output = f'{'000000_'*3}{BaseAddr_weight}_00_{opcode}\n'
@@ -213,7 +205,7 @@ def to_machine_code(instruction):
             opcode = '110000'
             #opcode = '111000'
             BaseAddr_weight = int(instruction_data[1])
-            if(BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_weight < 0 or BaseAddr_weight > 4):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
             if(BaseAddr_weight > 3):
@@ -227,16 +219,12 @@ def to_machine_code(instruction):
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
-            if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 2 or BaseAddr_source < 0 or BaseAddr_source > 4 or BaseAddr_acc < 0 or BaseAddr_acc > 2):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+            if(BaseAddr_dest > 1):
                 print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
-            if(BaseAddr_source > 3):
-                BaseAddr_source = 7
-            if(BaseAddr_acc > 1):
-                BaseAddr_acc = 3
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
@@ -248,16 +236,12 @@ def to_machine_code(instruction):
             BaseAddr_dest = int(instruction_data[1])
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
-            if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 2 or BaseAddr_source < 0 or BaseAddr_source > 4 or BaseAddr_acc < 0 or BaseAddr_acc > 2):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+            if(BaseAddr_dest > 1):
                 print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
-            if(BaseAddr_source > 3):
-                BaseAddr_source = 7
-            if(BaseAddr_acc > 1):
-                BaseAddr_acc = 3
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
@@ -270,18 +254,12 @@ def to_machine_code(instruction):
             BaseAddr_source = int(instruction_data[2])
             BaseAddr_acc = int(instruction_data[3])
             BaseAddr_weight = int(instruction_data[4])
-            if(BaseAddr_dest < 0 or BaseAddr_dest > (C_MEM_DEPTH/DIM - 1) or BaseAddr_source < 0 or BaseAddr_source > (AB_MEM_DEPTH/DIM - 1) or BaseAddr_acc < 0 or BaseAddr_acc > (C_MEM_DEPTH/DIM - 1) or BaseAddr_weight < 0 or BaseAddr_weight > (AB_MEM_DEPTH/DIM - 1)):
+            if(BaseAddr_dest < 0 or BaseAddr_dest > 2 or BaseAddr_source < 0 or BaseAddr_source > 4 or BaseAddr_acc < 0 or BaseAddr_acc > 2 or BaseAddr_weight < 0 or BaseAddr_weight > 4):
                 print(instruction, "WARNING: Address out of bounds")
                 return ''
-            if(BaseAddr_dest > (C_MEM_DEPTH/DIM - 3)):
+            if(BaseAddr_dest > 1):
                 print(instruction, "WARNING: Cannot overwrite zero matrix")
                 return ''
-            if(BaseAddr_source > 3):
-                BaseAddr_source = 7
-            if(BaseAddr_acc > 1):
-                BaseAddr_acc = 3
-            if(BaseAddr_weight > 3):
-                BaseAddr_weight = 7
             BaseAddr_dest = f'0{to_signed_nbit_binary(BaseAddr_dest, C_BASEADDR_W)}000'
             BaseAddr_source = f'{'0'*(6-AB_ADDR_W)}{to_signed_nbit_binary(BaseAddr_source, AB_BASEADDR_W)}000'
             BaseAddr_acc = f'0{to_signed_nbit_binary(BaseAddr_acc, C_BASEADDR_W)}000'
