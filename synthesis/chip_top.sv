@@ -153,6 +153,13 @@ module chip_top (
     // ----- Tap nets from C[] / drive nets toward I[] -----
     wire core_clk;
     wire hard_reset;
+    wire hard_reset_sync;
+    async_rst_sync_deassert u_hard_reset_sync(
+        .clk        (core_clk),
+        .rst        (hard_reset),
+        .async_rst_sync_deassert(hard_reset_sync)
+    );
+
 
     wire dn_clk;
     wire dn_valid;
@@ -189,22 +196,22 @@ module chip_top (
     // that starts running once hard_reset deasserts.
     reg [5:0] reset_cnt = 6'd0;
     always @(posedge core_clk) begin
-        if (hard_reset)              reset_cnt <= 6'd0;
+        if (hard_reset_sync)              reset_cnt <= 6'd0;
         else if (reset_cnt < 6'd63)  reset_cnt <= reset_cnt + 6'd1;
     end
 
     // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
     // hard_reset deasserts. Held 0 during hard_reset (matches bsg ref tb).
-    wire async_token_reset_int = ~hard_reset
+    wire async_token_reset_int = ~hard_reset_sync
                                  && (reset_cnt >= 6'd2)
                                  && (reset_cnt <  6'd5);
 
     // io_link_resets: held high while hard_reset is asserted, then for
     // ~16 more core_clk cycles after the async_token_reset pulse.
-    wire io_link_reset_int  = hard_reset || (reset_cnt < 6'd16);
+    wire io_link_reset_int  = hard_reset_sync || (reset_cnt < 6'd16);
 
     // core link reset: released last (~32 cycles after hard_reset).
-    wire core_link_reset_int = hard_reset || (reset_cnt < 6'd32);
+    wire core_link_reset_int = hard_reset_sync || (reset_cnt < 6'd32);
 
     // ----- Tap clocks/inputs from pad ring -----
     assign core_clk    = C[CORE_CLK_PAD];
@@ -317,7 +324,7 @@ module chip_top (
     // ----- Student-editable design instance -----
     top_chip u_soc_top (
         .clk_i              (core_clk),
-        .reset_i       (hard_reset),
+        .reset_i       (hard_reset_sync),
 
         // bsg_link (config write path B + status return)
         // Input
@@ -386,4 +393,17 @@ module pad_ring_64 (
         end
     endgenerate
 
+endmodule
+
+module async_rst_sync_deassert (
+    input wire clk,
+    input wire rst,
+    output wire async_rst_sync_deassert
+);
+    reg rst_sync1, rst_sync2;
+    always @(posedge clk or posedge rst) begin 
+        if (rst) begin rst_sync1 <= 1'b1; rst_sync2 <= 1'b1; end
+        else     begin rst_sync1 <= 1'b0; rst_sync2 <= rst_sync1; end
+    end
+    assign async_rst_sync_deassert = rst_sync2;
 endmodule
