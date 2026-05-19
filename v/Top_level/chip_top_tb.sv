@@ -26,17 +26,39 @@ module chip_top_tb;
     localparam int DATA_WIDTH    = 32;
     localparam int CHANNEL_WIDTH = 17;
 
-    // ----- Clocks + global control -----
-    logic core_clk;
-    logic dn_io_clk;          // FPGA's TX I/O master clock; bsg_link_oddr_phy ÷2 → 50 MHz forwarded to PAD[8]
-    logic hard_reset;
+    // // ----- Clocks + global control -----
+    // logic core_clk;
+    // logic dn_io_clk;          // FPGA's TX I/O master clock; bsg_link_oddr_phy ÷2 → 50 MHz forwarded to PAD[8]
+    // logic hard_reset;
 
-    // ----- Reset stages (mirrors bsg_link reference tb staging) -----
-    logic fpga_core_reset;
-    logic fpga_tx_io_link_reset;
-    logic fpga_tx_async_token_reset;
-    logic fpga_rx_io_link_reset;
-    logic fpga_rx_io_link_reset_sync;
+    // Core clock — drives DUT core domain (same period as tb clock)
+    logic core_clk;
+    bsg_nonsynth_clock_gen #(12000) clk_gen_core (core_clk);
+    
+    // IO master clock — dedicated high-speed clock for bsg_link upstream IO domain
+    // Must be provided separately; use 2x core speed (6000ps = half of 12000ps period)
+    logic io_master_clk;
+    bsg_nonsynth_clock_gen #(6000) clk_gen_io_master (io_master_clk);
+
+    // ============================================================
+    // Testbench Reset (for trace replays only)
+    // ============================================================
+    logic hard_reset;
+    bsg_nonsynth_reset_gen #(
+        .num_clocks_p    (1),
+        .reset_cycles_lo_p(1),
+        .reset_cycles_hi_p(2)
+    ) reset_gen_tb (
+        .clk_i        ( core_clk   ),
+        .async_reset_o( hard_reset )
+    );
+
+    // // ----- Reset stages (mirrors bsg_link reference tb staging) -----
+    // logic fpga_core_reset;
+    // logic fpga_tx_io_link_reset;
+    // logic fpga_tx_async_token_reset;
+    // logic fpga_rx_io_link_reset;
+    // logic fpga_rx_io_link_reset_sync;
 
     // ----- Pad bus -----
     wire vdd_io = 1'b1;
@@ -148,20 +170,21 @@ module chip_top_tb;
     assign asic_to_fpga_data[16] = pad[13];
 
     // ----- FPGA-side bsg_link instances (peers to chip's wrapper) -----
-    logic [FLIT_WIDTH-1:0] fpga_tx_data;
+    logic [DATA_WIDTH-1:0] fpga_tx_data;
     logic                  fpga_tx_valid;
-    logic                  fpga_tx_ready;
-    logic [FLIT_WIDTH-1:0] fpga_rx_data;
-    logic                  fpga_rx_valid;
+    logic                  link_tx_ready;
+    logic [DATA_WIDTH-1:0] link_rx_data;
+    logic                  link_rx_valid;
     logic                  fpga_rx_yumi;
+    logic                  link_rx_parity_error;
 
-    logic                  tx_data_i; // This is the data that comes out of trace replay
-    logic                  tx_parity_low;
-    logic                  tx_parity_high;
-    logic                  rx_ok_low;
-    logic                  rx_ok_high;
-    logic                  rx_data_o; // This is the data that goes into trace replay
-    logic                  rx_parity_error_o;
+    // logic                  tx_data_i; // This is the data that comes out of trace replay
+    // logic                  tx_parity_low;
+    // logic                  tx_parity_high;
+    // logic                  rx_ok_low;
+    // logic                  rx_ok_high;
+    // logic                  rx_data_o; // This is the data that goes into trace replay
+    // logic                  rx_parity_error_o;
 
     /*
     // TX PATH: Parity Generation & Upstream
@@ -245,30 +268,35 @@ module chip_top_tb;
     assign rx_parity_error_o = rx_valid_o && (!rx_ok_low || !rx_ok_high);
     */
 
+    // wire io_master_clk = core_clk;
+    logic core_link_reset_int;
+    logic io_link_reset_int;
+    logic async_token_reset_int;
+
     bsg_link_wrapper #(
         .FLIT_WIDTH    (32),
         .CHANNEL_WIDTH (17)
     ) u_bsg_link_wrapper (
         .core_clk_i                (core_clk),
-        .reset_i                   (core_link_reset_int),
+        .reset_i                   (core_link_reset_int), // fpga_core_reset
         .io_master_clk_i           (io_master_clk),
-        .upstream_io_link_reset_i  (io_link_reset_int),
-        .async_token_reset_i       (async_token_reset_int),
-        .token_clk_i               (token_clk),
-        .downstream_io_link_reset_i(io_link_reset_int),
-        .downstream_io_clk_i       (dn_clk),
-        .downstream_io_data_i      (dn_data),
-        .downstream_io_valid_i     (dn_valid),
-        .upstream_io_clk_r_o       (up_clk),
-        .upstream_io_data_r_o      (up_data),
-        .upstream_io_valid_r_o     (up_valid),
-        .downstream_core_token_r_o (dn_token),
+        .upstream_io_link_reset_i  (io_link_reset_int), // fpga_tx_io_link_reset
+        .async_token_reset_i       (async_token_reset_int), // fpga_tx_async_token_reset
+        .token_clk_i               (asic_to_fpga_token), // asic_to_fpga_token
+        .downstream_io_link_reset_i(io_link_reset_int), // fpga_rx_io_link_reset_sync
+        .downstream_io_clk_i       (asic_to_fpga_clk), // asic_to_fpga_clk
+        .downstream_io_data_i      (asic_to_fpga_data),
+        .downstream_io_valid_i     (asic_to_fpga_valid),
+        .upstream_io_clk_r_o       (fpga_to_asic_clk),
+        .upstream_io_data_r_o      (fpga_to_asic_data),
+        .upstream_io_valid_r_o     (fpga_to_asic_valid),
+        .downstream_core_token_r_o (fpga_to_asic_token),
         .rx_data_o                 (link_rx_data),
         .rx_valid_o                (link_rx_valid),
-        .rx_yumi_i                 (link_rx_yumi),
-        .rx_parity_error_o         (link_rx_parity),
-        .tx_data_i                 (link_tx_data),
-        .tx_valid_i                (link_tx_valid),
+        .rx_yumi_i                 (fpga_rx_yumi),
+        .rx_parity_error_o         (link_rx_parity_error),
+        .tx_data_i                 (fpga_tx_data),
+        .tx_valid_i                (fpga_tx_valid),
         .tx_ready_o                (link_tx_ready)
     );
 
@@ -291,75 +319,78 @@ module chip_top_tb;
 
     // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
     // hard_reset deasserts. Held 0 during hard_reset (matches bsg ref tb).
-    wire async_token_reset_int = ~hard_reset
+    assign async_token_reset_int = ~hard_reset
                                  && (reset_cnt >= 6'd2)
                                  && (reset_cnt <  6'd5);
 
     // io_link_resets: held high while hard_reset is asserted, then for
     // ~16 more core_clk cycles after the async_token_reset pulse.
-    wire io_link_reset_int  = hard_reset || (reset_cnt < 6'd16);
+    assign io_link_reset_int  = hard_reset || (reset_cnt < 6'd16);
 
     // core link reset: released last (~32 cycles after hard_reset).
-    wire core_link_reset_int = hard_reset || (reset_cnt < 6'd32);
+    assign core_link_reset_int = hard_reset || (reset_cnt < 6'd32);
 
-    pad_oe[44] = 1'b1; pad_oe[45] = 1'b1;
-    pad_oe[8]  = 1'b1; pad_oe[9]  = 1'b1;
-    pad_oe[12] = 1'b1;
-    pad_oe[13] = 1'b1; pad_oe[24] = 1'b1; pad_oe[26] = 1'b1;
-    pad_oe[11] = 1'b1; pad_oe[46] = 1'b1;
-    for (int dn = 0; dn < 8; dn++) pad_oe[dn] = 1'b1;
-    pad_oe[37] = 1'b1; pad_oe[36] = 1'b1;
-    pad_oe[39] = 1'b1; pad_oe[38] = 1'b1;
-    pad_oe[41] = 1'b1; pad_oe[40] = 1'b1;
-    pad_oe[43] = 1'b1; pad_oe[42] = 1'b1;
+    always_comb begin
+        pad_oe[44] = 1'b1; pad_oe[45] = 1'b1;
+        pad_oe[8]  = 1'b1; pad_oe[9]  = 1'b1;
+        pad_oe[12] = 1'b1;
+        // pad_oe[13] = 1'b1; pad_oe[24] = 1'b1; pad_oe[26] = 1'b1;
+        pad_oe[11] = 1'b1; pad_oe[46] = 1'b1;
+        for (int dn = 0; dn < 8; dn++) pad_oe[dn] = 1'b1;
+        pad_oe[37] = 1'b1; pad_oe[36] = 1'b1;
+        pad_oe[39] = 1'b1; pad_oe[38] = 1'b1;
+        pad_oe[41] = 1'b1; pad_oe[40] = 1'b1;
+        pad_oe[43] = 1'b1; pad_oe[42] = 1'b1;
+    end
 
-    assign fpga_rx_yumi = fpga_rx_valid;
+    // assign fpga_rx_yumi = link_rx_valid;
 
     // Track FPGA-side RX from chip
-    logic [FLIT_WIDTH-1:0] fpga_last_rx_data;
+    logic [DATA_WIDTH-1:0] link_last_rx_data;
     integer                fpga_rx_count;
     always_ff @(posedge core_clk) begin
         if (hard_reset) begin
             fpga_rx_count     <= 0;
-            fpga_last_rx_data <= '0;
-        end else if (fpga_rx_valid && fpga_rx_yumi) begin
+            link_last_rx_data <= '0;
+        end else if (link_rx_valid && fpga_rx_yumi) begin
             fpga_rx_count     <= fpga_rx_count + 1;
-            fpga_last_rx_data <= fpga_rx_data;
+            link_last_rx_data <= link_rx_data;
         end
     end
 
-    // ----- Clock generation -----
-    initial begin
-        core_clk = 1'b0;
-        forever #10000 core_clk = ~core_clk;      // 50 MHz
-    end
+    // // ----- Clock generation -----
+    // initial begin
+    //     core_clk = 1'b0;
+    //     forever #10000 core_clk = ~core_clk;      // 50 MHz
+    // end
 
-    initial begin
-        dn_io_clk = 1'b0;
-        forever #10000 dn_io_clk = ~dn_io_clk;    // 50 MHz → bsg_link_oddr_phy ÷2 → 25 MHz forwarded clock at PAD[8]
-    end
+    // initial begin
+    //     dn_io_clk = 1'b0;
+    //     forever #10000 dn_io_clk = ~dn_io_clk;    // 50 MHz → bsg_link_oddr_phy ÷2 → 25 MHz forwarded clock at PAD[8]
+    // end
 
     //logic tr_v_lo;
     //logic [DATA_WIDTH-1:0] tr_data_lo;
     logic tr_yumi_li;
-    logic [DATA_WIDTH+4] rom_data_lo_send, rom_data_lo_recv;
+    logic [DATA_WIDTH+4-1:0] rom_data_send, rom_data_recv;
     logic [31:0] rom_addr_send, rom_addr_recv;
+    logic done_send, done_recv;
 
     // --- Send Trace Replay (Feeds in_flit) ---
     bsg_fsb_node_trace_replay #(
         .ring_width_p(DATA_WIDTH)
        ,.rom_addr_width_p(32)
     ) tracer_send (
-         .clk_i  (~clk_i) // Run replay on opposite edge for stability
-        ,.reset_i(reset_i)
+         .clk_i  (~core_clk) // Run replay on opposite edge for stability
+        ,.reset_i(hard_reset)
         ,.en_i   (1'b1)
         
         ,.v_i    (1'b0)
         ,.data_i ('0)
         ,.ready_o()
 
-        ,.v_o    (fpga_to_asic_valid)
-        ,.data_o (fpga_to_asic_data)
+        ,.v_o    (fpga_tx_valid)
+        ,.data_o (fpga_tx_data)
         ,.yumi_i (tr_yumi_li)
 
         ,.rom_addr_o(rom_addr_send)
@@ -378,10 +409,10 @@ module chip_top_tb;
     logic tr_v_li;
     logic[31:0] link_out_data_o_r;
 
-    always_ff @(negedge clk_i) begin 
-        link_out_yumi_i <= tr_ready_lo && link_out_v_o;
-        tr_v_li <= link_out_v_o;
-        link_out_data_o_r <= link_out_data_o;
+    always_ff @(negedge core_clk) begin 
+        fpga_rx_yumi <= tr_ready_lo && link_rx_valid;
+        tr_v_li <= link_rx_valid;
+        link_out_data_o_r <= link_rx_data;
     end
 
     // --- Receive Trace Replay (Validates link_out) ---
@@ -389,8 +420,8 @@ module chip_top_tb;
         .ring_width_p(DATA_WIDTH)
        ,.rom_addr_width_p(32)
     ) tracer_recv (
-         .clk_i  (~clk_i)
-        ,.reset_i(reset_i)
+         .clk_i  (~core_clk)
+        ,.reset_i(hard_reset)
         ,.en_i   (1'b1)
 
         ,.v_i    (tr_v_li)
