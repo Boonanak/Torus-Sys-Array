@@ -12,7 +12,7 @@ synthesis.inputs.input_files: [
 
   "v/Top_level/bsg_test_node_client.v",
 
-  "v/synthesis/chip_top.sv",
+  "synthesis/chip_top.sv",
   "v/Top_level/bsg_link_parity_wrapper.sv",
 
   "v/PE/TwistPE.sv",
