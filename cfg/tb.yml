@@ -11,13 +11,13 @@ sim.inputs.tb_incdir_meta: [subst]
 # List of Verilog testbenches (or other sources) needed for simulation only.
 sim.inputs.tb_input_files: [
   # TODO: list verilog files
-  "v/Top_level/Top_level_tb.sv",
-  "v/Top_level/Top_level_tb_twotrace.sv",
-
   "v/memory/scratchpad_pkg.sv",
   "v/PE/PE_pkg.sv",
   "v/controller/ctrl_pkg.sv",
   
+  "v/Top_level/Top_level_tb.sv",
+  "v/Top_level/Top_level_tb_twotrace.sv",
+
   "v/Top_level/top_chip_tb.sv",
 
   "v/controller/mem_arbiter_tb.sv",

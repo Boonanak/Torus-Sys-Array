@@ -272,13 +272,54 @@ module chip_top_tb;
         .tx_ready_o                (link_tx_ready)
     );
 
+    // ----- Internal reset sequencer for bsg_link init protocol -----
+    // bsg_async_credit_counter requires:
+    //   1. Assert r_reset (= io_link_reset, on io_clk domain).
+    //   2. While r_reset asserted, pulse w_reset (= async_token_reset)
+    //      0 -> 1 -> 0 at least once.
+    //   3. Wait >=4 r_clock posedges before deasserting r_reset.
+    //   4. Deassert r_reset.
+    //
+    // Tying every link reset to hard_reset would violate that ordering, so
+    // the chip generates the staged reset internally from a single counter
+    // that starts running once hard_reset deasserts.
+    reg [5:0] reset_cnt = 6'd0;
+    always @(posedge core_clk) begin
+        if (hard_reset)              reset_cnt <= 6'd0;
+        else if (reset_cnt < 6'd63)  reset_cnt <= reset_cnt + 6'd1;
+    end
+
+    // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
+    // hard_reset deasserts. Held 0 during hard_reset (matches bsg ref tb).
+    wire async_token_reset_int = ~hard_reset
+                                 && (reset_cnt >= 6'd2)
+                                 && (reset_cnt <  6'd5);
+
+    // io_link_resets: held high while hard_reset is asserted, then for
+    // ~16 more core_clk cycles after the async_token_reset pulse.
+    wire io_link_reset_int  = hard_reset || (reset_cnt < 6'd16);
+
+    // core link reset: released last (~32 cycles after hard_reset).
+    wire core_link_reset_int = hard_reset || (reset_cnt < 6'd32);
+
+    pad_oe[44] = 1'b1; pad_oe[45] = 1'b1;
+    pad_oe[8]  = 1'b1; pad_oe[9]  = 1'b1;
+    pad_oe[12] = 1'b1;
+    pad_oe[13] = 1'b1; pad_oe[24] = 1'b1; pad_oe[26] = 1'b1;
+    pad_oe[11] = 1'b1; pad_oe[46] = 1'b1;
+    for (int dn = 0; dn < 8; dn++) pad_oe[dn] = 1'b1;
+    pad_oe[37] = 1'b1; pad_oe[36] = 1'b1;
+    pad_oe[39] = 1'b1; pad_oe[38] = 1'b1;
+    pad_oe[41] = 1'b1; pad_oe[40] = 1'b1;
+    pad_oe[43] = 1'b1; pad_oe[42] = 1'b1;
+
     assign fpga_rx_yumi = fpga_rx_valid;
 
     // Track FPGA-side RX from chip
     logic [FLIT_WIDTH-1:0] fpga_last_rx_data;
     integer                fpga_rx_count;
     always_ff @(posedge core_clk) begin
-        if (fpga_core_reset) begin
+        if (hard_reset) begin
             fpga_rx_count     <= 0;
             fpga_last_rx_data <= '0;
         end else if (fpga_rx_valid && fpga_rx_yumi) begin
@@ -298,9 +339,11 @@ module chip_top_tb;
         forever #10000 dn_io_clk = ~dn_io_clk;    // 50 MHz → bsg_link_oddr_phy ÷2 → 25 MHz forwarded clock at PAD[8]
     end
 
-    logic tr_v_lo;
-    logic [DATA_WIDTH-1:0] tr_data_lo;
-    logic tr_yumi
+    //logic tr_v_lo;
+    //logic [DATA_WIDTH-1:0] tr_data_lo;
+    logic tr_yumi_li;
+    logic [DATA_WIDTH+4] rom_data_lo_send, rom_data_lo_recv;
+    logic [31:0] rom_addr_send, rom_addr_recv;
 
     // --- Send Trace Replay (Feeds in_flit) ---
     bsg_fsb_node_trace_replay #(
@@ -315,8 +358,8 @@ module chip_top_tb;
         ,.data_i ('0)
         ,.ready_o()
 
-        ,.v_o    (tr_v_lo)
-        ,.data_o (tr_data_lo)
+        ,.v_o    (fpga_to_asic_valid)
+        ,.data_o (fpga_to_asic_data)
         ,.yumi_i (tr_yumi_li)
 
         ,.rom_addr_o(rom_addr_send)
@@ -326,10 +369,10 @@ module chip_top_tb;
     );
 
     // Mapping Trace Replay to Top Level Input
-    assign fpga_tx_data   = tr_data_lo;
-    assign fpga_tx_valid  = tr_v_lo;
-    assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
-    assign tr_yumi_li     = in_flit_ready & in_flit_v;
+    // assign fpga_tx_data   = tr_data_lo;
+    // assign fpga_tx_valid  = tr_v_lo;
+    // assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
+    assign tr_yumi_li     = link_tx_ready & fpga_to_asic_valid;
 
     logic tr_ready_lo;
     logic tr_v_li;
@@ -343,7 +386,7 @@ module chip_top_tb;
 
     // --- Receive Trace Replay (Validates link_out) ---
     bsg_fsb_node_trace_replay #(
-        .ring_width_p(RECV_WIDTH_lp)
+        .ring_width_p(DATA_WIDTH)
        ,.rom_addr_width_p(32)
     ) tracer_recv (
          .clk_i  (~clk_i)
@@ -363,6 +406,11 @@ module chip_top_tb;
         ,.done_o    (done_recv)
         ,.error_o   ()
     );
+
+    benchmark4_send_trace_rom #(.width_p(DATA_WIDTH+4), .addr_width_p(32)) 
+        ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
+    benchmark4_recv_trace_rom #(.width_p(DATA_WIDTH+4), .addr_width_p(32))
+        ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
     /*
     // ----- Stimulus tasks -----
