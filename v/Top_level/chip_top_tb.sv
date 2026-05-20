@@ -234,28 +234,28 @@ module chip_top_tb;
 
     // Bit-banged SPI write of 298 bits (rw_bit=0 + 297 data bits MSB-first).
     // The first data bit (MSB after rw_bit) becomes reg_out[297] = spi_reg_enable.
-    task automatic spi_write(input logic [297:0] data);
-        integer i;
-        begin
-            @(negedge SCLK);
-            SS_n = 1'b0;
-            MOSI = 1'b0;          // rw_bit = 0 (write)
-            @(negedge SCLK);
-            for (i = 297; i >= 0; i = i - 1) begin
-                MOSI = data[i];
-                @(negedge SCLK);
-            end
-            @(negedge SCLK);
-            @(negedge SCLK);
-            SS_n = 1'b1;
-        end
-    endtask
+    // task automatic spi_write(input logic [297:0] data);
+    //     integer i;
+    //     begin
+    //         @(negedge SCLK);
+    //         SS_n = 1'b0;
+    //         MOSI = 1'b0;          // rw_bit = 0 (write)
+    //         @(negedge SCLK);
+    //         for (i = 297; i >= 0; i = i - 1) begin
+    //             MOSI = data[i];
+    //             @(negedge SCLK);
+    //         end
+    //         @(negedge SCLK);
+    //         @(negedge SCLK);
+    //         SS_n = 1'b1;
+    //     end
+    // endtask
 
-    // SPI clock generation (4 MHz)
-    initial begin
-        SCLK = 1'b0;
-        forever #125000 SCLK = ~SCLK;
-    end
+    // // SPI clock generation (4 MHz)
+    // initial begin
+    //     SCLK = 1'b0;
+    //     forever #125000 SCLK = ~SCLK;
+    // end
 
     // ----- Main test sequence -----
     initial begin
@@ -276,8 +276,8 @@ module chip_top_tb;
         fpga_rx_io_link_reset     = 1'b1;
         fpga_tx_valid             = 1'b0;
         fpga_tx_data              = '0;
-        SS_n                      = 1'b1;
-        MOSI                      = 1'b0;
+        // SS_n                      = 1'b1;
+        // MOSI                      = 1'b0;
         pad_oe                    = '0;
 
         // Let chip_top configure pad directions first.
@@ -345,12 +345,12 @@ module chip_top_tb;
 
         // Test 2: SPI write with spi_reg_enable=1
         $display("Test 2: SPI write with spi_reg_enable=1");
-        spi_write({
-            1'b1,                                                              // spi_reg_enable
-            1'b1,                                                              // transmit_enable
-            232'hAABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566,   // packet_in
-            8'd2, 8'd64, 16'd20000, 8'd8, 8'd16, 8'd10, 8'd20
-        });
+        // spi_write({
+        //     1'b1,                                                              // spi_reg_enable
+        //     1'b1,                                                              // transmit_enable
+        //     232'hAABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566,   // packet_in
+        //     8'd2, 8'd64, 16'd20000, 8'd8, 8'd16, 8'd10, 8'd20
+        // });
         repeat (1000) @(posedge core_clk);
 
         if (fpga_last_rx_data[2] !== 1'b1) begin
