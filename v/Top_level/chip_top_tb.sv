@@ -156,13 +156,18 @@ module chip_top_tb;
         .bits_i(trace_data_lo[15:0]),
         .parity_o(fpga_tx_data[16])
     );
-    assign fpga_tx_data[15:0] = trace_data_lo[15:0];
+    
 
     parity_generator #(.WIDTH_p(16)) pg_high (
         .bits_i(trace_data_lo[31:16]),
         .parity_o(fpga_tx_data[31])
     );
-    assign fpga_tx_data[32:17] = trace_data_lo[31:16];
+    
+
+    initial begin
+        assign fpga_tx_data[15:0] = trace_data_lo[15:0];
+        assign fpga_tx_data[32:17] = trace_data_lo[31:16];
+    end
 
     bsg_link_ddr_upstream #(
         .width_p        (FLIT_WIDTH+2),
