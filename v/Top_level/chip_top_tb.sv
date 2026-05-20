@@ -22,7 +22,7 @@
 
 module chip_top_tb;
 
-    localparam int FLIT_WIDTH    = 34;
+    localparam int FLIT_WIDTH    = 32;
     localparam int DATA_WIDTH    = 32;
     localparam int CHANNEL_WIDTH = 17;
 
@@ -51,6 +51,13 @@ module chip_top_tb;
     ) reset_gen_tb (
         .clk_i        ( core_clk   ),
         .async_reset_o( hard_reset )
+    );
+
+    wire hard_reset_sync;
+    async_rst_sync_deassert u_hard_reset_sync(
+        .clk        (core_clk),
+        .rst        (hard_reset),
+        .async_rst_sync_deassert(hard_reset_sync)
     );
 
     // -------- dump waveform -----------
@@ -318,24 +325,27 @@ module chip_top_tb;
     // Tying every link reset to hard_reset would violate that ordering, so
     // the chip generates the staged reset internally from a single counter
     // that starts running once hard_reset deasserts.
-    reg [5:0] reset_cnt = 6'd0;
+    logic [5:0] reset_cnt = 6'd0;
     always @(posedge core_clk) begin
-        if (hard_reset)              reset_cnt <= 6'd0;
+        if (hard_reset_sync)              reset_cnt <= 6'd0;
         else if (reset_cnt < 6'd63)  reset_cnt <= reset_cnt + 6'd1;
     end
 
     // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
     // hard_reset deasserts. Held 0 during hard_reset (matches bsg ref tb).
-    assign async_token_reset_int = ~hard_reset
+    logic async_token_reset_int;
+    assign async_token_reset_int = ~hard_reset_sync
                                  && (reset_cnt >= 6'd2)
                                  && (reset_cnt <  6'd5);
 
     // io_link_resets: held high while hard_reset is asserted, then for
     // ~16 more core_clk cycles after the async_token_reset pulse.
-    assign io_link_reset_int  = hard_reset || (reset_cnt < 6'd16);
+    logic io_link_reset_int;
+    assign io_link_reset_int  = hard_reset_sync || (reset_cnt < 6'd16);
 
     // core link reset: released last (~32 cycles after hard_reset).
-    assign core_link_reset_int = hard_reset || (reset_cnt < 6'd32);
+    logic core_link_reset_int;
+    assign core_link_reset_int = hard_reset_sync || (reset_cnt < 6'd32);
 
     always_comb begin
         pad_oe[44] = 1'b1; pad_oe[45] = 1'b1;
@@ -348,6 +358,7 @@ module chip_top_tb;
         pad_oe[39] = 1'b1; pad_oe[38] = 1'b1;
         pad_oe[41] = 1'b1; pad_oe[40] = 1'b1;
         pad_oe[43] = 1'b1; pad_oe[42] = 1'b1;
+        pad_oe[27] = 1'b1;
     end
 
     // assign fpga_rx_yumi = link_rx_valid;
@@ -389,7 +400,7 @@ module chip_top_tb;
        ,.rom_addr_width_p(32)
     ) tracer_send (
          .clk_i  (~core_clk) // Run replay on opposite edge for stability
-        ,.reset_i(hard_reset)
+        ,.reset_i(core_link_reset_int)
         ,.en_i   (1'b1)
         
         ,.v_i    (1'b0)
@@ -428,7 +439,7 @@ module chip_top_tb;
        ,.rom_addr_width_p(32)
     ) tracer_recv (
          .clk_i  (~core_clk)
-        ,.reset_i(hard_reset)
+        ,.reset_i(core_link_reset_int)
         ,.en_i   (1'b1)
 
         ,.v_i    (tr_v_li)
