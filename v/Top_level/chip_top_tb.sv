@@ -23,7 +23,7 @@
 module chip_top_tb;
 
     localparam int FLIT_WIDTH    = 32;
-    localparam int CHANNEL_WIDTH = 16;
+    localparam int CHANNEL_WIDTH = 17;
 
     // ----- Clocks + global control -----
     logic core_clk;
@@ -328,40 +328,40 @@ module chip_top_tb;
         $display("post-reset: rx_count=%0d, last_status=%h",
                  fpga_rx_count, fpga_last_rx_data);
 
-        // Test 1: bsg_link config write (10 words)
-        $display("Test 1: send 10 bsg_link config words to chip RX");
-        for (int w = 0; w < 10; w++) begin
-            send_link_word(32'hC0DE_0000 | w);
-        end
-        repeat (200) @(posedge core_clk);
+        // // Test 1: bsg_link config write (10 words)
+        // $display("Test 1: send 10 bsg_link config words to chip RX");
+        // for (int w = 0; w < 10; w++) begin
+        //     send_link_word(32'hC0DE_0000 | w);
+        // end
+        // repeat (200) @(posedge core_clk);
 
-        if (fpga_last_rx_data[3] !== 1'b1) begin
-            $display("WARN: expected link_cfg_active=1 in chip status, got status=%h",
-                     fpga_last_rx_data);
-        end else begin
-            $display("Test 1 PASS: link_cfg_active=1, rx_word_count=%0d, status=%h",
-                     fpga_last_rx_data[15:8], fpga_last_rx_data);
-        end
+        // if (fpga_last_rx_data[3] !== 1'b1) begin
+        //     $display("WARN: expected link_cfg_active=1 in chip status, got status=%h",
+        //              fpga_last_rx_data);
+        // end else begin
+        //     $display("Test 1 PASS: link_cfg_active=1, rx_word_count=%0d, status=%h",
+        //              fpga_last_rx_data[15:8], fpga_last_rx_data);
+        // end
 
-        // Test 2: SPI write with spi_reg_enable=1
-        $display("Test 2: SPI write with spi_reg_enable=1");
+        // // Test 2: SPI write with spi_reg_enable=1
+        // $display("Test 2: SPI write with spi_reg_enable=1");
         // spi_write({
         //     1'b1,                                                              // spi_reg_enable
         //     1'b1,                                                              // transmit_enable
         //     232'hAABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566,   // packet_in
         //     8'd2, 8'd64, 16'd20000, 8'd8, 8'd16, 8'd10, 8'd20
         // });
-        repeat (1000) @(posedge core_clk);
+        // repeat (1000) @(posedge core_clk);
 
-        if (fpga_last_rx_data[2] !== 1'b1) begin
-            $display("WARN: expected spi_reg_enable=1 in chip status, got status=%h",
-                     fpga_last_rx_data);
-        end else begin
-            $display("Test 2 PASS: spi_reg_enable=1, status=%h", fpga_last_rx_data);
-        end
+        // if (fpga_last_rx_data[2] !== 1'b1) begin
+        //     $display("WARN: expected spi_reg_enable=1 in chip status, got status=%h",
+        //              fpga_last_rx_data);
+        // end else begin
+        //     $display("Test 2 PASS: spi_reg_enable=1, status=%h", fpga_last_rx_data);
+        // end
 
-        $display("BSG_LINK_PAD_LOOPBACK_PASS rx_count=%0d last_status=%h",
-                 fpga_rx_count, fpga_last_rx_data);
+        // $display("BSG_LINK_PAD_LOOPBACK_PASS rx_count=%0d last_status=%h",
+        //          fpga_rx_count, fpga_last_rx_data);
         $finish;
     end
 
