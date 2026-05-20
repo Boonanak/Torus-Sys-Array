@@ -150,7 +150,7 @@ module chip_top_tb;
     logic                  fpga_rx_valid;
     logic                  fpga_rx_yumi;
     bsg_link_ddr_upstream #(
-        .width_p        (FLIT_WIDTH),
+        .width_p        (FLIT_WIDTH+2),
         .channel_width_p(CHANNEL_WIDTH),
         .num_channels_p (1),
         .lg_fifo_depth_p(6)
@@ -176,7 +176,7 @@ module chip_top_tb;
     );
 
     bsg_link_ddr_downstream #(
-        .width_p        (FLIT_WIDTH),
+        .width_p        (FLIT_WIDTH+2),
         .channel_width_p(CHANNEL_WIDTH),
         .num_channels_p (1),
         .lg_fifo_depth_p(6)
@@ -275,10 +275,10 @@ module chip_top_tb;
         fpga_tx_async_token_reset = 1'b0;
         fpga_rx_io_link_reset     = 1'b1;
         fpga_tx_valid             = 1'b0;
-        fpga_tx_data              = '0;
+        fpga_tx_data              = 32'b0;
         // SS_n                      = 1'b1;
         // MOSI                      = 1'b0;
-        pad_oe                    = '0;
+        pad_oe                    = 48'b0;
 
         // Let chip_top configure pad directions first.
         #1000;
