@@ -223,7 +223,7 @@ module chip_top_tb;
     );
     assign dut_data_lo[31:16] = fpga_rx_data[32:17];
 
-    assign fpga_rx_yumi = fpga_rx_valid;
+    // assign fpga_rx_yumi = fpga_rx_valid; // MIGHT NEED THIS LINE UNCOMMENTED
 
     // Track FPGA-side RX from chip
     logic [FLIT_WIDTH-1:0] fpga_last_rx_data;
@@ -250,17 +250,17 @@ module chip_top_tb;
     end
 
     // ----- Stimulus tasks -----
-    task automatic send_link_word(input logic [FLIT_WIDTH-1:0] data);
-        begin
-            fpga_tx_data  <= data;
-            fpga_tx_valid <= 1'b1;
-            do begin
-                @(posedge core_clk);
-            end while (!fpga_tx_ready);
-            fpga_tx_valid <= 1'b0;
-            @(posedge core_clk);
-        end
-    endtask
+    // task automatic send_link_word(input logic [FLIT_WIDTH-1:0] data);
+    //     begin
+    //         fpga_tx_data  <= data;
+    //         fpga_tx_valid <= 1'b1;
+    //         do begin
+    //             @(posedge core_clk);
+    //         end while (!fpga_tx_ready);
+    //         fpga_tx_valid <= 1'b0;
+    //         @(posedge core_clk);
+    //     end
+    // endtask
 
     // Bit-banged SPI write of 298 bits (rw_bit=0 + 297 data bits MSB-first).
     // The first data bit (MSB after rw_bit) becomes reg_out[297] = spi_reg_enable.
@@ -378,8 +378,8 @@ module chip_top_tb;
         fpga_tx_io_link_reset     = 1'b1;
         fpga_tx_async_token_reset = 1'b0;
         fpga_rx_io_link_reset     = 1'b1;
-        fpga_tx_valid             = 1'b0;
-        fpga_tx_data              = 32'b0;
+        // fpga_tx_valid             = 1'b0;
+        // fpga_tx_data              = 32'b0;
         // SS_n                      = 1'b1;
         // MOSI                      = 1'b0;
         pad_oe                    = 48'b0;
