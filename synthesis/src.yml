@@ -82,9 +82,31 @@ synthesis.inputs.input_files: [
   "../Torus-Sys-Array/v/transpose/shift_reg_simple.sv",
   "../Torus-Sys-Array/v/transpose/tp_node.sv",
   "../Torus-Sys-Array/v/transpose/transpose.sv",
-  "zeroscatter/chip_top.sv",
+  "zeroscatter/chip_top.sv"
 ]
 synthesis.inputs.input_files_meta: [append, subst]
+
+# Conformal LEC needs its own search path list
+
+formal.inputs.hdl_search_paths: [
+  "../Torus-Sys-Array/v",
+  "../Torus-Sys-Array/v/Top_level",
+  "../Torus-Sys-Array/v/CSR",
+  "../Torus-Sys-Array/v/PE",
+  "../Torus-Sys-Array/v/sys_array",
+  "../Torus-Sys-Array/v/memory",
+  "../Torus-Sys-Array/v/controller",
+  "../Torus-Sys-Array/v/transpose",
+
+  "${bsg_root}/bsg_misc",
+  "${bsg_root}/bsg_async",
+  "${bsg_root}/bsg_dataflow",
+  "${bsg_root}/bsg_link",
+  "${bsg_root}/bsg_mem"
+]
+formal.inputs.hdl_search_paths_meta: [append, subst]
+
+
 
 # Add synthesis input files to simulation inputs (only for RTL sim).
 sim.inputs.input_files: synthesis.inputs.input_files
