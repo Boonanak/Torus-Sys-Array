@@ -325,7 +325,7 @@ module chip_top_tb;
 
     logic tr_ready_lo;
     logic tr_v_li;
-    logic[31:0] link_out_data_o_r;
+    logic[31:0] dut_data_r;
 
     always_ff @(negedge core_clk) begin 
         fpga_rx_yumi <= tr_ready_lo && fpga_rx_valid;
@@ -335,7 +335,7 @@ module chip_top_tb;
 
     // --- Receive Trace Replay (Validates link_out) ---
     bsg_fsb_node_trace_replay #(
-        .ring_width_p(DATA_WIDTH)
+        .ring_width_p(FLIT_WIDTH)
        ,.rom_addr_width_p(32)
     ) tracer_recv (
          .clk_i  (~core_clk)
@@ -343,7 +343,7 @@ module chip_top_tb;
         ,.en_i   (trace_enable)
 
         ,.v_i    (tr_v_li)
-        ,.data_i (link_out_data_o_r)
+        ,.data_i (dut_data_r)
         ,.ready_o(tr_ready_lo) // This ready effectively acts as 'yumi' for the DUT
 
         ,.v_o    ()
