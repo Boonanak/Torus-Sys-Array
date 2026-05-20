@@ -165,8 +165,8 @@ module chip_top_tb;
     
 
     initial begin
-        assign fpga_tx_data[15:0] = trace_data_lo[15:0];
-        assign fpga_tx_data[32:17] = trace_data_lo[31:16];
+        fpga_tx_data[15:0] = trace_data_lo[15:0];
+        fpga_tx_data[32:17] = trace_data_lo[31:16];
     end
 
     bsg_link_ddr_upstream #(
