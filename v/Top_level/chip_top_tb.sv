@@ -473,7 +473,7 @@ module chip_top_tb;
 
         // $display("BSG_LINK_PAD_LOOPBACK_PASS rx_count=%0d last_status=%h",
         //          fpga_rx_count, fpga_last_rx_data);
-        repeat (5000000)
+        repeat (5000000) @(posedge core_clk);
         $finish;
     end
 
