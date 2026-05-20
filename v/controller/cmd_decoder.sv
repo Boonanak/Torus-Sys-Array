@@ -59,7 +59,7 @@ module cmd_decoder (
     end
 
     // Handshake logic
-    assign flit_ready_o = (st_r != S_SEND);
+    assign flit_ready_o = (st_r != S_SEND) && flit_v_i;
     assign cmd_v_o      = (st_r == S_SEND);
     assign cmd_o        = cmd_r;
     assign err_o        = err_n;
