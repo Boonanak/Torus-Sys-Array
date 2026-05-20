@@ -324,7 +324,7 @@ module chip_top (
     // ----- Student-editable design instance -----
     top_chip u_soc_top (
         .clk_i              (core_clk),
-        .reset_i       (hard_reset_sync),
+        .reset_i       (core_link_reset_int),
 
         // bsg_link (config write path B + status return)
         // Input
