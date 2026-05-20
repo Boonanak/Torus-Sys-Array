@@ -26,6 +26,8 @@ module chip_top_tb;
     initial begin 
         $fsdbDumpfile("waveform.fsdb");
         $fsdbDumpvars("+all");
+        $fsdbDumpvars(0, chip_top_tb);  // 0 = all levels, chip_top_tb = top scope
+        $fsdbDumpMDA();
     end
 
     localparam int FLIT_WIDTH    = 32;
