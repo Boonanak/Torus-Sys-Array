@@ -183,7 +183,7 @@ module chip_top_tb;
 
     bsg_link_ddr_upstream #(
         .width_p        (FLIT_WIDTH+2),
-        .channel_width_p(CHANNEL_WIDTH),
+        .channel_width_p(CHANNEL_WIDTH+1),
         .num_channels_p (1),
         .lg_fifo_depth_p(6)
     ) fpga_tx_link (
@@ -209,7 +209,7 @@ module chip_top_tb;
 
     bsg_link_ddr_downstream #(
         .width_p        (FLIT_WIDTH+2),
-        .channel_width_p(CHANNEL_WIDTH),
+        .channel_width_p(CHANNEL_WIDTH+1),
         .num_channels_p (1),
         .lg_fifo_depth_p(6)
     ) fpga_rx_link (
