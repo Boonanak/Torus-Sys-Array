@@ -152,19 +152,33 @@ module chip_top_tb;
     logic                  fpga_rx_valid;
     logic                  fpga_rx_yumi;
 
-    parity_generator #(.WIDTH_p(16)) pg_low (
-        .bits_i(trace_data_lo[15:0]),
-        .parity_o(fpga_tx_data[16])
-    );
+    // parity_generator #(.WIDTH_p(16)) pg_low (
+    //     .bits_i(trace_data_lo[15:0]),
+    //     .parity_o(fpga_tx_data[16])
+    // );
     
 
-    parity_generator #(.WIDTH_p(16)) pg_high (
-        .bits_i(trace_data_lo[31:16]),
-        .parity_o(fpga_tx_data[33])
-    );
+    // parity_generator #(.WIDTH_p(16)) pg_high (
+    //     .bits_i(trace_data_lo[31:16]),
+    //     .parity_o(fpga_tx_data[33])
+    // );
     
-    assign fpga_tx_data[15:0] = trace_data_lo[15:0];
-    assign fpga_tx_data[32:17] = trace_data_lo[31:16];
+    // assign fpga_tx_data[15:0] = trace_data_lo[15:0];
+    // assign fpga_tx_data[32:17] = trace_data_lo[31:16];
+
+    logic parity_lo, parity_hi;
+
+    parity_generator #(.WIDTH_p(16)) pg_low (
+        .bits_i  (trace_data_lo[15:0]),
+        .parity_o(parity_lo)
+    );
+
+    parity_generator #(.WIDTH_p(16)) pg_high (
+        .bits_i  (trace_data_lo[31:16]),
+        .parity_o(parity_hi)
+    );
+
+    assign fpga_tx_data = {parity_hi, trace_data_lo[31:16], parity_lo, trace_data_lo[15:0]};
     
 
     bsg_link_ddr_upstream #(
@@ -473,7 +487,7 @@ module chip_top_tb;
 
         // $display("BSG_LINK_PAD_LOOPBACK_PASS rx_count=%0d last_status=%h",
         //          fpga_rx_count, fpga_last_rx_data);
-        repeat (50000) @(posedge core_clk);
+        repeat (100000) @(posedge core_clk);
         $finish;
     end
 
