@@ -415,6 +415,7 @@ module chip_top_tb;
         pad_oe[39] = 1'b1; pad_oe[38] = 1'b1;
         pad_oe[41] = 1'b1; pad_oe[40] = 1'b1;
         pad_oe[43] = 1'b1; pad_oe[42] = 1'b1;
+        pad_oe[27] = 1'b1;
 
         // Reset bring-up order for our chip:
         //  1) Pulse FPGA TX async_token_reset (chip RX side will see tokens
