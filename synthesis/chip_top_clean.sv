@@ -169,14 +169,14 @@ module chip_top (
 
     wire dn_clk;
     wire dn_valid;
-    wire [16:0] dn_data;
+    wire [17:0] dn_data;
     wire dn_token;            // chip output, drives PAD[10]
 
 
     wire token_clk;
     wire up_clk;              // chip output, drives PAD[15]
     wire up_valid;            // chip output, drives PAD[14]
-    wire [16:0] up_data;      // chip outputs
+    wire [17:0] up_data;      // chip outputs
 
 
     // wire sclk_in;
@@ -437,7 +437,7 @@ module chip_top (
         .reset_i(core_link_reset_int),
         .in_flit(link_rx_data_real),
         .in_flit_v(link_rx_valid),
-        .in_flit_par_ok(),
+        .in_flit_par_ok(!link_rx_parity_error),
         .in_flit_ready(link_rx_yumi),
         .link_out_v_o(link_tx_valid),
         .link_out_data_o(link_tx_data_real),
