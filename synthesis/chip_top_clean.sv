@@ -311,7 +311,7 @@ module chip_top (
         .core_clk_i                (core_clk),
         .reset_i                   (core_link_reset_int),
         .io_master_clk_i           (io_master_clk),
-        .upstream_io_link_reset_i  (io_link_reset_int           ),
+        .upstream_io_link_reset_i  (io_link_reset_int),
         .async_token_reset_i       (async_token_reset_int),
         .token_clk_i               (token_clk),
         .downstream_io_link_reset_i(downstream_io_link_reset_int),

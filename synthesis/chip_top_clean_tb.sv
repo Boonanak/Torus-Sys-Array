@@ -209,6 +209,61 @@ module chip_top_tb;
         end
     end
 
+    // ----- Internal reset sequencer for bsg_link init protocol -----
+    // bsg_async_credit_counter requires:
+    //   1. Assert r_reset (= io_link_reset, on io_clk domain).
+    //   2. While r_reset asserted, pulse w_reset (= async_token_reset)
+    //      0 -> 1 -> 0 at least once.
+    //   3. Wait >=4 r_clock posedges before deasserting r_reset.
+    //   4. Deassert r_reset.
+    //
+    // Tying every link reset to hard_reset would violate that ordering, so
+    // the chip generates the staged reset internally from a single counter
+    // that starts running once hard_reset deasserts.
+    reg [5:0] reset_cnt = 6'd0;
+    always @(posedge core_clk) begin
+        if (hard_reset_sync)              reset_cnt <= 6'd0;
+        else if (reset_cnt < 6'd63)       reset_cnt <= reset_cnt + 6'd1;
+    end
+
+    // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
+    // hard_reset_sync deasserts. Held 0 during reset (matches bsg ref tb).
+    logic async_token_reset_int;
+    assign async_token_reset_int = ~hard_reset_sync
+                                 && (reset_cnt >= 6'd2)
+                                 && (reset_cnt <  6'd5);
+    assign fpga_tx_async_token_reset = async_token_reset_int;
+
+    // io_link_resets: held high while reset is asserted, then for
+    // ~16 more core_clk cycles after the async_token_reset pulse.
+    // upstream (TX) releases first so the other chip's downstream FIFO
+    // write-side sees clock edges while its own reset is still asserted,
+    // satisfying the BSG sync-reset requirement for bsg_circular_ptr.
+    // downstream (RX) holds 12 extra core_clk cycles after upstream releases.
+    // UP_CLK is 25 MHz (= core_clk/2), so 12 core cycles = 6 UP_CLK cycles of
+    // margin, ensuring the bsg_async_ptr_gray sync-reset fires 4+ times before
+    // the RX FIFO write-side reset deasserts.  Stays clear of core_link_reset
+    // at cnt=32.
+    logic io_link_reset_int;
+    assign io_link_reset_int            = hard_reset_sync || (reset_cnt < 6'd16);
+    assign fpga_tx_io_link_reset = io_link_reset_int;
+    logic downstream_io_link_reset_int
+    assign downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
+    assign fpga_rx_io_link_reset;
+
+    // core link reset: released last (~32 cycles after hard_reset_sync).
+    logic core_link_reset_int;
+    assign core_link_reset_int = hard_reset_sync || (reset_cnt < 6'd32);
+    assign fpga_core_reset = core_link_reset_int;
+
+    // Synchronize hard_reset deassert into core_clk domain.
+    // Assert is still combinationally fast (2-FF chain clears asynchronously).
+    async_rst_sync_deassert u_hard_reset_sync (
+        .clk                    (core_clk),
+        .rst                    (hard_reset),
+        .async_rst_sync_deassert(hard_reset_sync)
+    );
+
     // ----- Clock generation -----
     initial begin
         core_clk = 1'b0;
@@ -271,10 +326,10 @@ module chip_top_tb;
         $fsdbDumpMDA();   // pack arrays so DDR data buses stay readable
 
         hard_reset                = 1'b1;
-        fpga_core_reset           = 1'b1;
-        fpga_tx_io_link_reset     = 1'b1;
-        fpga_tx_async_token_reset = 1'b0;
-        fpga_rx_io_link_reset     = 1'b1;
+        // fpga_core_reset           = 1'b1;
+        // fpga_tx_io_link_reset     = 1'b1;
+        // fpga_tx_async_token_reset = 1'b0;
+        // fpga_rx_io_link_reset     = 1'b1;
         fpga_tx_valid             = 1'b0;
         fpga_tx_data              = '0;
         SS_n                      = 1'b1;
@@ -307,12 +362,12 @@ module chip_top_tb;
         //     so the FPGA RX side sees a valid up_clk from the chip.
         //  5) Release FPGA core reset.
         repeat (8) @(posedge core_clk);
-        fpga_tx_async_token_reset = 1'b1;
+        //fpga_tx_async_token_reset = 1'b1;
         repeat (2) @(posedge core_clk);
-        fpga_tx_async_token_reset = 1'b0;
+        //fpga_tx_async_token_reset = 1'b0;
 
         repeat (8) @(posedge dn_io_clk);
-        fpga_tx_io_link_reset = 1'b0;
+        //fpga_tx_io_link_reset = 1'b0;
 
         // Release chip's hard_reset; wait for its internal sequencer to
         // finish (>=32 core_clks).
@@ -321,9 +376,9 @@ module chip_top_tb;
         repeat (64) @(posedge core_clk);
 
         // Now the chip is driving up_clk; safe to bring up FPGA RX.
-        fpga_rx_io_link_reset = 1'b0;
+        //fpga_rx_io_link_reset = 1'b0;
         repeat (8) @(posedge core_clk);
-        fpga_core_reset = 1'b0;
+        //fpga_core_reset = 1'b0;
 
         // Let chip exit reset and start emitting status words
         repeat (200) @(posedge core_clk);
