@@ -66,7 +66,7 @@ module chip_top_tb;
     // ----- bsg_link wires shared with chip's PAD bus -----
     logic                       fpga_to_asic_clk;
     logic                       fpga_to_asic_valid;
-    logic [CHANNEL_WIDTH-1:0]   fpga_to_asic_data;
+    logic [CHANNEL_WId13DTH-1:0]   fpga_to_asic_data;
     logic                       fpga_to_asic_token;   // FPGA RX -> chip TX token_clk
     logic                       asic_to_fpga_token;   // chip RX -> FPGA TX token
     logic                       asic_to_fpga_clk;
@@ -110,10 +110,10 @@ module chip_top_tb;
     // SPI controls
     logic SCLK, MOSI, SS_n;
     wire  MISO;
-    assign pad_drv[13] = kz(SCLK);
-    assign pad_drv[24] = kz(MOSI);
-    assign pad_drv[26] = kz(SS_n);
-    assign MISO         = pad[25];
+    //assign pad_drv[13] = kz(SCLK);
+    //assign pad_drv[24] = kz(MOSI);
+    //assign pad_drv[26] = kz(SS_n);
+    //assign MISO         = pad[25];
 
     // DFT scan inputs tied off in functional sim
     assign pad_drv[11] = 1'b0;
