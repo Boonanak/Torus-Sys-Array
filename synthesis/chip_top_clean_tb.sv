@@ -195,6 +195,12 @@ module chip_top_tb;
         .tx_ready_o                (fpga_tx_ready)
     );
 
+    bsg_sync_sync #(.width_p(1)) fpga_rx_reset_sync (
+        .oclk_i      (asic_to_fpga_clk),
+        .iclk_data_i (fpga_rx_io_link_reset),
+        .oclk_data_o (fpga_rx_io_link_reset_sync)
+    );
+
     assign fpga_rx_yumi = fpga_rx_valid;
 
     // Track FPGA-side RX from chip
