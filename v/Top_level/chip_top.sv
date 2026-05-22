@@ -210,6 +210,8 @@ module chip_top (
     // ~16 more core_clk cycles after the async_token_reset pulse.
     wire io_link_reset_int  = hard_reset_sync || (reset_cnt < 6'd16);
 
+    wire downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
+
     // core link reset: released last (~32 cycles after hard_reset).
     wire core_link_reset_int = hard_reset_sync || (reset_cnt < 6'd32);
 
@@ -304,7 +306,7 @@ module chip_top (
         .upstream_io_link_reset_i  (io_link_reset_int),
         .async_token_reset_i       (async_token_reset_int),
         .token_clk_i               (token_clk),
-        .downstream_io_link_reset_i(io_link_reset_int),
+        .downstream_io_link_reset_i(downstream_io_link_reset_int),
         .downstream_io_clk_i       (dn_clk),
         .downstream_io_data_i      (dn_data),
         .downstream_io_valid_i     (dn_valid),
