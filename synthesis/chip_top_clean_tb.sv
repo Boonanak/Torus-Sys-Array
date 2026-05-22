@@ -317,7 +317,7 @@ module chip_top_tb;
         pad_oe[44] = 1'b1; pad_oe[45] = 1'b1;
         pad_oe[8]  = 1'b1; pad_oe[9]  = 1'b1;
         pad_oe[12] = 1'b1;
-        pad_oe[13] = 1'b1; pad_oe[24] = 1'b1; pad_oe[26] = 1'b1;
+        //pad_oe[13] = 1'b1; pad_oe[24] = 1'b1; pad_oe[26] = 1'b1;
         pad_oe[11] = 1'b1; pad_oe[46] = 1'b1;
         for (int dn = 0; dn < 8; dn++) pad_oe[dn] = 1'b1;
         pad_oe[37] = 1'b1; pad_oe[36] = 1'b1;

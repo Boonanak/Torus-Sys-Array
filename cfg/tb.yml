@@ -58,7 +58,7 @@ sim.inputs.tb_input_files: [
   #"v/Top_level/upstream_wrapper_tb_twotrace.sv",
   "v/Top_level/upstream_downstream_tb_twotrace.sv",
 
-    # BSG utilities
+  # BSG utilities
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_test/bsg_nonsynth_clock_gen.v",
   "${bsg_root}/bsg_test/bsg_nonsynth_reset_gen.v",
