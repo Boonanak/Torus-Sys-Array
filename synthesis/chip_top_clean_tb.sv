@@ -251,7 +251,7 @@ module chip_top_tb;
     assign fpga_tx_io_link_reset = io_link_reset_int;
     logic downstream_io_link_reset_int;
     assign downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
-    assign fpga_rx_io_link_reset;
+    assign fpga_rx_io_link_reset = downstream_io_link_reset_int;
 
     // core link reset: released last (~32 cycles after hard_reset_sync).
     logic core_link_reset_int;
