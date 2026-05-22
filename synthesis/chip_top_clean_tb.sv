@@ -226,7 +226,7 @@ module chip_top_tb;
         .oclk_data_o (fpga_rx_io_link_reset_sync)
     );
 
-    assign fpga_rx_yumi = fpga_rx_valid;
+    // assign fpga_rx_yumi = fpga_rx_valid;
 
     // Track FPGA-side RX from chip
     logic [31:0] fpga_last_rx_data;
@@ -290,6 +290,11 @@ module chip_top_tb;
         forever #125000 SCLK = ~SCLK;
     end
 
+
+
+    // STRAY TRACE SIGNAL (bc order matters)
+    logic trace_enable;
+
     // ----- Main test sequence -----
     initial begin
         // VCD for legacy/open-source viewers; FSDB for Verdi
@@ -307,11 +312,12 @@ module chip_top_tb;
         fpga_tx_io_link_reset     = 1'b1;
         fpga_tx_async_token_reset = 1'b0;
         fpga_rx_io_link_reset     = 1'b1;
-        fpga_tx_valid             = 1'b0;
-        fpga_tx_data_real         = '0;
+        //fpga_tx_valid             = 1'b0;
+        //fpga_tx_data_real         = '0;
         SS_n                      = 1'b1;
         MOSI                      = 1'b0;
         pad_oe                    = '0;
+        trace_enable              = 1'b0;
 
         // Let chip_top configure pad directions first.
         #1000;
@@ -359,14 +365,15 @@ module chip_top_tb;
 
         // Let chip exit reset and start emitting status words
         repeat (200) @(posedge core_clk);
+        trace_enable = 1'b1;
         $display("post-reset: rx_count=%0d, last_status=%h",
                  fpga_rx_count, fpga_last_rx_data);
 
         // Test 1: bsg_link config write (10 words)
         $display("Test 1: send 10 bsg_link config words to chip RX");
-        send_link_word(32'h0000_0010);
-        send_link_word(32'h0102_0304);
-        send_link_word(32'h0506_0708);
+        // send_link_word(32'h0000_0010);
+        // send_link_word(32'h0102_0304);
+        // send_link_word(32'h0506_0708);
         repeat (200) @(posedge core_clk);
 
         // if (fpga_last_rx_data[3] !== 1'b1) begin
@@ -405,5 +412,117 @@ module chip_top_tb;
         $display("ERROR: testbench watchdog expired");
         $finish;
     end
+
+
+
+
+
+
+
+
+    // TRACE REPLAY
+
+    // --- Trace Replay Signals ---
+
+    // Addressing
+    logic [31:0] rom_addr_send, rom_addr_recv;
+    logic [31+4:0] rom_data_send;
+    logic [31+4:0] rom_data_recv;
+    logic done_send, done_recv;
+
+    // Send side
+    logic [31:0] tr_data_lo;
+    logic        tr_v_lo;
+    logic        tr_yumi_li;
+
+    // Recv side
+    logic tr_ready_lo, tr_ready_r;
+    logic dut_v_lo, dut_v_r;
+    logic[31:0] dut_data_lo, dut_data_r;
+
+    // --- Send Trace Replay (Drives 32 bit flit) ---
+    bsg_fsb_node_trace_replay #(
+        .ring_width_p(32)
+       ,.rom_addr_width_p(32)
+    ) tracer_send (
+         .clk_i  (~core_clk) // Run replay on opposite edge for stability
+        ,.reset_i(hard_reset)
+        ,.en_i   (trace_enable)
+        
+        ,.v_i    (1'b0)
+        ,.data_i ('0)
+        ,.ready_o()
+
+        ,.v_o    (tr_v_lo)
+        ,.data_o (tr_data_lo)
+        ,.yumi_i (tr_yumi_li)
+
+        ,.rom_addr_o(rom_addr_send)
+        ,.rom_data_i(rom_data_send)
+        ,.done_o    (done_send)
+        ,.error_o   ()
+    );
+
+    // // Mapping Trace Replay to Top Level Input
+    // assign in_flit        = tr_data_lo;
+    // assign in_flit_v      = tr_v_lo;
+    // assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
+    // assign tr_yumi_li     = in_flit_ready & in_flit_v;
+
+    
+
+    always_ff @(negedge core_clk) begin 
+        tr_ready_r <= tr_ready_lo && dut_v_lo; // fpga_rx_yumi, previously link_out_yumi_i
+        dut_v_r <= dut_v_lo;
+        dut_data_r <= dut_data_lo;
+    end
+
+    // --- Receive Trace Replay (Validates link_out) ---
+    bsg_fsb_node_trace_replay #(
+        .ring_width_p(32)
+       ,.rom_addr_width_p(32)
+    ) tracer_recv (
+         .clk_i  (~core_clk)
+        ,.reset_i(hard_reset)
+        ,.en_i   (1'b1)
+
+        ,.v_i    (dut_v_r)
+        ,.data_i (dut_data_r)
+        ,.ready_o(tr_ready_lo) // This ready effectively acts as 'yumi' for the DUT
+
+        ,.v_o    ()
+        ,.data_o ()
+        ,.yumi_i (1'b0)
+
+        ,.rom_addr_o(rom_addr_recv)
+        ,.rom_data_i(rom_data_recv)
+        ,.done_o    (done_recv)
+        ,.error_o   ()
+    );
+
+    // --- Trace ROMs ---
+
+    // top_chip_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
+    //     ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
+    // top_chip_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
+    //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
+
+    // benchmark1_header_send_trace_rom #(.width_p(SEND_WIDTH_lp+4), .addr_width_p(32)) 
+    //     ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
+    // benchmark1_header_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
+    //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
+
+    benchmark4_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
+        ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
+    benchmark4_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
+        ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
+
+    // HERE WE WILL CONNECT TRACE REPLAY SIGNALS TO ACTUAL TESTBENCH SIGNALS
+    assign fpga_tx_data_real = tr_data_lo;
+    assign fpga_tx_valid = tr_v_lo;
+    assign tr_yumi_li = fpga_tx_ready;
+    assign fpga_rx_yumi = tr_ready_lo;
+    assign dut_data_lo = fpga_rx_data_real;
+    assign dut_v_lo = fpga_rx_valid;
 
 endmodule
