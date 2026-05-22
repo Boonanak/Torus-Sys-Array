@@ -44,6 +44,7 @@ module chip_top (
     inout wire VSS
 );
 
+
     // Pad ring control vectors
     reg [47:0] I;       // Output data to PAD
     reg [47:0] DS;      // Drive strength control
@@ -51,6 +52,7 @@ module chip_top (
     reg [47:0] PE;      // Pull-down enable
     reg [47:0] IE;      // Input enable
     wire [47:0] C;      // Input data from PAD
+
 
     pad_ring_64 u_pad_ring (
         .I      (I),
@@ -66,20 +68,24 @@ module chip_top (
         .VSS    (VSS)
     );
 
+
     // ----- Pad index parameters (must match pcb_jumper_layout.md) -----
     // Global control
     localparam int CORE_CLK_PAD          = 44;
     localparam int HARD_RESET_PAD        = 45;
+
 
     // Bsg_link RX (FPGA -> ASIC)
     localparam int DN_CLK_PAD            = 8;
     localparam int DN_VALID_PAD          = 9;
     localparam int DN_TOKEN_PAD          = 10;
 
+
     // Bsg_link TX (ASIC -> FPGA)
     localparam int TOKEN_CLK_PAD         = 12;
     localparam int UP_VALID_PAD          = 14;
     localparam int UP_CLK_PAD            = 15;
+
 
     // SPI
     // localparam int SCLK_PAD              = 13;
@@ -87,13 +93,16 @@ module chip_top (
     // localparam int MISO_PAD              = 25;
     // localparam int SS_N_PAD              = 26;
 
+
     // BLE modulator output
     localparam int PIN_18_PAD            = 27;
+
 
     // DFT scan
     localparam int SCAN_EN_PAD           = 11;
     localparam int SCAN_IN_PAD           = 46;
     localparam int SCAN_OUT_PAD          = 47;
+
 
     // ----- Per-bit dn_data PAD index lookup -----
     // dn_data[0..7] live on PAD[0..7] (top side, 2x4 jumper grid 1).
@@ -123,6 +132,7 @@ module chip_top (
         endcase
     endfunction
 
+
     // up_data[0..7] live on PAD[16..23] (left side, 2x4 jumper grid 3),
     // interleaved: P2 pin 17=PAD15=??, ... Actually our left-side mapping
     // is up_data[0..7] -> PAD[22, 23, 20, 21, 18, 19, 16, 17].
@@ -150,32 +160,39 @@ module chip_top (
         endcase
     endfunction
 
+
     // ----- Tap nets from C[] / drive nets toward I[] -----
     wire core_clk;
     wire hard_reset;
     wire hard_reset_sync;   // async-assert / sync-deassert version of hard_reset
+
 
     wire dn_clk;
     wire dn_valid;
     wire [16:0] dn_data;
     wire dn_token;            // chip output, drives PAD[10]
 
+
     wire token_clk;
     wire up_clk;              // chip output, drives PAD[15]
     wire up_valid;            // chip output, drives PAD[14]
     wire [16:0] up_data;      // chip outputs
+
 
     // wire sclk_in;
     // wire mosi_in;
     // wire ss_n_in;
     // wire miso_out;
 
+
     wire pin_18_out;
+
 
     // Tie io_master_clk to core_clk to save the PAD that would otherwise
     // carry it. The bsg_link_ddr_upstream's internal CDC degenerates when
     // io_clk_i and core_clk_i are the same net.
     wire io_master_clk = core_clk;
+
 
     // ----- Internal reset sequencer for bsg_link init protocol -----
     // bsg_async_credit_counter requires:
@@ -194,11 +211,13 @@ module chip_top (
         else if (reset_cnt < 6'd63)       reset_cnt <= reset_cnt + 6'd1;
     end
 
+
     // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
     // hard_reset_sync deasserts. Held 0 during reset (matches bsg ref tb).
     wire async_token_reset_int = ~hard_reset_sync
                                  && (reset_cnt >= 6'd2)
                                  && (reset_cnt <  6'd5);
+
 
     // io_link_resets: held high while reset is asserted, then for
     // ~16 more core_clk cycles after the async_token_reset pulse.
@@ -213,12 +232,15 @@ module chip_top (
     wire io_link_reset_int            = hard_reset_sync || (reset_cnt < 6'd16);
     wire downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
 
+
     // core link reset: released last (~32 cycles after hard_reset_sync).
     wire core_link_reset_int = hard_reset_sync || (reset_cnt < 6'd32);
+
 
     // ----- Tap clocks/inputs from pad ring -----
     assign core_clk    = C[CORE_CLK_PAD];
     assign hard_reset  = C[HARD_RESET_PAD];
+
 
     // Synchronize hard_reset deassert into core_clk domain.
     // Assert is still combinationally fast (2-FF chain clears asynchronously).
@@ -228,13 +250,16 @@ module chip_top (
         .async_rst_sync_deassert(hard_reset_sync)
     );
 
+
     assign dn_clk      = C[DN_CLK_PAD];
     assign dn_valid    = C[DN_VALID_PAD];
     assign token_clk   = C[TOKEN_CLK_PAD];
 
+
     // assign sclk_in     = C[SCLK_PAD];
     // assign mosi_in     = C[MOSI_PAD];
     // assign ss_n_in     = C[SS_N_PAD];
+
 
     // RX data: gather 16 bits from interleaved PAD indices.
     genvar dn_i;
@@ -244,6 +269,7 @@ module chip_top (
         end
     endgenerate
 
+
 `ifdef DFT_EN
     // Naive scan chain. Buffer cells give Genus named pins (instance/Z,
     // instance/I) to use as DFT control points referenced by cfg/dft.yml.
@@ -252,6 +278,7 @@ module chip_top (
     BUFFD0BWP7T u_scan_in_buf  (.I(C[SCAN_IN_PAD]), .Z(scan_in));   // scan_in_port
     BUFFD0BWP7T u_scan_out_buf (.I(scan_out),       .Z(scan_out_d));// scan_out_port
 `endif
+
 
     // ----- Default pad configuration + per-pad overrides -----
     integer k;
@@ -264,6 +291,7 @@ module chip_top (
             DS[k]  = 1'b0;
             I[k]   = 1'b0;
         end
+
 
         // Inputs (chip listens; OEN=1 keeps driver disabled, IE=1 enables receiver).
         IE[CORE_CLK_PAD]   = 1'b1;
@@ -278,6 +306,7 @@ module chip_top (
             IE[dn_data_pad(k)] = 1'b1;
         end
 
+
         // Outputs (chip drives).
         OEN[DN_TOKEN_PAD]  = 1'b0; I[DN_TOKEN_PAD]  = dn_token;
         OEN[UP_CLK_PAD]    = 1'b0; I[UP_CLK_PAD]    = up_clk;
@@ -289,12 +318,14 @@ module chip_top (
             I[up_data_pad(k)]   = up_data[k];
         end
 
+
 `ifdef DFT_EN
         IE[SCAN_EN_PAD]  = 1'b1; OEN[SCAN_EN_PAD]  = 1'b1;
         IE[SCAN_IN_PAD]  = 1'b1; OEN[SCAN_IN_PAD]  = 1'b1;
         IE[SCAN_OUT_PAD] = 1'b0; OEN[SCAN_OUT_PAD] = 1'b0; I[SCAN_OUT_PAD] = scan_out_d;
 `endif
     end
+
 
     // ----- bsg_link wrapper: 32-bit ready/valid to top.v -----
     wire [33:0] link_rx_data;
@@ -304,14 +335,15 @@ module chip_top (
     wire        link_tx_valid;
     wire        link_tx_ready;
 
+
     bsg_link_wrapper #(
         .FLIT_WIDTH    (32),
-        .CHANNEL_WIDTH (17)
+        .CHANNEL_WIDTH (16)
     ) u_bsg_link_wrapper (
         .core_clk_i                (core_clk),
         .reset_i                   (core_link_reset_int),
         .io_master_clk_i           (io_master_clk),
-        .upstream_io_link_reset_i  (io_link_reset_int),
+        .upstream_io_link_reset_i  (io_link_reset_int           ),
         .async_token_reset_i       (async_token_reset_int),
         .token_clk_i               (token_clk),
         .downstream_io_link_reset_i(downstream_io_link_reset_int),
@@ -330,16 +362,19 @@ module chip_top (
         .tx_ready_o                (link_tx_ready)
     );
 
+
     // ----- Student-editable design instance -----
     // top u_soc_top (
     //     .CLK              (core_clk),
     //     .hard_reset       (core_link_reset_int),
+
 
     //     // SPI (config write path A)
     //     .SCLK             (sclk_in),
     //     .MOSI             (mosi_in),
     //     .MISO             (miso_out),
     //     .SS_n             (ss_n_in),
+
 
     //     // bsg_link (config write path B + status return)
     //     .link_rx_data_i   (link_rx_data),
@@ -349,9 +384,11 @@ module chip_top (
     //     .link_tx_valid_o  (link_tx_valid),
     //     .link_tx_ready_i  (link_tx_ready),
 
+
     //     // BLE modulator output
     //     .PIN_18           (pin_18_out)
     // );
+
 
     top_chip u_soc_top (
         .clk_i(core_clk),
@@ -366,7 +403,10 @@ module chip_top (
     );
 
 
+
+
 endmodule
+
 
 // -----------------------------------------------------------------------
 // Async assert / sync deassert reset synchronizer.
@@ -379,6 +419,7 @@ module async_rst_sync_deassert (
     reg rst_sync1;
     reg rst_sync2;
 
+
     always @(posedge clk or posedge rst) begin
         if (rst) begin
             rst_sync1 <= 1'b1;
@@ -389,8 +430,10 @@ module async_rst_sync_deassert (
         end
     end
 
+
     assign async_rst_sync_deassert = rst_sync2;
 endmodule
+
 
 // -----------------------------------------------------------------------
 // pad_ring_64 — instantiates 48 PDDW1216CDG bidirectional IO pads
@@ -410,25 +453,30 @@ module pad_ring_64 (
     inout  wire        VSS
 );
 
+
     PVDD2POC Pad_VDDPST_top    (.VDDPST(VDDPST));
     PVSS2CDG Pad_VSSPST_top    (.VSSPST(VSSPST));
     PVDD1CDG Pad_VDD_top       (.VDD(VDD));
     PVSS1CDG Pad_VSS_top       (.VSS(VSS));
+
 
     PVDD2CDG Pad_VDDPST_bottom (.VDDPST(VDDPST));
     PVSS2CDG Pad_VSSPST_bottom (.VSSPST(VSSPST));
     PVDD1CDG Pad_VDD_bottom    (.VDD(VDD));
     PVSS1CDG Pad_VSS_bottom    (.VSS(VSS));
 
+
     PVDD2CDG Pad_VDDPST_left   (.VDDPST(VDDPST));
     PVSS2CDG Pad_VSSPST_left   (.VSSPST(VSSPST));
     PVDD1CDG Pad_VDD_left      (.VDD(VDD));
     PVSS1CDG Pad_VSS_left      (.VSS(VSS));
 
+
     PVDD2CDG Pad_VDDPST_right  (.VDDPST(VDDPST));
     PVSS2CDG Pad_VSSPST_right  (.VSSPST(VSSPST));
     PVDD1CDG Pad_VDD_right     (.VDD(VDD));
     PVSS1CDG Pad_VSS_right     (.VSS(VSS));
+
 
     genvar i;
     generate
@@ -444,5 +492,6 @@ module pad_ring_64 (
             );
         end
     endgenerate
+
 
 endmodule
