@@ -148,48 +148,32 @@ module chip_top_tb;
     logic [FLIT_WIDTH-1:0] fpga_rx_data;
     logic                  fpga_rx_valid;
     logic                  fpga_rx_yumi;
-    bsg_link_ddr_upstream #(
-        .width_p        (FLIT_WIDTH),
-        .channel_width_p(CHANNEL_WIDTH),
-        .num_channels_p (1),
-        .lg_fifo_depth_p(6)
-    ) fpga_tx_link (
-        .core_clk_i         (core_clk),
-        .core_link_reset_i  (fpga_core_reset),
-        .core_data_i        (fpga_tx_data),
-        .core_valid_i       (fpga_tx_valid),
-        .core_ready_o       (fpga_tx_ready),
-        .io_clk_i           (dn_io_clk),
-        .io_link_reset_i    (fpga_tx_io_link_reset),
-        .async_token_reset_i(fpga_tx_async_token_reset),
-        .io_clk_r_o         (fpga_to_asic_clk),
-        .io_data_r_o        (fpga_to_asic_data),
-        .io_valid_r_o       (fpga_to_asic_valid),
-        .token_clk_i        (asic_to_fpga_token)
-    );
+    
 
-    bsg_sync_sync #(.width_p(1)) fpga_rx_reset_sync (
-        .oclk_i      (asic_to_fpga_clk),
-        .iclk_data_i (fpga_rx_io_link_reset),
-        .oclk_data_o (fpga_rx_io_link_reset_sync)
-    );
-
-    bsg_link_ddr_downstream #(
-        .width_p        (FLIT_WIDTH),
-        .channel_width_p(CHANNEL_WIDTH),
-        .num_channels_p (1),
-        .lg_fifo_depth_p(6)
-    ) fpga_rx_link (
-        .core_clk_i        (core_clk),
-        .core_link_reset_i (fpga_core_reset),
-        .io_link_reset_i   (fpga_rx_io_link_reset_sync),
-        .core_data_o       (fpga_rx_data),
-        .core_valid_o      (fpga_rx_valid),
-        .core_yumi_i       (fpga_rx_yumi),
-        .io_clk_i          (asic_to_fpga_clk),
-        .io_data_i         (asic_to_fpga_data),
-        .io_valid_i        (asic_to_fpga_valid),
-        .core_token_r_o    (fpga_to_asic_token)
+    bsg_link_wrapper #(
+        .FLIT_WIDTH    (32),
+        .CHANNEL_WIDTH (16)
+    ) u_bsg_link_wrapper (
+        .core_clk_i                (core_clk),
+        .reset_i                   (fpga_core_reset),
+        .io_master_clk_i           (dn_io_clk),
+        .upstream_io_link_reset_i  (fpga_tx_io_link_reset),
+        .async_token_reset_i       (fpga_tx_async_token_reset),
+        .token_clk_i               (asic_to_fpga_token),
+        .downstream_io_link_reset_i(fpga_rx_io_link_reset_sync),
+        .downstream_io_clk_i       (asic_to_fpga_clk),
+        .downstream_io_data_i      (asic_to_fpga_data),
+        .downstream_io_valid_i     (asic_to_fpga_valid),
+        .upstream_io_clk_r_o       (fpga_to_asic_clk),
+        .upstream_io_data_r_o      (fpga_to_asic_data),
+        .upstream_io_valid_r_o     (fpga_to_asic_valid),
+        .downstream_core_token_r_o (fpga_to_asic_token),
+        .rx_data_o                 (fpga_rx_data),
+        .rx_valid_o                (fpga_rx_valid),
+        .rx_yumi_i                 (fpga_rx_yumi),
+        .tx_data_i                 (fpga_tx_data),
+        .tx_valid_i                (fpga_tx_valid),
+        .tx_ready_o                (fpga_tx_ready)
     );
 
     assign fpga_rx_yumi = fpga_rx_valid;
