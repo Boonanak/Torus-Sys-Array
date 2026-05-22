@@ -150,16 +150,17 @@ module chip_top_tb;
     logic                  fpga_rx_valid;
     logic                  fpga_rx_yumi;
 
-    logic [35:0] fpga_tx_data_extended; // FROM FPGA
-    logic [35:0] fpga_rx_data_extended; // FROM CHIP
-    logic [17:0] fpga_to_asic_data_extended; // FROM FPGA
-    logic [17:0] asic_to_fpga_data_extended; // FROM CHIP
+    logic [33:0] fpga_tx_data_real; // FROM FPGA
+    logic [33:0] fpga_rx_data_real; // FROM CHIP
+    // logic [17:0] fpga_to_asic_data_real; // FROM FPGA
+    // logic [17:0] asic_to_fpga_data_real; // FROM CHIP
 
-    assign fpga_tx_data_extended = {1'b0, fpga_tx_data[33:17], 1'b0, fpga_tx_data[16:0]};
-    assign fpga_rx_data[33:17] = fpga_rx_data_extended[34:18];
-    assign fpga_rx_data[16:0]  = fpga_rx_data_extended[16:0];
-    assign fpga_to_asic_data_extended = {1'b0, fpga_to_asic_data[16:0]};
-    assign asic_to_fpga_data = asic_to_fpga_data_extended[16:0];
+    assign fpga_tx_data = {1'b0, fpga_tx_data_real[33:17], 1'b0, fpga_tx_data_real[16:0]};
+    assign fpga_rx_data_real[33:17] = fpga_rx_data[34:18];
+    assign fpga_rx_data_real[16:0]  = fpga_rx_data[16:0];
+    // assign fpga_to_asic_data = {1'b0, asic_to_fpga_data[16:0]};
+    // assign asic_to_fpga_data = asic_to_fpga_data_extended[16:0];
+    assign asic_to_fpga_data[17] = 1'b0;
     
 
     bsg_link_wrapper #(
@@ -174,16 +175,16 @@ module chip_top_tb;
         .token_clk_i               (asic_to_fpga_token),
         .downstream_io_link_reset_i(fpga_rx_io_link_reset_sync),
         .downstream_io_clk_i       (asic_to_fpga_clk),
-        .downstream_io_data_i      (asic_to_fpga_data_extended), // this is currently 18 bits
+        .downstream_io_data_i      (asic_to_fpga_data), // this is currently 18 bits
         .downstream_io_valid_i     (asic_to_fpga_valid),
         .upstream_io_clk_r_o       (fpga_to_asic_clk),
-        .upstream_io_data_r_o      (fpga_to_asic_data_extended), // this is currently 18 bits
+        .upstream_io_data_r_o      (fpga_to_asic_data), // this is currently 18 bits
         .upstream_io_valid_r_o     (fpga_to_asic_valid),
         .downstream_core_token_r_o (fpga_to_asic_token),
-        .rx_data_o                 (fpga_rx_data_extended), // this is currently 36 bits
+        .rx_data_o                 (fpga_rx_data), // this is currently 36 bits
         .rx_valid_o                (fpga_rx_valid),
         .rx_yumi_i                 (fpga_rx_yumi),
-        .tx_data_i                 (fpga_tx_data_extended), // this is currently 36 bits
+        .tx_data_i                 (fpga_tx_data), // this is currently 36 bits
         .tx_valid_i                (fpga_tx_valid),
         .tx_ready_o                (fpga_tx_ready)
     );

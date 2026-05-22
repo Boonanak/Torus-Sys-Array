@@ -335,16 +335,17 @@ module chip_top (
     wire        link_tx_valid;
     wire        link_tx_ready;
 
-    logic [35:0] link_tx_data_extended; // FROM CHIP
-    logic [35:0] link_rx_data_extended; // FROM FPGA
-    logic [17:0] up_data_extended; // FROM CHIP
-    logic [17:0] dn_data_extended; // FROM FPGA
+    logic [33:0] link_tx_data_real; // FROM CHIP
+    logic [33:0] link_rx_data_real; // FROM FPGA
+    // logic [17:0] up_data_extended; // FROM CHIP
+    // logic [17:0] dn_data_extended; // FROM FPGA
 
-    assign link_tx_data_extended = {1'b0, link_tx_data[33:17], 1'b0, link_tx_data[16:0]};
-    assign link_rx_data[33:17] = link_rx_data_extended[34:18];
-    assign link_rx_data[16:0]  = link_rx_data_extended[16:0];
-    assign dn_data_extended = {1'b0, dn_data[16:0]};
-    assign up_data = up_data_extended[16:0];
+    assign link_tx_data = {1'b0, link_tx_data_real[33:17], 1'b0, link_tx_data_real[16:0]};
+    assign link_rx_data_real[33:17] = link_rx_data[34:18];
+    assign link_rx_data_real[16:0]  = link_rx_data[16:0];
+    // assign dn_data_extended = {1'b0, dn_data[16:0]};
+    // assign up_data = up_data_extended[16:0];
+    assign dn_data[17] = 1'b0;
 
 
     bsg_link_wrapper #(
@@ -359,16 +360,16 @@ module chip_top (
         .token_clk_i               (token_clk),
         .downstream_io_link_reset_i(downstream_io_link_reset_int),
         .downstream_io_clk_i       (dn_clk),
-        .downstream_io_data_i      (dn_data_extended), // 18 bits
+        .downstream_io_data_i      (dn_data), // 18 bits
         .downstream_io_valid_i     (dn_valid),
         .upstream_io_clk_r_o       (up_clk),
-        .upstream_io_data_r_o      (up_data_extended), // 18 bits
+        .upstream_io_data_r_o      (up_data), // 18 bits
         .upstream_io_valid_r_o     (up_valid),
         .downstream_core_token_r_o (dn_token),
-        .rx_data_o                 (link_rx_data_extended), // 18 bits
+        .rx_data_o                 (link_rx_data), // 18 bits
         .rx_valid_o                (link_rx_valid),
         .rx_yumi_i                 (link_rx_yumi),
-        .tx_data_i                 (link_tx_data_extended), // 18 bits
+        .tx_data_i                 (link_tx_data), // 18 bits
         .tx_valid_i                (link_tx_valid),
         .tx_ready_o                (link_tx_ready)
     );
