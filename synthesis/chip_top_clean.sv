@@ -343,7 +343,7 @@ module chip_top (
     assign link_tx_data_extended = {1'b0, link_tx_data[33:17], 1'b0, link_tx_data[16:0]};
     assign link_rx_data[33:17] = link_rx_data_extended[34:18];
     assign link_rx_data[16:0]  = link_rx_data_extended[16:0];
-    assign dn_data_extended = {a'b0, dn_data[16:0]};
+    assign dn_data_extended = {1'b0, dn_data[16:0]};
     assign up_data = up_data_extended[16:0];
 
 

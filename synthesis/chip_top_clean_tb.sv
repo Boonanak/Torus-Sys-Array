@@ -158,7 +158,7 @@ module chip_top_tb;
     assign fpga_tx_data_extended = {1'b0, fpga_tx_data[33:17], 1'b0, fpga_tx_data[16:0]};
     assign fpga_rx_data[33:17] = fpga_rx_data_extended[34:18];
     assign fpga_rx_data[16:0]  = fpga_rx_data_extended[16:0];
-    assign fpga_to_asic_data_extended = {0, fpga_to_asic_data[16:0]};
+    assign fpga_to_asic_data_extended = {1'b0, fpga_to_asic_data[16:0]};
     assign asic_to_fpga_data = asic_to_fpga_data_extended[16:0];
     
 
