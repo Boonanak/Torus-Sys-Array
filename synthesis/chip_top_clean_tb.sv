@@ -141,6 +141,7 @@ module chip_top_tb;
     assign asic_to_fpga_data[13] = pad[33];
     assign asic_to_fpga_data[14] = pad[34];
     assign asic_to_fpga_data[15] = pad[35];
+    assign asic_to_fpga_data[16] = pad[13];
 
     // ----- FPGA-side bsg_link instances (peers to chip's wrapper) -----
     logic [FLIT_WIDTH-1:0] fpga_tx_data;
