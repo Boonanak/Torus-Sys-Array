@@ -328,21 +328,27 @@ module chip_top (
 
 
     // ----- bsg_link wrapper: 32-bit ready/valid to top.v -----
-    wire [33:0] link_rx_data;
+    wire [35:0] link_rx_data;
     wire        link_rx_valid;
     wire        link_rx_yumi;
-    wire [33:0] link_tx_data;
+    wire [35:0] link_tx_data;
     wire        link_tx_valid;
     wire        link_tx_ready;
 
-    logic [33:0] link_tx_data_real; // FROM CHIP
-    logic [33:0] link_rx_data_real; // FROM FPGA
+    logic [31:0] link_tx_data_real; // FROM CHIP
+    logic [31:0] link_rx_data_real; // FROM FPGA
     // logic [17:0] up_data_extended; // FROM CHIP
     // logic [17:0] dn_data_extended; // FROM FPGA
+    logic link_tx_parity_low, link_tx_parity_high;
+    assign link_tx_parity_low = 1'b0;
+    assign link_tx_parity_high = 1'b0;
+    logic link_rx_parity_low, link_rx_parity_high;
 
-    assign link_tx_data = {1'b0, link_tx_data_real[33:17], 1'b0, link_tx_data_real[16:0]};
-    assign link_rx_data_real[33:17] = link_rx_data[34:18];
-    assign link_rx_data_real[16:0]  = link_rx_data[16:0];
+    assign link_tx_data = {1'b0, link_tx_parity_high, link_tx_data_real[31:16], 1'b0, link_tx_parity_low, link_tx_data_real[15:0]};
+    assign link_rx_data_real[31:16] = link_rx_data[33:18];
+    assign link_rx_parity_high = link_rx_data[35];
+    assign link_rx_data_real[15:0]  = link_rx_data[15:0];
+    assign link_rx_parity_low = link_rx_data[16];
     // assign dn_data_extended = {1'b0, dn_data[16:0]};
     // assign up_data = up_data_extended[16:0];
     assign dn_data[17] = 1'b0;
@@ -405,12 +411,12 @@ module chip_top (
     top_chip u_soc_top (
         .clk_i(core_clk),
         .reset_i(core_link_reset_int),
-        .in_flit(link_rx_data),
+        .in_flit(link_rx_data_real),
         .in_flit_v(link_rx_valid),
         .in_flit_par_ok(),
         .in_flit_ready(link_rx_yumi),
         .link_out_v_o(link_tx_valid),
-        .link_out_data_o(link_tx_data),
+        .link_out_data_o(link_tx_data_real),
         .link_out_yumi_i(link_tx_ready)
     );
 
