@@ -66,7 +66,7 @@ module chip_top_tb;
     // ----- bsg_link wires shared with chip's PAD bus -----
     logic                       fpga_to_asic_clk;
     logic                       fpga_to_asic_valid;
-    logic [CHANNEL_WId13DTH-1:0]   fpga_to_asic_data;
+    logic [CHANNEL_WIDTH-1:0]   fpga_to_asic_data;
     logic                       fpga_to_asic_token;   // FPGA RX -> chip TX token_clk
     logic                       asic_to_fpga_token;   // chip RX -> FPGA TX token
     logic                       asic_to_fpga_clk;
@@ -118,7 +118,7 @@ module chip_top_tb;
     // DFT scan inputs tied off in functional sim
     assign pad_drv[11] = 1'b0;
     assign pad_drv[46] = 1'b0;
-
+ // random comment
     // Sample chip's TX-side pads
     assign asic_to_fpga_clk   = pad[15];
     assign asic_to_fpga_valid = pad[14];
