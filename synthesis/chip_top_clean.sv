@@ -339,10 +339,34 @@ module chip_top (
     logic [31:0] link_rx_data_real; // FROM FPGA
     // logic [17:0] up_data_extended; // FROM CHIP
     // logic [17:0] dn_data_extended; // FROM FPGA
+
+    // PARITY BITS SENT BY FPGA
     logic link_tx_parity_low, link_tx_parity_high;
-    assign link_tx_parity_low = 1'b0;
-    assign link_tx_parity_high = 1'b0;
+    // assign link_tx_parity_low = 1'b0;
+    // assign link_tx_parity_high = 1'b0;
+    parity_generator #(.WIDTH_p(16)) pg_low (
+        .bits_i(link_tx_data_real[15:0]),
+        .parity_o(link_tx_parity_low)
+    );
+    parity_generator #(.WIDTH_p(16)) pg_high (
+        .bits_i(link_tx_data_real[31:16]),
+        .parity_o(link_tx_parity_high)
+    );
+
     logic link_rx_parity_low, link_rx_parity_high;
+    logic link_rx_ok_low, link_rx_ok_high;
+    logic link_rx_parity_error;
+    parity_checker #(.WIDTH_p(16)) check_low (
+        .bits_i(link_rx_data[15:0]),
+        .parity_i(link_rx_parity_low),
+        .is_parity_o(link_rx_ok_low)
+    );
+    parity_checker #(.WIDTH_p(16)) check_high (
+        .bits_i(link_rx_data[33:18]),
+        .parity_i(link_rx_parity_high),
+        .is_parity_o(link_rx_ok_high)
+    );
+    assign link_rx_parity_error = link_rx_valid && (!link_rx_ok_low || !link_rx_ok_high);
 
     assign link_tx_data = {1'b0, link_tx_parity_high, link_tx_data_real[31:16], 1'b0, link_tx_parity_low, link_tx_data_real[15:0]};
     assign link_rx_data_real[31:16] = link_rx_data[33:18];

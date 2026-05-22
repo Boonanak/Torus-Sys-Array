@@ -154,10 +154,34 @@ module chip_top_tb;
     logic [31:0] fpga_rx_data_real; // FROM CHIP
     // logic [17:0] fpga_to_asic_data_real; // FROM FPGA
     // logic [17:0] asic_to_fpga_data_real; // FROM CHIP
+
+    // PARITY BITS SENT BY FPGA
     logic fpga_tx_parity_low, fpga_tx_parity_high;
-    assign fpga_tx_parity_low = 1'b0;
-    assign fpga_tx_parity_high = 1'b0;
+    // assign fpga_tx_parity_low = 1'b0;
+    // assign fpga_tx_parity_high = 1'b0;
+    parity_generator #(.WIDTH_p(16)) pg_low (
+        .bits_i(fpga_tx_data_real[15:0]),
+        .parity_o(fpga_tx_parity_low)
+    );
+    parity_generator #(.WIDTH_p(16)) pg_high (
+        .bits_i(fpga_tx_data_real[31:16]),
+        .parity_o(fpga_tx_parity_high)
+    );
+
     logic fpga_rx_parity_low, fpga_rx_parity_high;
+    logic fpga_rx_ok_low, fpga_rx_ok_high;
+    logic fpga_rx_parity_error;
+    parity_checker #(.WIDTH_p(16)) check_low (
+        .bits_i(fpga_rx_data[15:0]),
+        .parity_i(fpga_rx_parity_low),
+        .is_parity_o(fpga_rx_ok_low)
+    );
+    parity_checker #(.WIDTH_p(16)) check_high (
+        .bits_i(fpga_rx_data[33:18]),
+        .parity_i(fpga_rx_parity_high),
+        .is_parity_o(fpga_rx_ok_high)
+    );
+    assign fpga_rx_parity_error = fpga_rx_valid && (!fpga_rx_ok_low || !fpga_rx_ok_high);
 
     assign fpga_tx_data = {1'b0, fpga_tx_parity_high, fpga_tx_data_real[31:16], 1'b0, fpga_tx_parity_low, fpga_tx_data_real[15:0]};
     assign fpga_rx_data_real[31:16] = fpga_rx_data[33:18];
