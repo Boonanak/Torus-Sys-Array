@@ -215,7 +215,7 @@ module chip_top_tb;
     ) fpga_rx_link (
         .core_clk_i        (core_clk),
         .core_link_reset_i (fpga_core_reset),
-        .io_link_reset_i   (fpga_rx_io_link_reset_sync),
+        .io_link_reset_i   (downstream_io_link_reset_int), // fpga_rx_io_link_reset_sync
         .core_data_o       (fpga_rx_data),
         .core_valid_o      (fpga_rx_valid),
         .core_yumi_i       (fpga_rx_yumi),
@@ -414,6 +414,9 @@ module chip_top_tb;
     // ~16 more core_clk cycles after the async_token_reset pulse.
     logic io_link_reset_int;
     assign io_link_reset_int  = hard_reset_sync || (reset_cnt < 6'd16);
+
+    logic downstream_io_link_reset_int;
+    assign downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
 
     // core link reset: released last (~32 cycles after hard_reset).
     logic core_link_reset_int;
