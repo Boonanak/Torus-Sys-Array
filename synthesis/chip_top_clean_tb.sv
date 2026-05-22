@@ -220,6 +220,8 @@ module chip_top_tb;
     // Tying every link reset to hard_reset would violate that ordering, so
     // the chip generates the staged reset internally from a single counter
     // that starts running once hard_reset deasserts.
+    logic hard_reset_sync;
+
     reg [5:0] reset_cnt = 6'd0;
     always @(posedge core_clk) begin
         if (hard_reset_sync)              reset_cnt <= 6'd0;
@@ -247,7 +249,7 @@ module chip_top_tb;
     logic io_link_reset_int;
     assign io_link_reset_int            = hard_reset_sync || (reset_cnt < 6'd16);
     assign fpga_tx_io_link_reset = io_link_reset_int;
-    logic downstream_io_link_reset_int
+    logic downstream_io_link_reset_int;
     assign downstream_io_link_reset_int = hard_reset_sync || (reset_cnt < 6'd28);
     assign fpga_rx_io_link_reset;
 
