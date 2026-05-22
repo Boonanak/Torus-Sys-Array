@@ -306,7 +306,7 @@ module chip_top (
 
     bsg_link_wrapper #(
         .FLIT_WIDTH    (32),
-        .CHANNEL_WIDTH (16)
+        .CHANNEL_WIDTH (17)
     ) u_bsg_link_wrapper (
         .core_clk_i                (core_clk),
         .reset_i                   (core_link_reset_int),
