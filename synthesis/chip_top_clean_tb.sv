@@ -151,8 +151,8 @@ module chip_top_tb;
     
 
     bsg_link_wrapper #(
-        .FLIT_WIDTH    (32),
-        .CHANNEL_WIDTH (16)
+        .FLIT_WIDTH    (34),
+        .CHANNEL_WIDTH (17)
     ) u_bsg_link_wrapper (
         .core_clk_i                (core_clk),
         .reset_i                   (fpga_core_reset),
