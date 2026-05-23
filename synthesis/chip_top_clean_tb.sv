@@ -403,6 +403,7 @@ module chip_top_tb;
 
         // $display("BSG_LINK_PAD_LOOPBACK_PASS rx_count=%0d last_status=%h",
         //          fpga_rx_count, fpga_last_rx_data);
+        repeat(5000) @(posedge core_clk);
         $finish;
     end
 
@@ -469,13 +470,16 @@ module chip_top_tb;
     // assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
     // assign tr_yumi_li     = in_flit_ready & in_flit_v;
 
-    
+    logic fpga_tx_valid_r;    
 
     always_ff @(negedge core_clk) begin 
         tr_ready_r <= tr_ready_lo && dut_v_lo; // fpga_rx_yumi, previously link_out_yumi_i
         dut_v_r <= dut_v_lo;
         dut_data_r <= dut_data_lo;
+        fpga_tx_valid_r <= fpga_tx_valid;
     end
+
+    assign tr_yumi_li = fpga_tx_ready && fpga_tx_valid_r;
 
     // --- Receive Trace Replay (Validates link_out) ---
     bsg_fsb_node_trace_replay #(
@@ -520,8 +524,8 @@ module chip_top_tb;
     // HERE WE WILL CONNECT TRACE REPLAY SIGNALS TO ACTUAL TESTBENCH SIGNALS
     assign fpga_tx_data_real = tr_data_lo;
     assign fpga_tx_valid = tr_v_lo;
-    assign tr_yumi_li = fpga_tx_ready;
-    assign fpga_rx_yumi = tr_ready_lo;
+    //assign tr_yumi_li = fpga_tx_ready;
+    assign fpga_rx_yumi = tr_ready_lo && dut_v_r;
     assign dut_data_lo = fpga_rx_data_real;
     assign dut_v_lo = fpga_rx_valid;
 

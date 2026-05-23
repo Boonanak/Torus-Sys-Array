@@ -77,7 +77,7 @@ module chip_top (
 
     // Bsg_link RX (FPGA -> ASIC)
     localparam int DN_CLK_PAD            = 8;
-    localparam int DN_VALID_PAD          = 9;
+    localparam int DN_VALID_PAD          = 9; 
     localparam int DN_TOKEN_PAD          = 10;
 
 
@@ -370,7 +370,7 @@ module chip_top (
 
     assign link_tx_data = {1'b0, link_tx_parity_high, link_tx_data_real[31:16], 1'b0, link_tx_parity_low, link_tx_data_real[15:0]};
     assign link_rx_data_real[31:16] = link_rx_data[33:18];
-    assign link_rx_parity_high = link_rx_data[35];
+    assign link_rx_parity_high = link_rx_data[34];
     assign link_rx_data_real[15:0]  = link_rx_data[15:0];
     assign link_rx_parity_low = link_rx_data[16];
     // assign dn_data_extended = {1'b0, dn_data[16:0]};
