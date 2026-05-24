@@ -35,7 +35,7 @@ module chip_top_tb;
     logic fpga_tx_io_link_reset;
     logic fpga_tx_async_token_reset;
     logic fpga_rx_io_link_reset;
-    logic fpga_rx_io_link_reset_sync;
+    logic fpga_rx_io_link_reset_sync;  
 
     // ----- Pad bus -----
     wire vdd_io = 1'b1;
@@ -146,6 +146,7 @@ module chip_top_tb;
     // ----- FPGA-side bsg_link instances (peers to chip's wrapper) -----
     logic [FLIT_WIDTH-1:0] fpga_tx_data;
     logic                  fpga_tx_valid;
+    logic                  fpga_tx_valid_r;
     logic                  fpga_tx_ready;
     logic [FLIT_WIDTH-1:0] fpga_rx_data;
     logic                  fpga_rx_valid;
@@ -216,7 +217,7 @@ module chip_top_tb;
         .rx_valid_o                (fpga_rx_valid),
         .rx_yumi_i                 (fpga_rx_yumi),
         .tx_data_i                 (fpga_tx_data), // this is currently 36 bits
-        .tx_valid_i                (fpga_tx_valid),
+        .tx_valid_i                (fpga_tx_valid_r),
         .tx_ready_o                (fpga_tx_ready)
     );
 
@@ -470,7 +471,7 @@ module chip_top_tb;
     // assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
     // assign tr_yumi_li     = in_flit_ready & in_flit_v;
 
-    logic fpga_tx_valid_r;    
+
 
     always_ff @(negedge core_clk) begin 
         tr_ready_r <= tr_ready_lo && dut_v_lo; // fpga_rx_yumi, previously link_out_yumi_i
