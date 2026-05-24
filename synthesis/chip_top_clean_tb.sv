@@ -35,7 +35,7 @@ module chip_top_tb;
     logic fpga_tx_io_link_reset;
     logic fpga_tx_async_token_reset;
     logic fpga_rx_io_link_reset;
-    logic fpga_rx_io_link_reset_sync;
+    logic fpga_rx_io_link_reset_sync;  
 
     // ----- Pad bus -----
     wire vdd_io = 1'b1;
@@ -146,6 +146,7 @@ module chip_top_tb;
     // ----- FPGA-side bsg_link instances (peers to chip's wrapper) -----
     logic [FLIT_WIDTH-1:0] fpga_tx_data;
     logic                  fpga_tx_valid;
+    logic                  fpga_tx_valid_r;
     logic                  fpga_tx_ready;
     logic [FLIT_WIDTH-1:0] fpga_rx_data;
     logic                  fpga_rx_valid;
@@ -216,7 +217,7 @@ module chip_top_tb;
         .rx_valid_o                (fpga_rx_valid),
         .rx_yumi_i                 (fpga_rx_yumi),
         .tx_data_i                 (fpga_tx_data), // this is currently 36 bits
-        .tx_valid_i                (fpga_tx_valid),
+        .tx_valid_i                (fpga_tx_valid_r),
         .tx_ready_o                (fpga_tx_ready)
     );
 
@@ -433,15 +434,13 @@ module chip_top_tb;
 
     // Send side
     logic [31:0] tr_data_lo;
-    logic        tr_v_lo, tr_v_r;
+    logic        tr_v_lo;
     logic        tr_yumi_li;
 
     // Recv side
     logic tr_ready_lo, tr_ready_r;
     logic dut_v_lo, dut_v_r;
     logic[31:0] dut_data_lo, dut_data_r;
-
-    logic trace_enable_sync;
 
     // --- Send Trace Replay (Drives 32 bit flit) ---
     bsg_fsb_node_trace_replay #(
@@ -472,15 +471,13 @@ module chip_top_tb;
     // assign in_flit_par_ok = 1'b1; // Assuming parity is always good for functional test
     // assign tr_yumi_li     = in_flit_ready & in_flit_v;
 
-    logic fpga_tx_valid_r;    
+
 
     always_ff @(negedge core_clk) begin 
         tr_ready_r <= tr_ready_lo && dut_v_lo; // fpga_rx_yumi, previously link_out_yumi_i
         dut_v_r <= dut_v_lo;
         dut_data_r <= dut_data_lo;
         fpga_tx_valid_r <= fpga_tx_valid;
-        tr_v_r <= tr_v_lo;
-        trace_enable_sync <= trace_enable;
     end
 
     assign tr_yumi_li = fpga_tx_ready && fpga_tx_valid_r;
@@ -520,9 +517,9 @@ module chip_top_tb;
     // benchmark1_header_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
     //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
-    benchmark4_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
+    benchmark3_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
         ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
-    benchmark4_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
+    benchmark3_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
         ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
     // HERE WE WILL CONNECT TRACE REPLAY SIGNALS TO ACTUAL TESTBENCH SIGNALS
