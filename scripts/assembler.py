@@ -419,9 +419,9 @@ A1 = np.arange(1, 65).reshape(8,8)
 B2 = np.full((8,8), 2)
 C12 = A1 @ B2
 
-# instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
-# expected_outputs = [np.identity(8), A1, C12]
-# receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
+instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+expected_outputs = [np.identity(8), A1, C12]
+receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
 # instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_send_trace.tr')
 # expected_outputs = [np.identity(8), A1, C12]
 # receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_recv_trace.tr', expected_outputs)
@@ -555,37 +555,37 @@ C12 = A1 @ B2
 # expected_outputs3 = [inc_T, C0, V8, V0, inc, inc, inc, inc, C, C, CSR]
 # receive_to_traces('scripts/tpu_benchmark3.txt', 'v/Top_level/benchmark3_recv_trace.tr', expected_outputs3)
 
-# Benchmark 4
-AB0 = np.arange(1, 65).reshape(8,8)
-AB1 = np.full((8,8), 2)
-AB2 = -1 * AB0
-AB3 = -1 * AB1
-C1 = np.array([
-    [0, 1, 1, 2, 3, 5, 8, 13],
-    [21, 34, 55, 89, 144, 233, 377, 610],
-    [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
-    [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269],
-    [0, 1, 1, 2, 3, 5, 8, 13],
-    [21, 34, 55, 89, 144, 233, 377, 610],
-    [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
-    [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
-])
-# print(WRITEM(AB0, 0, 8))
-# print(WRITEM(AB1, 1, 8))
-# print(WRITEM(AB2, 2, 8))
-# print(WRITEM(AB3, 3, 8))
-# print(WRITEM(C1, 1, 32))
-# print(WRITEM(AB0, 4, 8))
-# print(WRITEM(AB0, 7, 8))
-# print(WRITEM(C1, 3, 32))
-# print(WRITEM(C1, 4, 32))
-instructions_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_send_trace.tr')
-I = np.identity(8)
-Z = np.zeros((8,8))
-C2 = AB0 @ AB0 + AB0
-C3 = AB0 @ AB0
-expected_outputs4 = [I, AB0, C2, C3, Z, AB1, Z]
-receive_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_recv_trace.tr', expected_outputs4)
+# # Benchmark 4
+# AB0 = np.arange(1, 65).reshape(8,8)
+# AB1 = np.full((8,8), 2)
+# AB2 = -1 * AB0
+# AB3 = -1 * AB1
+# C1 = np.array([
+#     [0, 1, 1, 2, 3, 5, 8, 13],
+#     [21, 34, 55, 89, 144, 233, 377, 610],
+#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269],
+#     [0, 1, 1, 2, 3, 5, 8, 13],
+#     [21, 34, 55, 89, 144, 233, 377, 610],
+#     [987, 1597, 2584, 4181, 6765, 10946, 17711, 28657],
+#     [46368, 75025, 121393, 196418, 317811, 514229, 832040, 1346269]
+# ])
+# # print(WRITEM(AB0, 0, 8))
+# # print(WRITEM(AB1, 1, 8))
+# # print(WRITEM(AB2, 2, 8))
+# # print(WRITEM(AB3, 3, 8))
+# # print(WRITEM(C1, 1, 32))
+# # print(WRITEM(AB0, 4, 8))
+# # print(WRITEM(AB0, 7, 8))
+# # print(WRITEM(C1, 3, 32))
+# # print(WRITEM(C1, 4, 32))
+# instructions_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_send_trace.tr')
+# I = np.identity(8)
+# Z = np.zeros((8,8))
+# C2 = AB0 @ AB0 + AB0
+# C3 = AB0 @ AB0
+# expected_outputs4 = [I, AB0, C2, C3, Z, AB1, Z]
+# receive_to_traces('scripts/tpu_benchmark4.txt', 'v/Top_level/benchmark4_recv_trace.tr', expected_outputs4)
 
 # A1 = np.arange(1, 65).reshape(8,8)
 # print(WRITEM(np.identity(8), 8))

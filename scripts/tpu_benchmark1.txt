@@ -17,13 +17,13 @@ WRITE8 13 [2, 2, 2, 2, 2, 2, 2, 2]
 WRITE8 14 [2, 2, 2, 2, 2, 2, 2, 2]
 WRITE8 15 [2, 2, 2, 2, 2, 2, 2, 2]
 # Load I in as weights
-LR 7
+LR 4
 # I * I + 0 -> addr0
-CR 0 7 3
+CR 0 4 2
 READM32 0
 # A * I + 0 -> addr1, load B
-LCCR 1 0 3 1
+LCCR 1 0 2 1
 READM32 1
 # A * B + 0 -> addr2
-CR 2 0 3
-READM32 2
+CR 0 0 2
+READM32 0
