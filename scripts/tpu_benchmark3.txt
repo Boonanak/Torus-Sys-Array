@@ -31,29 +31,29 @@ READM32 0
 # Read [1:8]
 READV8 0
 # Read [0:0]
-READV32 31
+READV32 23
 
 # LXCX
-LR 7
-LC 7
+LR 4
+LC 4
 
-CR 1 0 3
+CR 1 0 2
 # Read [1:64]
 READM32 1
-CC 1 1 3
+CC 1 1 2
 # Read [1:64]
 READM32 1
 
-LRCR 1 0 3 7
+LRCR 1 0 2 4
 # Read [1:64]
 READM32 1
-LCCR 1 0 3 1
+LCCR 1 0 2 1
 # Read [1:64]
 READM32 1
-LRCC 1 1 3 0
+LRCC 1 1 2 0
 # Read [1:64]^2
 READM32 1
-LCCC 1 1 3 7
+LCCC 1 1 2 4
 # Read [1:64]^2
 READM32 1
 

@@ -12,11 +12,11 @@ WRITE8 6 [0, 0, 0, 0, 0, 0, 0, 0]
 WRITE8 7 [0, 0, 0, 0, 0, 0, 0, 0]
 
 LC 0
-CR 1 0 3
+CR 1 0 2
 READM32 1
 
 # Compute I * 0 = 0
-CR 1 7 3
+CR 1 4 2
 READM32 1
 
 # Write A, compute A * 0 = 0
@@ -30,7 +30,7 @@ WRITE8 5  [41, 42, 43, 44, 45, 46, 47, 48]
 WRITE8 6  [49, 50, 51, 52, 53, 54, 55, 56]
 WRITE8 7  [57, 58, 59, 60, 61, 62, 63, 64]
 
-CR 1 0 3
+CR 1 0 2
 READM32 1
 
 # Write C, compute A * 0 + C = C
