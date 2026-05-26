@@ -517,9 +517,9 @@ module chip_top_tb;
     // benchmark1_header_recv_trace_rom #(.width_p(RECV_WIDTH_lp+4), .addr_width_p(32))
     //     ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
-    benchmark3_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
+    benchmark4_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
         ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
-    benchmark3_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
+    benchmark4_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
         ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
     // HERE WE WILL CONNECT TRACE REPLAY SIGNALS TO ACTUAL TESTBENCH SIGNALS
