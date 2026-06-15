@@ -30,6 +30,17 @@ Prior academic work ([IEEE Exploration, 2025](https://ieeexplore.ieee.org/docume
 # Our Solution: Shuffled 1-Hop Twisted Torus
 Proposed by Prof. Ang Li, Pipette addresses the long-interconnect bottleneck by applying a deterministic shuffling algorithm to the Twisted Torus topology. By altering the routing matrix, we ensure that every physical interconnect is constrained to a maximum of 1-hop. To support this localized routing, the datapath is re-architected so that activations, weights, and partial sums move diagonally through the array.
 
+# Results
+Final GDS submitted to TSMC meets all initial target and constraints based on Parasitic Extraction and Static Timing Analysis report:
+- TSMC 180nm Process Node
+- 2mm x 2mm die, with 1.7mm x 1.7mm for core logic
+- 64 IO pins (16 reserved for power/ground)
+- 50MHz clock frequency
+- DRC/LVS clean
+- 115mW power consumption
+- INT8 weights/inputs, INT32 partial sums
+- capable of full-throughput (IO-bound) computation
+
 # Diagrams
 ## Weight Loading Phase
 
