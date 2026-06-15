@@ -1,7 +1,7 @@
 # Pipette
 Pipette is an ASIC hardware accelerator designed to optimize Power, Performance, and Area (PPA) for General Matrix Multiply (GEMM) operations. Developed as an EE 478 Capstone Project at the University of Washington, this project evaluates the architectural trade-offs between a conventional Weight-Stationary (WS) Systolic Array and a novel, optimized Twisted Torus Systolic Array.
 
-Team Members: Vance Borus, Sachal Shaikh, Byeongguk Lee, Chenyi Wang, Neal Causey, and Sean Bubernak.
+Team Members: Vance Borus, Sachal Shaikh, Byeongguk Lee, Chenyi Wang, Neal Causey, Sean Bubernak, Chenyi Wang
 
 Advisors: Professor Ang Li (University of Washington) and Jiayi Wang (Ph.D. student).
 
