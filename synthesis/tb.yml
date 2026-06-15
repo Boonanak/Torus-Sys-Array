@@ -1,0 +1,77 @@
+# Search directories for `include directives in simulations
+sim.inputs.tb_incdir: [
+  "${bsg_root}/bsg_misc",
+  "../Torus-Sys-Array/v/PE",
+  "../Torus-Sys-Array/v/memory",
+  "../Torus-Sys-Array/v/controller",
+]
+sim.inputs.tb_incdir_meta: [subst]
+
+# List of Verilog testbenches (or other sources) needed for simulation only.
+# We include a behavioral pad cell model (tb_tsmc_io_behav.v) instead of the
+# foundry transistor-level pad model so RTL sim stays focused on chip_top
+# logic. For gate-level / post-PAR sim where the foundry pad model is
+# linked in by Hammer, comment that line out.
+#
+# bsg_link FPGA-side peer modules (bsg_link_ddr_upstream/downstream,
+# bsg_sync_sync, and their dependencies) live under tb_input_files
+# because they are *testbench-only* — they model the FPGA bsg_link peer
+# that the chip talks to over the pad ring, not part of the chip itself.
+# Including them here means they are compiled for ALL sim flavors
+# (sim-rtl + sim-syn + sim-par) without being passed to syn/par.
+# Order matters: dependencies first, then upstream/downstream, then tb.
+sim.inputs.tb_input_files: [
+  "${bsg_root}/bsg_misc/bsg_dff.v",
+  "${bsg_root}/bsg_misc/bsg_dff_en.v",
+  "${bsg_root}/bsg_misc/bsg_dff_reset.v",
+  "${bsg_root}/bsg_misc/bsg_counter_clear_up.v",
+  "${bsg_root}/bsg_misc/bsg_circular_ptr.v",
+  "${bsg_root}/bsg_misc/bsg_scan.v",
+  "${bsg_root}/bsg_misc/bsg_gray_to_binary.v",
+  "${bsg_root}/bsg_async/bsg_async_ptr_gray.v",
+  "${bsg_root}/bsg_async/bsg_async_credit_counter.v",
+  "${bsg_root}/bsg_async/bsg_async_fifo.v",
+  "${bsg_root}/bsg_async/bsg_launch_sync_sync.v",
+  "${bsg_root}/bsg_async/bsg_sync_sync.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_tracker.v",
+  "${bsg_root}/bsg_dataflow/bsg_one_fifo.v",
+  "${bsg_root}/bsg_dataflow/bsg_two_fifo.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small_unhardened.v",
+  "${bsg_root}/bsg_dataflow/bsg_fifo_1r1w_small.v",
+  "${bsg_root}/bsg_dataflow/bsg_parallel_in_serial_out.v",
+  "${bsg_root}/bsg_dataflow/bsg_serial_in_parallel_out.v",
+  "${bsg_root}/bsg_dataflow/bsg_serial_in_parallel_out_full.v",
+  "${bsg_root}/bsg_dataflow/bsg_round_robin_1_to_n.v",
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w_synth.v",
+  "${bsg_root}/bsg_mem/bsg_mem_1r1w.v",
+  "${bsg_root}/bsg_link/bsg_link_iddr_phy.v",
+  "${bsg_root}/bsg_link/bsg_link_oddr_phy.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_downstream.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_upstream.v",
+  "${bsg_root}/bsg_link/bsg_link_source_sync_upstream_sync.v",
+  "${bsg_root}/bsg_link/bsg_link_ddr_downstream.v",
+  "${bsg_root}/bsg_link/bsg_link_ddr_upstream.v",
+  "zeroscatter/chip_top_tb.sv",
+  "../Torus-Sys-Array/v/Top_level/parity_checker.sv",
+  "../Torus-Sys-Array/v/Top_level/parity_generator.sv",
+
+  "${bsg_root}/bsg_test/bsg_nonsynth_clock_gen.v",
+  "${bsg_root}/bsg_test/bsg_nonsynth_reset_gen.v",
+  "${bsg_root}/bsg_fsb/bsg_fsb_node_trace_replay.v",
+  #"../Torus-Sys-Array/v/Top_level/chip_top_tb.sv",
+  "zeroscatter/bsg_link_wrapper.sv",
+  "zeroscatter/tb_tsmc_io_behav.v",
+]
+sim.inputs.tb_input_files_meta: [append, subst]
+
+# List of trace files for the simulation
+sim.inputs.trace_files: [
+  "../Torus-Sys-Array/v/Top_level/benchmark4_recv_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark4_send_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark3_recv_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark3_send_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark2_recv_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark2_send_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark1_recv_trace.tr",
+  "../Torus-Sys-Array/v/Top_level/benchmark1_send_trace.tr",
+]

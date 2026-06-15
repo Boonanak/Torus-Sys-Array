@@ -1,0 +1,81 @@
+# Main hammer config file
+
+# Set top levels
+synthesis.inputs.top_module: "chip_top"
+sim.inputs.tb_name: "chip_top_tb"
+
+# Don't synthesize these gate-level netlist modules
+synthesis.inputs.preserve_modules: ["pad_ring_64"]
+synthesis.genus.write_sdf_args: ["-timescale ns"]
+
+# Custom SDC constraints
+vlsi.inputs:
+  # You can add SDC constraints directly here (list of strings)
+  custom_sdc_constraints: []
+  
+  # Additional SDC files to read
+  custom_sdc_files:
+    - "constraints.tcl"
+  custom_sdc_files_meta: prependlocal # Prepend path of this config file!
+
+vlsi.inputs.decaps:
+  - target: "capacitance"
+    capacitance: "1600" 
+    x: 0 
+    y: 0 
+    width: 1620
+    height: 1730
+    
+
+# Placement Constraints
+vlsi.inputs.placement_constraints:
+  - path: "TOP" # (this name isn't actually checked...)
+    type: toplevel
+    # define chip dimensions
+    width:  1620
+    height: 1730
+    x: 0
+    y: 0
+    margins: {left: 0, right: 0, top: 0, bottom: 0}
+
+par.innovus.floorplan_mode: "manual"
+par.innovus.floorplan_script_contents: "source ../../cfg/pad.tcl \n
+source ../../../Torus-Sys-Array/synthesis/floorplan.tcl"
+
+vlsi.inputs.pin_mode: "generated"
+vlsi.inputs.pin.generate_mode: "semi_auto" # Prepend path of this config file!
+vlsi.inputs.pin.assignments: 
+    - pins: "*"
+      preplaced: true
+
+par.power_straps_mode: "manual"
+par.power_straps_script_contents: "source ../../cfg/power_straps.tcl"
+
+vlsi.inputs.power_spec_mode: "manual"
+vlsi.inputs.power_spec_type: "cpf"
+vlsi.inputs.power_spec_contents: "source ../../cfg/power_spec.cpf"
+
+vlsi:
+  inputs:
+    # Supply voltages.
+    # TODO: add ability to tie pin to net in Hammer Innovus plugin
+    supplies:
+      power:  [ {name: "VDD",  pin: "VDD"}, {name: "VDDPST",  pin: "VDDPST"},{name: "POC",  pin: "POC"} ] 
+      ground: [ {name: "VSS",  pin: "VSS"}, {name: "VSSPST",  pin: "VSSPST"} ]
+      VDD: "1.8 V"
+      GND: "0 V"
+      VDDPST: "3.3 V"
+      VSSPST: "0 V"
+      POC: "3.3 V"
+
+lvs.calibre.virtual_connect_colon: true
+
+# Black-box the IO pad cells so their known-bad foundry internals don't
+# fail the top-level LVS. Matches the LVS BOX line in signoff_lvs.
+# `manual` mode makes hammer use our text (the default `auto` mode only
+# picks up tech-provided text).
+lvs.inputs.additional_lvs_text_mode: "manual"
+lvs.inputs.additional_lvs_text: |
+  LVS BOX PDDW1216CDG PVDD1CDG PVDD2CDG PVDD2POC
+
+timing.inputs.max_paths: 10000

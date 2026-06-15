@@ -465,22 +465,31 @@ module async_rst_sync_deassert (
     input  wire rst,
     output wire async_rst_sync_deassert
 );
-    reg rst_sync1;
-    reg rst_sync2;
+    // Async-assert / sync-deassert reset synchronizer using TSMC180 DFSNQD1BWP7T
+    // (DFF with active-low async-set SDN).  Direct-instantiated (not inferred)
+    // so the SDN pin name resolves in every tool stage — needed for SDN routing
+    // bounds in cfg/constraints.tcl which target rst_sync*_reg/SDN by pin.
+    //
+    // Truth table:
+    //   rst = 1 (asserted, active high):  SDN = 0 → Q forced to 1 immediately
+    //                                     → async_rst_sync_deassert = 1 (reset)
+    //   rst = 0 (released):               SDN = 1 → FF samples D each CP edge
+    //                                     → after 2 clocks, Q chain rolls to 0
+    //                                     → async_rst_sync_deassert = 0 (run)
+    //
+    // The 2-FF depth gives 1 clock cycle for metastability on FF1/Q to resolve
+    // before FF2 samples it on the next edge.
+    //
+    // Excluded from scan via cfg/dft.yml dont_scan_instances list — the non-scan
+    // DFSNQD1BWP7T variant is used (not SDFSNQD2BWP7T), so DFT scan stitching
+    // would fail to wire SI/SE through this module.
 
+    wire rst_n;
+    wire rst_sync1;
 
-    always @(posedge clk or posedge rst) begin
-        if (rst) begin
-            rst_sync1 <= 1'b1;
-            rst_sync2 <= 1'b1;
-        end else begin
-            rst_sync1 <= 1'b0;
-            rst_sync2 <= rst_sync1;
-        end
-    end
-
-
-    assign async_rst_sync_deassert = rst_sync2;
+    INVD1BWP7T   u_rst_inv      (.I (rst),     .ZN (rst_n));
+    DFSNQD1BWP7T rst_sync1_reg  (.SDN (rst_n), .CP (clk), .D (1'b0),      .Q (rst_sync1));
+    DFSNQD1BWP7T rst_sync2_reg  (.SDN (rst_n), .CP (clk), .D (rst_sync1), .Q (async_rst_sync_deassert));
 endmodule
 
 

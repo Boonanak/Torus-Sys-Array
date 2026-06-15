@@ -1,0 +1,23 @@
+set_cpf_version 2.0
+set_hierarchy_separator /
+set_design chip_top
+create_power_nets -nets { VDD } -voltage 1.8
+create_ground_nets -nets { VSS }
+create_power_domain -name AO -default
+update_power_domain -name AO -primary_power_net VDD -primary_ground_net VSS
+create_global_connection -domain AO -net VDD -pins VDD
+create_global_connection -domain AO -net VSS -pins VSS
+create_nominal_condition -name nominal -voltage 1.8
+create_power_mode -name aon -default -domain_conditions {AO@nominal}
+
+# Create virtual power domain for 3.3 V I/O supply (no instances added)
+# Needed to establish the correct netlist connectivity for I/O cells
+create_power_nets -nets {VDDPST} -voltage 3.3
+create_ground_nets -nets {VSSPST}
+create_power_nets -nets POC -voltage 3.3
+create_power_domain -name PD_VIRT_PST
+update_power_domain -name PD_VIRT_PST -primary_power_net VDDPST -primary_ground_net VSSPST -equivalent_power_nets POC
+create_global_connection -net VDDPST -pins VDDPST
+create_global_connection -net VSSPST -pins VSSPST
+create_global_connection -net POC -pins POC
+end_design

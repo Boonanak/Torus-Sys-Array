@@ -1,0 +1,13 @@
+# Testbench config for scan chain integrity sim.
+# Use in place of cfg/tb.yml when running the scan TB:
+#   make TB_CFGS=cfg/tb_scan.yml DFT=1 sim-syn
+#
+# Requires DFT_EN macro (provided by cfg/dft.yml when included).
+
+sim.inputs.tb_name: "chip_top_tb_scan"
+
+sim.inputs.tb_input_files: [
+  "zeroscatter/chip_top_tb_scan.sv",
+  "/homes/lab.apps/vlsiapps/kits/tsmc/N180RF/Standard_IO/tpd018nv_280a/TSMCHOME/digital/Front_End/verilog/tpd018nv_260a/tpd018nv.v",
+]
+sim.inputs.tb_input_files_meta: [append, subst]

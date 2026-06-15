@@ -1,0 +1,65 @@
+# Optional DFT (scan chain) configuration.
+# Include this in INPUT_CFGS to enable scan chain insertion in synthesis,
+# scan-aware placement reorder in PAR, and post-route scanDEF writeout.
+#
+# Scan ports are routed through existing PADs (no new chip_top ports added):
+#   PAD[11] -> scan_en  (input)
+#   PAD[46] -> scan_in  (input)
+#   PAD[47] -> scan_out (output)
+# Controlled by `define DFT_EN in chip_top.sv.
+
+dft:
+  enable: true
+  # Genus DFT scan-chain stitching uses these internal pin paths.
+  # scan_*_port values must be a Genus-resolvable port or pin reference
+  # (top-level port via [get_ports ...] OR an instance pin like
+  # u_scan_en_buf/Z). chip_top.sv must wire each PAD through buffer
+  # cells whose output (Z) / input (I) pins match these names.
+  scan_clock_port: "[get_ports {PAD[44]}]"
+  scan_en_port:    "u_scan_en_buf/Z"
+  scan_in_port:    "u_scan_in_buf/Z"
+  scan_out_port:   "u_scan_out_buf/I"
+  scan_period_ns:  10
+
+  # Instances to exclude from the scan chain. Each entry is the instance
+  # hierarchy path relative to the top module (chip_top), using the
+  # *instance names* you wrote in the RTL (e.g. `u_bsg_link_wrapper`,
+  # `spi_inst`). All flops inside the named instance — and recursively in
+  # everything it contains — are skipped by connect_scan_chains.
+  #
+  # Use instance paths, NOT module names: parameterized modules get
+  # uniquified during elaboration (e.g. `bsg_link_wrapper` becomes
+  # `bsg_link_wrapper_<param_hash>`), so a module-name reference silently
+  # fails for anything with parameters.
+  #
+  # Use this for blocks whose flops:
+  #   - run on a clock the single scan_clock can't reach (IO PHYs, SPI),
+  #   - are a synthesized memory array (bsg_mem_1r1w / reg-file SRAMs),
+  #   - or sit across an async-FIFO clock boundary (gray-coded pointers).
+  dont_scan_instances:
+    - u_bsg_link_wrapper        # bsg_link DDR upstream + downstream + FIFOs
+    - u_soc_top/u_sp            # scratchpad memory
+    - u_dn_reset_sync # downstream reset synchronizer, runs on different clock domain
+
+  # ATPG (Modus) pin assignment. These tell Modus which top-level pads
+  # are the EXTERNAL scan endpoints — used to overwrite the pinassign
+  # that write_dft_atpg auto-generates (which would otherwise leave
+  # scan_in/scan_out off because they're routed via internal buffers).
+  # Required for ATPG to find the chain (without these, Modus reports
+  # "0 controllable scan chains").
+  atpg:
+    scan_clock_pin: "PAD[44]"         # functional + scan clock (held -ES)
+    scan_en_pin:    "PAD[11]"         # scan enable             (held +SE)
+    scan_in_pin:    "PAD[46]"         # scan data input         (SI)
+    scan_out_pin:   "PAD[47]"         # scan data output        (SO)
+    # Pads held inactive (-SC) during scan, e.g. async resets, test_mode
+    constraint_pins: ["PAD[45]"]      # hard_reset
+
+# Pass DFT_EN define into VCS RTL/gate-level simulation
+sim.inputs.options: ["+define+DFT_EN"]
+sim.inputs.options_meta: append
+
+# Conformal LEC: constrain PAD[11] (scan_en) to 0 so DFT scan path does
+# not block equivalence checking in functional mode.
+formal.inputs.scan_enable_pins:
+  - "PAD[11]"

@@ -10,6 +10,8 @@ synthesis.inputs.input_files: [
   "${bsg_root}/bsg_misc/bsg_defines.v",
   "${bsg_root}/bsg_misc/bsg_dff.v",
   "${bsg_root}/bsg_misc/bsg_dff_en.v",
+  "${bsg_root}/bsg_misc/bsg_dff_reset.v",
+  "${bsg_root}/bsg_misc/bsg_mux.v",
   "${bsg_root}/bsg_misc/bsg_counter_clear_up.v",
   "${bsg_root}/bsg_misc/bsg_circular_ptr.v",
   "${bsg_root}/bsg_misc/bsg_scan.v",
@@ -56,7 +58,6 @@ synthesis.inputs.input_files: [
   # our version of bsg_link_wrapper, uses same module name internally
   "../Torus-Sys-Array/v/Top_level/parity_checker.sv",
   "../Torus-Sys-Array/v/Top_level/parity_generator.sv",
-  "../Torus-Sys-Array/v/Top_level/bsg_link_parity_wrapper.sv",
   "../Torus-Sys-Array/v/CSR/csr.sv",
   "../Torus-Sys-Array/v/PE/PE_pkg.sv",
   "../Torus-Sys-Array/v/memory/scratchpad_pkg.sv",
@@ -74,17 +75,26 @@ synthesis.inputs.input_files: [
   "../Torus-Sys-Array/v/controller/mesh_driver.sv",
   "../Torus-Sys-Array/v/controller/read_ctrl.sv",
   "../Torus-Sys-Array/v/controller/write_ctrl.sv",
-  #"../Torus-Sys-Array/v/controller/link16_to_flit32.sv",
-  #"../Torus-Sys-Array/v/controller/flit32_to_link16.sv",
   "../Torus-Sys-Array/v/memory/scratchpad.sv",
   "../Torus-Sys-Array/v/memory/sp_bank.sv",
   "../Torus-Sys-Array/v/sys_array/TwistMesh.sv",
   "../Torus-Sys-Array/v/transpose/shift_reg_simple.sv",
   "../Torus-Sys-Array/v/transpose/tp_node.sv",
   "../Torus-Sys-Array/v/transpose/transpose.sv",
-  "zeroscatter/chip_top.sv"
+  "../Torus-Sys-Array/v/Top_level/parity_checker.sv",
+  "../Torus-Sys-Array/v/Top_level/parity_generator.sv",
+
+
+  "zeroscatter/BLEpacket.sv",
+  "zeroscatter/squarewave.sv",
+  "zeroscatter/squarewavemod.sv",
+  "zeroscatter/spi_slave.sv",
+  "zeroscatter/bsg_link_wrapper.sv",
+  #"zeroscatter/top.v",
+  "zeroscatter/chip_top.sv",
 ]
 synthesis.inputs.input_files_meta: [append, subst]
+
 
 # Conformal LEC needs its own search path list
 

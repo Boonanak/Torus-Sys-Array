@@ -1,8 +1,10 @@
-create_guide -name u_soc_top/u_sp -area {900 500 1720 1100}
-create_guide -name u_soc_top/u_q -area {1250 1350 1780 1780}
-create_guide -name u_soc_top/u_decoder -area {1100 1350 1250 1780}
-create_guide -name u_soc_top/u_tp -area {1500 180 1780 500}
-create_guide -name u_soc_top/u_mesh -area {180 450 750 1780}
-create_guide -name u_soc_top/u_depack -area {400 180 600 400}
-create_guide -name u_bsg_link_wrapper/link_rx_i -area {750 1350 1100 1780}
+create_guide -name u_soc_top/u_sp -area {180 400 740 1440}
+create_guide -name u_soc_top/u_q -area {180 1400 1100 1785}
+create_guide -name u_soc_top/u_decoder -area {1500 1220 1785 1350}
+create_guide -name u_soc_top/u_disp -area {1460 1220 1550 1350}
+create_guide -name u_soc_top/u_tp -area {750 180 1000 600}
+create_guide -name u_soc_top/u_rd -area {750 600 1000 850}
+create_guide -name u_soc_top/u_mesh -area {1030 180 1785 1200}
+create_guide -name u_soc_top/u_depack -area {430 200 600 350}
+create_guide -name u_bsg_link_wrapper/link_rx_i -area {1420 1350 1785 1785}
 create_guide -name u_bsg_link_wrapper/link_tx_i -area {180 180 400 400}
