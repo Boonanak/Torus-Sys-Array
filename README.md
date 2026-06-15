@@ -15,7 +15,7 @@ Project Status: GDSII submitted to TSMC (DRC/LVS clean, timing closed). Awaiting
 └── synthesis/     # Physical design and synthesis scripts for the TSMC 180nm Hammer flow
 
 ### ⚠️ NDA Compliance Notice
-### All TSMC 180nm standard cell libraries, IO pad cells, and foundry-specific Hammer configurations have been omitted from this public repository to strictly adhere to non-disclosure agreements.
+### All TSMC 180nm standard cell libraries and foundry-specific Hammer configurations have been omitted from this public repository to strictly adhere to non-disclosure agreements.
 ```
 # Problem Statement
 <img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/9374a5dd-eb9a-4fec-9423-0329f9923dbc" />
