@@ -1,46 +1,54 @@
-# Torus-Sys-Array
-EE 478 Capstone Project. Testing PPA differences between a conventional weight-stationary systolic array and a new torus architecture systolic array
+# Pipette
+Pipette is an ASIC hardware accelerator designed to optimize Power, Performance, and Area (PPA) for General Matrix Multiply (GEMM) operations. Developed as an EE 478 Capstone Project at the University of Washington, this project evaluates the architectural trade-offs between a conventional Weight-Stationary (WS) Systolic Array and a novel, optimized Twisted Torus Systolic Array.
 
-# Directory
+Team Members: Vance Borus, Sachal Shaikh, Byeongguk Lee, Chenyi Wang, Neal Causey, and Sean Bubernak.
+
+Advisors: Professor Ang Li (University of Washington) and Jiayi Wang (Ph.D. student).
+
+Project Status: GDSII submitted to TSMC (DRC/LVS clean, timing closed). Awaiting fabrication for silicon bring-up and physical validation.
+
+# Repository Description
 ```bash
-├── docs/               # Specs, pinout diagrams, and registers
-├── hdl/                # Hardware Description Language files
-│   ├── rtl/            # Synthesizable logic (Verilog/VHDL)
-│   └── include/        # Headers and parameter files
-├── dv/                 # Design Verification (The "Testbench" area)
-│   ├── tests/          # Individual test cases
-│   └── env/            # UVM/SystemVerilog environments
-├── scripts/            # Automation scripts (Python, Tcl, Perl)
-├── synthesis/          # Synthesis constraints (SDC) and netlists
-├── layout/             # GDSII, LEF, DEF, and floorplan files
-├── verification/       # Formal, STA (Timing), and Power analysis
-└── third_party/        # IP cores or external libraries (as submodules)
+├── docs/          # Architecture specifications, pinout diagrams, and register maps
+├── v/             # Synthesizable RTL (Verilog) and comprehensive testbenches
+├── scripts/       # Automation, verification, and data-processing scripts (Python, Tcl, Perl)
+└── synthesis/     # Physical design and synthesis scripts for the TSMC 180nm Hammer flow
 ```
-# Problem we intend to address
-<img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/07a91294-237e-40b5-9c24-dea08b597701" />
-As this wikipedia image from https://en.wikipedia.org/wiki/Systolic_array#/media/File:Weights_Stationary_Systolic_Array_Example.png shows, 
-When we want to do a matrix multiply operation A x B = C with a weight stationary TPU, each individual PE at location (i, j) is loaded with weights of matrix B_ij, and the weights of matrix A is fed in this skewed manner to ensure partial sums (accumulated values) arrive on time and at correct places.
-<img width="1728" height="822" alt="image" src="https://github.com/user-attachments/assets/df279c21-77e1-44ff-a03b-01678f754cf6" />
-this creates two problems. first is that area efficiency of systolic array is reduced from the shift registers in red triangular area to correctly support skew. second is that now compute takes 7 cycles, instead of four if all the rows are aligned. this can be problematic in cases where it is compute bound and matrix weights of B is consistently changing, because the total matrix multiplication operation takes (cycles to load matrix B + cycles to shift A through PE's) and this impacts not only latency but also throughput. note that if matrix B rarely changes and next data is always ready, we can coalesce next and previous weights of matrix A and we would have same throughput as if we had all data aligned, but if B frequently changes we cannot do that because we must wait for B to correctly be loaded into the systolic array.
+[!IMPORTANT]
+NDA Compliance Notice: All TSMC 180nm standard cell libraries, IO pad cells, and foundry-specific Hammer configurations have been omitted to strictly adhere to non-disclosure agreements.
 
-## Ideas and Previous works
-simply rearranging the diagram a bit does not solve the problem as there are still shift registers and skew problem, but reveals us an idea that leads to this publication: https://ieeexplore.ieee.org/document/11098764
-<img width="1574" height="549" alt="image" src="https://github.com/user-attachments/assets/e1aeaab8-4eea-4823-9365-575d819bb32a" />
-The core idea is that we can wrap around the PE's that extend out of regular 4x4 grid structure (B24, B33, B34, B42, B43, B44) and bring it back into the 4x4 grid.
-<img width="1543" height="719" alt="image" src="https://github.com/user-attachments/assets/7019c8ea-4b85-43e6-8768-fb9d9dcd11a3" />
-There are additional wraparound link from B_4j to B_1j to accomodate for the changes, which leads us to a twisted torus shaped systolic array.
-these wraparound links are long interconnects, which poses significant timing, power, and routing issues.
+# Problem Statement
+<img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/9374a5dd-eb9a-4fec-9423-0329f9923dbc" />
+The Cost of Input Skewing in Conventional WS Arrays are the main motivator for this novel architecture. In a standard Weight-Stationary Tensor Processing Unit (TPU), executing a matrix multiplication ($A \times B = C$) requires the inputs of matrix $A$ to be fed in a staggered, skewed fashion. This ensures that the moving activations intersect with the correct stationary weights ($B_{ij}$) and that partial sums accumulate synchronously across the Processing Elements (PEs).This conventional approach introduces two major hardware inefficiencies:
+<img width="1728" height="822" alt="image" src="https://github.com/user-attachments/assets/2a048ae4-f2a7-4bd9-913e-47492e2e8ac8" />
+1. Area Overhead: Substantial Silicon area is consumed by external shift-register arrays (represented by the red triangular buffers below) required to stagger input data.
+2. Latency & Throughput Degradation: Input skewing increases execution latency. For a $4 \times 4$ array, computation stretches to 7 cycles instead of a theoretical 4-cycle minimum. While continuous streaming can hide this latency for static weights, frequently changing weights break the pipeline. The hardware must stall to load new weights, severely penalizing throughput in workloads with dynamic weight updates.
 
-# Our Solution (work in progress, advised by Prof. Ang Li)
-We intend on minimizing the interconnect length by applying additional shuffling to the twisted torus based TPU. This in turn requires slightly more complex structure where not only partial sums, but also matrix weights of A and B must also move in diagonal direction.
-Below is a diagram for loading weights.
-<img width="1822" height="3199" alt="image" src="https://github.com/user-attachments/assets/342e3d0d-7130-4525-b137-3418bcec8207" />
+## Prior Art: The Twisted Torus Architecture
+Prior academic work ([IEEE Exploration, 2025](https://ieeexplore.ieee.org/document/11098764)) demonstrated that spatial skewing can be eliminated by wrapping peripheral processing elements back into a standard $N \times N$ grid structure.By introducing secondary wraparound links from the bottom row back to the top ($B_{4j}$ to $B_{1j}$), the architecture forms a Twisted Torus. This allows perfectly aligned rows of matrix $A$ to be injected into the array simultaneously. However, this architectural fix introduces a massive physical implementation bottleneck: long, non-local interconnects that degrade timing closure, increase dynamic power consumption, and complicate routing.
 
-Below is a diagram for actual computation after loading weights
-<img width="2517" height="6737" alt="image" src="https://github.com/user-attachments/assets/d4345515-9c13-4035-8122-d21e2a615876" />
+# Our Solution: Shuffled 1-Hop Twisted Torus
+Proposed by Prof. Ang Li, Pipette addresses the long-interconnect bottleneck by applying a deterministic shuffling algorithm to the Twisted Torus topology. By altering the routing matrix, we ensure that every physical interconnect is constrained to a maximum of 1-hop. To support this localized routing, the datapath is re-architected so that activations, weights, and partial sums move diagonally through the array.
 
-A challenge and complexity of this problem now comes to generating the initial pattern of B in hardware efficient manner and at maximum throughput.
-<img width="682" height="566" alt="image" src="https://github.com/user-attachments/assets/e35d7e25-e7f1-49ae-b8f3-12ab46ed677a" />
+# Diagrams
+## Weight Loading Phase
 
-we must first convert the data into column major, so that we can shift each column by preset amount (different for each column, but it is set for each column). To convert row major data into column major data, we can use transposer designed similarly to GEMMINI (https://github.com/ucb-bar/gemmini/blob/master/src/main/scala/gemmini/Transposer.scala) to ensure full throughput transposition, then design a shifter with FSM to control how much each column is shifted by. This logic can be extended to any size of systolic array, and Ang and his team has proven that this shifter network needs at most 3 hop to maintain 1 hop systolic array using coloring theory. The long interconnect routing is now offloaded from systolic array to transposer-shifter array, which is less demanding in performance as they are mostly designed with registers and muxes and does not have its associated multiplier/adders.
-We can further improve throughput.
+<table>
+  <tr>
+    <td><strong>Cycle 1</strong><br><img src="https://github.com/user-attachments/assets/aed7af6b-772a-4870-996e-4beac89a0782" width="200"/></td>
+    <td><strong>Cycle 2</strong><br><img src="https://github.com/user-attachments/assets/6f02ecb6-5f73-41a5-b2f0-b5923f15ba2c" width="200"/></td>
+    <td><strong>Cycle 3</strong><br><img src="https://github.com/user-attachments/assets/3393c972-010c-4a68-8688-c8afa0982b28" width="200"/></td>
+    <td><strong>Cycle 4</strong><br><img src="https://github.com/user-attachments/assets/db739d6e-59ea-4011-aa43-90d0048e84a3" width="200"/></td>
+  </tr>
+</table>
+
+## Compute Phase
+
+<table>
+  <tr>
+    <td><strong>Cycle 5</strong><br><img src="https://github.com/user-attachments/assets/80389978-df2d-4328-a97f-5ff6de7ee1fe" width="200"/></td>
+    <td><strong>Cycle 6</strong><br><img src="https://github.com/user-attachments/assets/7a52fb36-a4b2-415d-a422-ea5ad6502692" width="200"/></td>
+    <td><strong>Cycle 7</strong><br><img src="https://github.com/user-attachments/assets/59a82273-c48d-408f-9648-34a37814c9c6" width="200"/></td>
+    <td><strong>Cycle 8</strong><br><img src="https://github.com/user-attachments/assets/d7ae1815-c08c-44d4-a994-78890d31c378" width="200"/></td>
+  </tr>
+</table>
