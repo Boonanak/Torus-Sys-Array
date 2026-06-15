@@ -18,11 +18,26 @@ Project Status: GDSII submitted to TSMC (DRC/LVS clean, timing closed). Awaiting
 ### All TSMC 180nm standard cell libraries and foundry-specific Hammer configurations have been omitted from this public repository to strictly adhere to non-disclosure agreements.
 ```
 # Problem Statement
-<img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/9374a5dd-eb9a-4fec-9423-0329f9923dbc" />
-The Cost of Input Skewing in Conventional WS Arrays are the main motivator for this novel architecture. In a standard Weight-Stationary Tensor Processing Unit (TPU), executing a matrix multiplication ($A \times B = C$) requires the inputs of matrix $A$ to be fed in a staggered, skewed fashion. This ensures that the moving activations intersect with the correct stationary weights ($B_{ij}$) and that partial sums accumulate synchronously across the Processing Elements (PEs).This conventional approach introduces two major hardware inefficiencies:
-<img width="1728" height="822" alt="image" src="https://github.com/user-attachments/assets/2a048ae4-f2a7-4bd9-913e-47492e2e8ac8" />
-1. Area Overhead: Substantial Silicon area is consumed by external shift-register arrays (represented by the red triangular buffers below) required to stagger input data.
-2. Latency & Throughput Degradation: Input skewing increases execution latency. For a $4 \times 4$ array, computation stretches to 7 cycles instead of a theoretical 4-cycle minimum. While continuous streaming can hide this latency for static weights, frequently changing weights break the pipeline. The hardware must stall to load new weights, severely penalizing throughput in workloads with dynamic weight updates.
+
+The main motivator for this novel architecture is the **Cost of Input Skewing** in conventional Weight-Stationary (WS) arrays. 
+
+In a standard Weight-Stationary Tensor Processing Unit (TPU), executing a matrix multiplication $A \times B = C$ requires the inputs of matrix $A$ to be fed in a staggered, skewed fashion. This ensures that the moving activations intersect with the correct stationary weights ($B_{ij}$) and that partial sums accumulate synchronously across the Processing Elements (PEs).
+
+<p align="center">
+  <img width="100%" alt="Conventional WS Array Input Skewing" src="https://github.com/user-attachments/assets/9374a5dd-eb9a-4fec-9423-0329f9923dbc" />
+</p>
+
+### Hardware Inefficiencies of Conventional Approaches
+
+This conventional approach introduces two major hardware inefficiencies:
+
+1. **Area Overhead:** Substantial silicon area is consumed by external shift-register arrays (represented by the red triangular buffers in the diagram) required to stagger input data.
+2. **Latency & Throughput Degradation:** Input skewing increases execution latency. For a $4 \times 4$ array, computation stretches to 7 cycles instead of a theoretical 4-cycle minimum. 
+
+<p align="center">
+  <img width="100%" alt="Latency Breakdown" src="https://github.com/user-attachments/assets/2a048ae4-f2a7-4bd9-913e-47492e2e8ac8" />
+</p>
+
 
 ## Prior Art: The Twisted Torus Architecture
 Prior academic work ([IEEE Exploration, 2025](https://ieeexplore.ieee.org/document/11098764)) demonstrated that spatial skewing can be eliminated by wrapping peripheral processing elements back into a standard $N \times N$ grid structure.By introducing secondary wraparound links from the bottom row back to the top ($B_{4j}$ to $B_{1j}$), the architecture forms a Twisted Torus. This allows perfectly aligned rows of matrix $A$ to be injected into the array simultaneously. However, this architectural fix introduces a massive physical implementation bottleneck: long, non-local interconnects that degrade timing closure, increase dynamic power consumption, and complicate routing.
