@@ -13,10 +13,10 @@ Project Status: GDSII submitted to TSMC (DRC/LVS clean, timing closed). Awaiting
 ├── v/             # Synthesizable RTL (Verilog) and comprehensive testbenches
 ├── scripts/       # Automation, verification, and data-processing scripts (Python, Tcl, Perl)
 └── synthesis/     # Physical design and synthesis scripts for the TSMC 180nm Hammer flow
-```
-[!IMPORTANT]
-NDA Compliance Notice: All TSMC 180nm standard cell libraries, IO pad cells, and foundry-specific Hammer configurations have been omitted to strictly adhere to non-disclosure agreements.
 
+### ⚠️ NDA Compliance Notice
+### All TSMC 180nm standard cell libraries, IO pad cells, and foundry-specific Hammer configurations have been omitted from this public repository to strictly adhere to non-disclosure agreements.
+```
 # Problem Statement
 <img width="1920" height="1163" alt="image" src="https://github.com/user-attachments/assets/9374a5dd-eb9a-4fec-9423-0329f9923dbc" />
 The Cost of Input Skewing in Conventional WS Arrays are the main motivator for this novel architecture. In a standard Weight-Stationary Tensor Processing Unit (TPU), executing a matrix multiplication ($A \times B = C$) requires the inputs of matrix $A$ to be fed in a staggered, skewed fashion. This ensures that the moving activations intersect with the correct stationary weights ($B_{ij}$) and that partial sums accumulate synchronously across the Processing Elements (PEs).This conventional approach introduces two major hardware inefficiencies:
