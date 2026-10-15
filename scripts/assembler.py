@@ -419,9 +419,10 @@ A1 = np.arange(1, 65).reshape(8,8)
 B2 = np.full((8,8), 2)
 C12 = A1 @ B2
 
-instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
-expected_outputs = [np.identity(8), A1, C12]
-receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
+# Benchmark 1 - with header or without header
+# instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_send_trace.tr')
+# expected_outputs = [np.identity(8), A1, C12]
+# receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_trace.tr', expected_outputs)
 # instructions_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_send_trace.tr')
 # expected_outputs = [np.identity(8), A1, C12]
 # receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_header_recv_trace.tr', expected_outputs)
@@ -607,3 +608,34 @@ receive_to_traces('scripts/tpu_benchmark1.txt', 'v/Top_level/benchmark1_recv_tra
 #     instruction_file.write(to_machine_code("READM16 3"))
 #     instruction_file.write(to_machine_code("CR 4 0 63"))
 #     instruction_file.write(to_machine_code("READM16 4"))
+
+# Benchmark 5
+# A = gen_matrix(8, -100, 100)
+# B = gen_matrix(8, -100, 100)
+# print(A, B)
+# print(WRITEM(A, 0, 8))
+# print(WRITEM(B, 1, 8))
+A = np.array([
+    [-96, -6, 73, -3, -90, -53, -73, 83], 
+    [38, -44, 57, -87, -63, -5, 97, -18], 
+    [83, -60, 69, 17, 9, -29, 93, -16], 
+    [95, -53, -16, 93, -81, 78, 63, -99], 
+    [87, 4, 54, -39, 52, -11, 43, -95], 
+    [60, 21, 51, 59, 5, 24, -51, -71], 
+    [17, -33, -41, 4, 89, 9, -89, 4], 
+    [-24, 44, -29, 24, -47, 36, 45, -31]
+])
+B = np.array([
+    [-58, 50, -87, 79, -95, 56, 38, 63], 
+    [-19, -69, 13, 81, -58, -80, 81, -91], 
+    [-20, -86, 33, -79, 8, -73, 17, 7], 
+    [77, 100, -29, -99, -50, 34, -76, -19], 
+    [-53, -60, 82, -62, -80, -60, -65, -60], 
+    [62, -64, 58, 35, -94, 15, -68, 65], 
+    [60, 70, 42, 37, -62, 45, 65, -14], 
+    [89, -21, 89, 14, -71, -59, 30, 63]
+])
+C = A @ B
+instructions_to_traces('scripts/tpu_benchmark5.txt', 'v/Top_level/benchmark5_send_trace.tr')
+expected_outputs = [A, C]
+receive_to_traces('scripts/tpu_benchmark5.txt', 'v/Top_level/benchmark5_recv_trace.tr', expected_outputs)
