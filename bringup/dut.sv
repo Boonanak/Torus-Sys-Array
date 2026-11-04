@@ -36,7 +36,7 @@
 // io_master_clk_i for bsg_link_ddr_upstream is tied to core_clk_i internally
 // to save one pad. All four bsg_link reset inputs are tied to hard_reset.
 // -----------------------------------------------------------------------
-module chip_top (
+module dut (
     input logic core_clk,
     input logic hard_reset,
     

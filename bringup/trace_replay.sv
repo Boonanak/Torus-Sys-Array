@@ -58,8 +58,8 @@ module trace_replay
       eNop=4'd0,
       eSend=4'd1,
       eReceive=4'd2,
-      eDone=4'd3,
-      eFinish=4'd4,
+      eFinish=4'd3,   // PREVIOUSLY eDone --> changed because done works better as our finish command!
+      eDone=4'd4,     // PREVIOUSLY eFinish
       eCycleDec=4'd5,
       eCycleInit=4'd6
    } eOp;

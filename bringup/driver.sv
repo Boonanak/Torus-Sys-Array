@@ -22,7 +22,7 @@ module driver (
 
     output logic scan_en,
     output logic scan_in,
-    input  logic scan_out
+    input  logic scan_out,
 
     // status to the board
     output logic        done_o,        // both traces finished
@@ -168,16 +168,16 @@ module driver (
     assign core_clk = clk_i;  // 50 MHz if clk_i is CLOCK_50
     assign dn_io_clk = clk_i; // 50 MHz if clk_i is CLOCK_50
 
-    // ----- Clock and reset generation -----
-    logic [31:0] clkdiv;
+    // // ----- Clock and reset generation -----
+    // logic [31:0] clkdiv;
 
-    // FPGA clk
-    // assign clk = SW[8] ? KEY[3] : clkdiv[20]; // 50 MHz
-    assign core_clk = clkdiv[2]; 
-    assign dn_io_clk = clkdiv[2];  
-    always_ff @(posedge CLOCK_50) begin
-        clkdiv <= rst_i ? 32'b0 : clkdiv + 1;
-    end
+    // // FPGA clk
+    // // assign clk = SW[8] ? KEY[3] : clkdiv[20]; // 50 MHz
+    // assign core_clk = clkdiv[2]; 
+    // assign dn_io_clk = clkdiv[2];  
+    // always_ff @(posedge clk_i) begin
+    //     clkdiv <= rst_i ? 32'b0 : clkdiv + 1;
+    // end
 
 
 
@@ -245,7 +245,6 @@ module driver (
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
             wait_amount      <= 'b0;
-            pad_oe           <= '0; 
 			wait_done        <= 1'b0;
         end else if (wait_done) begin
             case (reset_seq)
@@ -280,8 +279,6 @@ module driver (
                     fpga_tx_io_link_reset     <= 1'b1;
                     fpga_tx_async_token_reset <= 1'b0;
                     fpga_rx_io_link_reset     <= 1'b1;
-                    SS_n                      <= 1'b1;
-                    MOSI                      <= 1'b0;
                     trace_enable              <= 1'b0;
                     reset_seq                 <= fpga_tx_async_assert;
                 end
@@ -338,6 +335,7 @@ module driver (
     logic [31+4:0] rom_data_send;
     logic [31+4:0] rom_data_recv;
     logic done_send, done_recv;
+    logic error_send, error_recv;
 
     // Send side
     logic [31:0] tr_data_lo;
@@ -369,7 +367,7 @@ module driver (
         ,.rom_addr_o(rom_addr_send)
         ,.rom_data_i(rom_data_send)
         ,.done_o    (done_send)
-        ,.error_o   ()
+        ,.error_o   (error_send)
     );
 
     // // Mapping Trace Replay to Top Level Input
@@ -409,7 +407,7 @@ module driver (
         ,.rom_addr_o(rom_addr_recv)
         ,.rom_data_i(rom_data_recv)
         ,.done_o    (done_recv)
-        ,.error_o   ()
+        ,.error_o   (error_recv)
     );
 
     // --- Trace ROMs ---
@@ -426,5 +424,14 @@ module driver (
     assign fpga_rx_yumi = tr_ready_lo && dut_v_r;
     assign dut_data_lo = fpga_rx_data_real;
     assign dut_v_lo = fpga_rx_valid;
+
+
+    assign done_o       = done_send | done_recv;
+    assign error_o      = error_send | error_recv;
+    assign parity_err_o = fpga_rx_parity_error;
+    assign send_addr_o  = rom_addr_send;
+    assign recv_addr_o  = rom_addr_recv;
+    assign out_valid_o  = fpga_rx_valid & fpga_rx_yumi;
+    assign out_data_o   = fpga_rx_data_real;
 
 endmodule
