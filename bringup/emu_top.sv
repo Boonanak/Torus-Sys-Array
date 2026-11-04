@@ -68,6 +68,14 @@ module emu_top (
         ,.out_data_o   (out_data)
     );
 
+    // assign done = 0;
+    // assign error = 0;
+    // assign parity_err = 0;
+    // assign send_addr = 5;
+    // assign recv_addr = 10;
+    // assign out_valid = 0;
+    // assign out_data = 0;
+
     dut u_chip (
          .core_clk   (core_clk)
         ,.hard_reset (hard_reset)

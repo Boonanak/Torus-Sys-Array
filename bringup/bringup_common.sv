@@ -199,7 +199,7 @@ module bringup_io #(
         end
     end
 
-    assign ledr_o = {hb_cnt[HB_BIT], 3'b000, timeout_seen, out_seen,
+    assign ledr_o = {hb_cnt[HB_BIT], rst_i, run_i, 1'b0, timeout_seen, out_seen,
                      fifo_overflow, parity_seen, error_i, done_i};
 
     // ---- seven-segment displays ----
