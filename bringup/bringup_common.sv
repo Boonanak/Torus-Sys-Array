@@ -158,7 +158,7 @@ module bringup_io #(
     ,parameter int BAUD           = 115200
     ,parameter int FIFO_ADDR_W    = 9
     ,parameter int HB_BIT         = 23
-    ,parameter int TIMEOUT_CYCLES = 125_000_000   // ~10 s at 12.5 MHz
+    ,parameter int TIMEOUT_CYCLES = CLK_HZ * 10   // ~10 s at 12.5 MHz
 )(
      input  logic        clk_i
     ,input  logic        rst_i
