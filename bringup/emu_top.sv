@@ -18,14 +18,15 @@ module emu_top (
     ,inout  wire  [35:0] GPIO_0
 );
 
-    // 50 MHz / CLK_DIV. Start slow; raise it once everything works.
-    localparam int CLK_DIV = 1;                       // 50 MHz
-    localparam int CLK_HZ  = 50_000_000 / CLK_DIV;
-
     // ---- clock, reset, run switch ----
-    logic clk, rst;
-    clk_div #(.DIV(CLK_DIV)) u_div (.clk_i(CLOCK_50), .clk_o(clk));
+    // reset synchronized into the 50 MHz domain
+    logic rst, rst50, clk, tick;
+    rst_gen #(.POR_CYCLES(16)) u_rst50 (.clk_i(CLOCK_50), .rst_async_i(~KEY[0]), .rst_o(rst50));
     rst_gen #(.POR_CYCLES(16)) u_rst (.clk_i(clk), .rst_async_i(~KEY[0]), .rst_o(rst));
+
+    // SW[9:6] pick the divide ratio (latched at reset)
+    clk_div_sw u_div (.clk_i(CLOCK_50), .rst_i(rst50), .sel_i(SW[9:6]),
+                    .clk_o(clk), .tick_o(tick));
 
     logic [1:0] run_s;
     always_ff @(posedge clk) run_s <= {run_s[0], SW[0]};
@@ -42,10 +43,29 @@ module emu_top (
     logic        trace_ready, done, error, parity_err, out_valid;
     logic [31:0] send_addr, recv_addr, out_data;
 
+    // ---- Choose benchmark ----
+    function automatic logic [2:0] pick_bench(input logic [4:0] s);  // s[4]=SW[5] ... s[0]=SW[1]
+        if      (s[4]) pick_bench = 3'd5;
+        else if (s[3]) pick_bench = 3'd4;
+        else if (s[2]) pick_bench = 3'd3;
+        else if (s[1]) pick_bench = 3'd2;
+        else if (s[0]) pick_bench = 3'd1;
+        else           pick_bench = 3'd0;      // nothing selected
+    endfunction
+
+    logic [4:0] bsw_s1, bsw_s2;
+    logic [2:0] bench;
+    always_ff @(posedge clk) begin
+        bsw_s1 <= SW[5:1];
+        bsw_s2 <= bsw_s1;
+        if (rst) bench <= pick_bench(bsw_s2);
+    end
+
     driver u_driver (
          .clk_i        (clk)
         ,.rst_i        (rst)
-        ,.run_i        (run)
+        ,.run_i        (run & (bench != 3'd0))
+        ,.bench_i      (bench)
         ,.core_clk     (core_clk)
         ,.hard_reset   (hard_reset)
         ,.rx_data      (rx_data)
@@ -95,7 +115,7 @@ module emu_top (
 
     // ---- LEDs, displays, UART ----
     logic uart_tx;
-    bringup_io #(.CLK_HZ(CLK_HZ)) u_io (
+    bringup_io #(.CLK_HZ(50_000_000)) u_io (
          .clk_i        (clk)
         ,.rst_i        (rst)
         ,.run_i        (run)

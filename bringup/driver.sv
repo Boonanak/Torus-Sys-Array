@@ -3,6 +3,7 @@ module driver (
     input  logic        clk_i,        // CLOCK_50 or a PLL output
     input  logic        rst_i,        // user reset, active high (invert KEY at the top)
     input  logic        run_i,        // start the trace (a switch)
+    input logic [2:0] bench_i,        // which benchmark is being run
 
     // interface with chip
     output logic core_clk,
@@ -421,10 +422,35 @@ module driver (
     logic dut_v_lo, dut_v_r;
     logic[31:0] dut_data_lo, dut_data_r;
 
+    logic [35:0] send_rom_1, send_rom_2, send_rom_3, send_rom_4, send_rom_5;
+    logic [35:0] recv_rom_1, recv_rom_2, recv_rom_3, recv_rom_4, recv_rom_5;
+
+    benchmark1_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_1 (.addr_i(rom_addr_send), .data_o(send_rom_1));
+    benchmark1_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_1 (.addr_i(rom_addr_recv), .data_o(recv_rom_1));
+    benchmark2_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_2 (.addr_i(rom_addr_send), .data_o(send_rom_2));
+    benchmark2_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_2 (.addr_i(rom_addr_recv), .data_o(recv_rom_2));
+    benchmark3_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_3 (.addr_i(rom_addr_send), .data_o(send_rom_3));
+    benchmark3_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_3 (.addr_i(rom_addr_recv), .data_o(recv_rom_3));
+    benchmark4_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_4 (.addr_i(rom_addr_send), .data_o(send_rom_4));
+    benchmark4_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_4 (.addr_i(rom_addr_recv), .data_o(recv_rom_4));
+    benchmark5_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_5 (.addr_i(rom_addr_send), .data_o(send_rom_5));
+    benchmark5_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_5 (.addr_i(rom_addr_recv), .data_o(recv_rom_5));
+
+    always_comb begin
+        case (bench_i)
+            3'd1:    begin rom_data_send = send_rom_1; rom_data_recv = recv_rom_1; end
+            3'd2:    begin rom_data_send = send_rom_2; rom_data_recv = recv_rom_2; end
+            3'd3:    begin rom_data_send = send_rom_3; rom_data_recv = recv_rom_3; end
+            3'd4:    begin rom_data_send = send_rom_4; rom_data_recv = recv_rom_4; end
+            3'd5:    begin rom_data_send = send_rom_5; rom_data_recv = recv_rom_5; end
+            default: begin rom_data_send = '0;         rom_data_recv = '0;         end
+        endcase
+    end
+
     // --- Send Trace Replay (Drives 32 bit flit) ---
     trace_replay #(
         .ring_width_p(32), .rom_addr_width_p(32)
-        ,.rom_len_p(54)                 // number of lines in the send ROM (0..52)
+        ,.rom_len_p(574)                 // number of lines in the longest send ROM (0..573)
         ,.timeout_cycles_p(12_500_000)  // ~1 s at 12.5 MHz; use a small value in simulation
         ,.drain_after_error_p(1)
     ) tracer_send (
@@ -468,7 +494,7 @@ module driver (
     // --- Receive Trace Replay (Validates link_out) ---
     trace_replay #(
          .ring_width_p(32), .rom_addr_width_p(32)
-        ,.rom_len_p(150)                // lines in the recv ROM (0..149)
+        ,.rom_len_p(702)                // lines in the longest recv ROM (0..701)
         ,.timeout_cycles_p(12_500_000)
         ,.drain_after_error_p(1)
     ) tracer_recv (
@@ -491,13 +517,6 @@ module driver (
         ,.error_o   (error_recv)
         ,.mismatch_o(), .timeout_o(), .overrun_o(), .err_got_o(), .err_exp_o()
     );
-
-    // --- Trace ROMs ---
-
-    benchmark5_send_trace_rom #(.width_p(32+4), .addr_width_p(32)) 
-        ROM_send (.addr_i(rom_addr_send), .data_o(rom_data_send));
-    benchmark5_recv_trace_rom #(.width_p(32+4), .addr_width_p(32))
-        ROM_recv (.addr_i(rom_addr_recv), .data_o(rom_data_recv));
 
     // HERE WE WILL CONNECT TRACE REPLAY SIGNALS TO ACTUAL TESTBENCH SIGNALS
     assign fpga_tx_data_real = tr_data_lo;
