@@ -19,7 +19,7 @@ module emu_top (
 );
 
     // 50 MHz / CLK_DIV. Start slow; raise it once everything works.
-    localparam int CLK_DIV = 10;                       // 5 MHz
+    localparam int CLK_DIV = 1;                       // 50 MHz
     localparam int CLK_HZ  = 50_000_000 / CLK_DIV;
 
     // ---- clock, reset, run switch ----

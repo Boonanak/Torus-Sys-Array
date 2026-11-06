@@ -62,6 +62,8 @@ always_comb case(addr_i)
                                  // # A * B + 0 = C -> addr1
         51: data_o = width_p ' (36'b0001_001000_000000_010000_000000_00_100110); // 0x120040026
         52: data_o = width_p ' (36'b0001_000000_001000_000000_000000_00_001011); // 0x10080000B
+                                 // # END SIMULATION
+        53: data_o = width_p ' (36'b0100_00000000000000000000000000_000000); // 0x400000000
    default: data_o = 'X;
 endcase
 endmodule

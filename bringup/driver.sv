@@ -424,7 +424,7 @@ module driver (
     // --- Send Trace Replay (Drives 32 bit flit) ---
     trace_replay #(
         .ring_width_p(32), .rom_addr_width_p(32)
-        ,.rom_len_p(53)                 // number of lines in the send ROM (0..52)
+        ,.rom_len_p(54)                 // number of lines in the send ROM (0..52)
         ,.timeout_cycles_p(12_500_000)  // ~1 s at 12.5 MHz; use a small value in simulation
         ,.drain_after_error_p(1)
     ) tracer_send (
