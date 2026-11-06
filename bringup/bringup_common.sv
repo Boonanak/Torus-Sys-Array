@@ -148,6 +148,7 @@ endmodule
 //   LEDR[0] done          LEDR[1] error (sticky, from the trace player)
 //   LEDR[2] parity error seen (sticky)   LEDR[3] UART FIFO overflowed
 //   LEDR[4] chip has sent at least one flit   LEDR[5] timeout
+//   LEDR[6] trace_enable_i (essentially confirmation the reset sequence has finished)
 //   LEDR[9] heartbeat (clock is alive)
 //   HEX5..HEX3 = send trace address [11:0],  HEX2..HEX0 = recv trace address [11:0]
 //   uart_tx_o  = every flit from the chip as 8 hex chars + newline
@@ -164,6 +165,7 @@ module bringup_io #(
     ,input  logic        rst_i
     ,input  logic        run_i
     // status from the driver
+    ,input  logic        trace_ready_i
     ,input  logic        done_i
     ,input  logic        error_i
     ,input  logic        parity_err_i
@@ -199,7 +201,7 @@ module bringup_io #(
         end
     end
 
-    assign ledr_o = {hb_cnt[HB_BIT], rst_i, run_i, 1'b0, timeout_seen, out_seen,
+    assign ledr_o = {hb_cnt[HB_BIT], rst_i, run_i, trace_ready_i, timeout_seen, out_seen,
                      fifo_overflow, parity_seen, error_i, done_i};
 
     // ---- seven-segment displays ----

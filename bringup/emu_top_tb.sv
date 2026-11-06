@@ -15,14 +15,20 @@ module emu_top_tb();
 		end 
 		
 		initial begin
+            // Reset followed by trace enable
             KEY[0] <= 0;    SW[0] <= 0;     @(posedge CLOCK_50);
-                                 repeat(50) @(posedge CLOCK_50);
-            KEY[0] <= 0;                    @(posedge CLOCK_50);
                                 repeat(500) @(posedge CLOCK_50);
             KEY[0] <= 1;                    @(posedge CLOCK_50);
-                                 repeat(50) @(posedge CLOCK_50);
+                                repeat(500) @(posedge CLOCK_50);
                             SW[0] <= 1;     @(posedge CLOCK_50);
-                               repeat(5000) @(posedge CLOCK_50);
+                              repeat(10000) @(posedge CLOCK_50);
+            // Trace enable followed by reset
+            KEY[0] <= 0;    SW[0] <= 0;     @(posedge CLOCK_50);
+                                repeat(500) @(posedge CLOCK_50);
+                            SW[0] <= 1;     @(posedge CLOCK_50);
+                                repeat(500) @(posedge CLOCK_50);
+            KEY[0] <= 1;                    @(posedge CLOCK_50);
+                              repeat(10000) @(posedge CLOCK_50);
 			$stop;					
 							
 		end

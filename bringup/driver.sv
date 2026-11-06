@@ -25,6 +25,7 @@ module driver (
     input  logic scan_out,
 
     // status to the board
+    output logic        trace_ready_o, // confirmation of the reset sequence finishing
     output logic        done_o,        // both traces finished
     output logic        error_o,       // any mismatch (sticky)
     output logic        parity_err_o,
@@ -182,7 +183,7 @@ module driver (
 
     /* THIS IS THE OLD RESET SEQUENCER */
     // // STRAY TRACE SIGNAL (bc order matters)
-    // logic trace_enable;
+    logic trace_enable;
 
 
     // //     // Reset bring-up order for our chip:
@@ -289,45 +290,115 @@ module driver (
     // end
 
     /* THIS IS THE NEW RESET SEQUENCER EQUIVALENT TO THAT OF DUT */
-    // ----- Internal reset sequencer for bsg_link init protocol -----
-    // bsg_async_credit_counter requires:
-    //   1. Assert r_reset (= io_link_reset, on io_clk domain).
-    //   2. While r_reset asserted, pulse w_reset (= async_token_reset)
-    //      0 -> 1 -> 0 at least once.
-    //   3. Wait >=4 r_clock posedges before deasserting r_reset.
-    //   4. Deassert r_reset.
-    //
-    // Tying every link reset to hard_reset would violate that ordering, so
-    // the chip generates the staged reset internally from a single counter
-    // that starts running once hard_reset deasserts.
-    wire hard_reset_sync;
-    reg [7:0] reset_cnt = 8'd0;
-    always @(posedge clk_i) begin
-        if (rst_i)              reset_cnt <= 8'd0;
-        else if (reset_cnt < 6'd200)       reset_cnt <= reset_cnt + 6'd1;
+    // // ----- Internal reset sequencer for bsg_link init protocol -----
+    // // bsg_async_credit_counter requires:
+    // //   1. Assert r_reset (= io_link_reset, on io_clk domain).
+    // //   2. While r_reset asserted, pulse w_reset (= async_token_reset)
+    // //      0 -> 1 -> 0 at least once.
+    // //   3. Wait >=4 r_clock posedges before deasserting r_reset.
+    // //   4. Deassert r_reset.
+    // //
+    // // Tying every link reset to hard_reset would violate that ordering, so
+    // // the chip generates the staged reset internally from a single counter
+    // // that starts running once hard_reset deasserts.
+    // wire hard_reset_sync;
+    // reg [7:0] reset_cnt = 8'd0;
+    // always @(posedge clk_i) begin
+    //     if (rst_i)              reset_cnt <= 8'd0;
+    //     else if (reset_cnt < 6'd200)       reset_cnt <= reset_cnt + 6'd1;
+    // end
+
+    // assign hard_reset = (reset_cnt < 8'd64);
+
+    // // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
+    // // hard_reset_sync deasserts. Held 0 during reset (matches bsg ref tb).
+    // assign fpga_tx_async_token_reset = (reset_cnt >= 8'd2) && (reset_cnt <  8'd5);
+
+    // // io_link_resets: held high while reset is asserted, then for
+    // // ~16 more core_clk cycles after the async_token_reset pulse.
+    // // upstream (TX) releases first so the other chip's downstream FIFO
+    // // write-side sees clock edges while its own reset is still asserted,
+    // // satisfying the BSG sync-reset requirement for bsg_circular_ptr.
+    // // downstream (RX) holds 12 extra core_clk cycles after upstream releases.
+    // // UP_CLK is 25 MHz (= core_clk/2), so 12 core cycles = 6 UP_CLK cycles of
+    // // margin, ensuring the bsg_async_ptr_gray sync-reset fires 4+ times before
+    // // the RX FIFO write-side reset deasserts.  Stays clear of core_link_reset
+    // // at cnt=32.
+    // assign fpga_tx_io_link_reset = (reset_cnt < 8'd16);
+    // assign fpga_rx_io_link_reset = (reset_cnt < 8'd100);
+
+    // // core link reset: released last (~32 cycles after hard_reset_sync).
+    // assign fpga_core_reset = (reset_cnt < 8'd200);
+
+    /* THIS IS THE RESET SEQUENCER WRITTEN BY CLAUDE */
+    typedef enum logic [2:0] {
+         S_TOKEN_ASSERT
+        ,S_TOKEN_DEASSERT
+        ,S_TX_IO_RELEASE
+        ,S_HARD_RELEASE
+        ,S_RX_IO_RELEASE
+        ,S_CORE_RELEASE
+        ,S_RUN
+    } state_e;
+ 
+    state_e      state;
+    logic [10:0] wait_cnt;
+    logic        running;
+ 
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            state                     <= S_TOKEN_ASSERT;
+            wait_cnt                  <= 11'd8;
+            hard_reset                <= 1'b1;
+            fpga_core_reset           <= 1'b1;
+            fpga_tx_io_link_reset     <= 1'b1;
+            fpga_tx_async_token_reset <= 1'b0;
+            fpga_rx_io_link_reset     <= 1'b1;
+            running                   <= 1'b0;
+        end else if (wait_cnt != 11'd0) begin
+            wait_cnt <= wait_cnt - 11'd1;
+        end else begin
+            case (state)
+                S_TOKEN_ASSERT: begin
+                    fpga_tx_async_token_reset <= 1'b1;
+                    wait_cnt <= 11'd2;
+                    state    <= S_TOKEN_DEASSERT;
+                end
+                S_TOKEN_DEASSERT: begin
+                    fpga_tx_async_token_reset <= 1'b0;
+                    wait_cnt <= 11'd8;
+                    state    <= S_TX_IO_RELEASE;
+                end
+                S_TX_IO_RELEASE: begin
+                    fpga_tx_io_link_reset <= 1'b0;
+                    wait_cnt <= 11'd8;
+                    state    <= S_HARD_RELEASE;
+                end
+                S_HARD_RELEASE: begin
+                    hard_reset <= 1'b0;
+                    wait_cnt <= 11'd64;
+                    state    <= S_RX_IO_RELEASE;
+                end
+                S_RX_IO_RELEASE: begin
+                    fpga_rx_io_link_reset <= 1'b0;
+                    wait_cnt <= 11'd8;
+                    state    <= S_CORE_RELEASE;
+                end
+                S_CORE_RELEASE: begin
+                    fpga_core_reset <= 1'b0;
+                    wait_cnt <= 11'd200;
+                    state    <= S_RUN;
+                end
+                S_RUN: begin
+                    running <= 1'b1;
+                end
+                default: state <= S_TOKEN_ASSERT;
+            endcase
+        end
     end
-
-    assign hard_reset = (reset_cnt < 8'd64);
-
-    // async_token_reset: 0 normally, pulsed 1 during counts 2..4 after
-    // hard_reset_sync deasserts. Held 0 during reset (matches bsg ref tb).
-    assign fpga_tx_async_token_reset = (reset_cnt >= 8'd2) && (reset_cnt <  8'd5);
-
-    // io_link_resets: held high while reset is asserted, then for
-    // ~16 more core_clk cycles after the async_token_reset pulse.
-    // upstream (TX) releases first so the other chip's downstream FIFO
-    // write-side sees clock edges while its own reset is still asserted,
-    // satisfying the BSG sync-reset requirement for bsg_circular_ptr.
-    // downstream (RX) holds 12 extra core_clk cycles after upstream releases.
-    // UP_CLK is 25 MHz (= core_clk/2), so 12 core cycles = 6 UP_CLK cycles of
-    // margin, ensuring the bsg_async_ptr_gray sync-reset fires 4+ times before
-    // the RX FIFO write-side reset deasserts.  Stays clear of core_link_reset
-    // at cnt=32.
-    assign fpga_tx_io_link_reset = (reset_cnt < 8'd16);
-    assign fpga_rx_io_link_reset = (reset_cnt < 8'd100);
-
-    // core link reset: released last (~32 cycles after hard_reset_sync).
-    assign fpga_core_reset = (reset_cnt < 8'd200);
+ 
+    assign trace_enable = running & run_i;
+    assign trace_ready_o = running;
 
     // TRACE REPLAY
 
@@ -352,12 +423,15 @@ module driver (
 
     // --- Send Trace Replay (Drives 32 bit flit) ---
     trace_replay #(
-        .ring_width_p(32)
-       ,.rom_addr_width_p(32)
+        .ring_width_p(32), .rom_addr_width_p(32)
+        ,.rom_len_p(53)                 // number of lines in the send ROM (0..52)
+        ,.timeout_cycles_p(12_500_000)  // ~1 s at 12.5 MHz; use a small value in simulation
+        ,.drain_after_error_p(1)
     ) tracer_send (
          .clk_i  (~core_clk) // Run replay on opposite edge for stability
         ,.reset_i(hard_reset)
-        ,.en_i   (trace_enable & run_i)
+        ,.en_i   (trace_enable)
+        ,.halt_i (error_recv)
         
         ,.v_i    (1'b0)
         ,.data_i ('0)
@@ -371,6 +445,7 @@ module driver (
         ,.rom_data_i(rom_data_send)
         ,.done_o    (done_send)
         ,.error_o   (error_send)
+        ,.mismatch_o(), .timeout_o(), .overrun_o(), .err_got_o(), .err_exp_o()
     );
 
     // // Mapping Trace Replay to Top Level Input
@@ -392,12 +467,15 @@ module driver (
 
     // --- Receive Trace Replay (Validates link_out) ---
     trace_replay #(
-        .ring_width_p(32)
-       ,.rom_addr_width_p(32)
+         .ring_width_p(32), .rom_addr_width_p(32)
+        ,.rom_len_p(150)                // lines in the recv ROM (0..149)
+        ,.timeout_cycles_p(12_500_000)
+        ,.drain_after_error_p(1)
     ) tracer_recv (
          .clk_i  (~core_clk)
         ,.reset_i(hard_reset)
         ,.en_i   (trace_enable & run_i)
+        ,.halt_i (error_send)
 
         ,.v_i    (dut_v_r)
         ,.data_i (dut_data_r)
@@ -411,6 +489,7 @@ module driver (
         ,.rom_data_i(rom_data_recv)
         ,.done_o    (done_recv)
         ,.error_o   (error_recv)
+        ,.mismatch_o(), .timeout_o(), .overrun_o(), .err_got_o(), .err_exp_o()
     );
 
     // --- Trace ROMs ---

@@ -39,7 +39,7 @@ module emu_top (
     logic        scan_en, scan_in, scan_out;
 
     // ---- driver status ----
-    logic        done, error, parity_err, out_valid;
+    logic        trace_ready, done, error, parity_err, out_valid;
     logic [31:0] send_addr, recv_addr, out_data;
 
     driver u_driver (
@@ -59,6 +59,7 @@ module emu_top (
         ,.scan_en      (scan_en)
         ,.scan_in      (scan_in)
         ,.scan_out     (scan_out)
+        ,.trace_ready_o (trace_ready)
         ,.done_o       (done)
         ,.error_o      (error)
         ,.parity_err_o (parity_err)
@@ -98,6 +99,7 @@ module emu_top (
          .clk_i        (clk)
         ,.rst_i        (rst)
         ,.run_i        (run)
+        ,.trace_ready_i(trace_ready)
         ,.done_i       (done)
         ,.error_i      (error)
         ,.parity_err_i (parity_err)
