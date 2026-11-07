@@ -12,7 +12,7 @@
 set QSF  "quartus_proj.qsf"     ;# project settings file, relative to the folder you cd'd to
 set TB   "emu_top_tb.sv"        ;# testbench file, only if it is NOT already in the .qsf (else "" or any missing name)
 set TOP  "emu_top_tb"           ;# testbench module name
-set RUN  "5 ms"                 ;# how long to simulate
+set RUN  "50 ms"                 ;# how long to simulate
 set PERMISSIVE 1                ;# 1 = pass -permissive to vsim (relaxes some LRM error checks to warnings)
 set OVR  "sim_overrides"        ;# folder of simulation-only replacement files (see below)
 # --------------------------------------------
@@ -77,5 +77,5 @@ view wave
 view structure
 view signals
 
-run $RUN
+run -all
 wave zoom full
