@@ -89,14 +89,6 @@ module emu_top (
         ,.out_data_o   (out_data)
     );
 
-    // assign done = 0;
-    // assign error = 0;
-    // assign parity_err = 0;
-    // assign send_addr = 5;
-    // assign recv_addr = 10;
-    // assign out_valid = 0;
-    // assign out_data = 0;
-
     dut u_chip (
          .core_clk   (core_clk)
         ,.hard_reset (hard_reset)
@@ -116,8 +108,8 @@ module emu_top (
     // ---- LEDs, displays, UART ----
     logic uart_tx;
     bringup_io #(.CLK_HZ(50_000_000)) u_io (
-         .clk_i        (clk)
-        ,.rst_i        (rst)
+         .clk_i        (CLOCK_50)
+        ,.rst_i        (rst50)
         ,.run_i        (run)
         ,.trace_ready_i(trace_ready)
         ,.done_i       (done)

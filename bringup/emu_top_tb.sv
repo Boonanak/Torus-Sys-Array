@@ -36,7 +36,7 @@ module emu_top_tb();
             SW[5:1] = 5'b01010; // running benchmark 4
             KEY[0] <= 0;        repeat(500) @(posedge CLOCK_50);
             KEY[0] <= 1;      repeat(10000) @(posedge CLOCK_50);
-            SW[9:6] = 4'b1000; // Clock at 50 MHz
+            SW[9:6] = 4'b0000; // Clock at 50 MHz
             SW[5:1] = 5'b11010; // running benchmark 5
             KEY[0] <= 0;        repeat(500) @(posedge CLOCK_50);
             KEY[0] <= 1;      repeat(10000) @(posedge CLOCK_50);

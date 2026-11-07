@@ -28,6 +28,32 @@ module clk_div_sw (
     ,output logic       tick_o
 );
 
+
+    logic [3:0] sel_s1 = 4'd0, sel_s2 = 4'd0;
+    logic [3:0] sel_r  = 4'd4;               // 12.5 MHz until the first reset latches the switches
+    logic [15:0] counter;
+
+    wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
+
+    always_ff @(posedge clk_i) begin
+        sel_s1 <= sel_i;
+        sel_s2 <= sel_s1;
+        if (rst_i) sel_r <= sel_s2;
+        if (rst_i) counter <= 16'b0;
+        else begin
+            if (counter == 16'b1111111111111111) counter <= 16'b0;
+            else counter <= counter + 16'b1;
+        end
+    end
+
+    assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
+    assign tick_o = use50;
+
+endmodule
+
+
+    /* Original module written by Claude - divides clock by sel value
+
     logic [3:0] sel_s1 = 4'd0, sel_s2 = 4'd0;
     logic [3:0] sel_r  = 4'd4;               // 12.5 MHz until the first reset latches the switches
     logic [3:0] cnt    = 4'd0;
@@ -48,6 +74,32 @@ module clk_div_sw (
     end
 
     assign clk_o  = use50 ? clk_i : clk_r;
+    assign tick_o = use50 | (cnt == 4'd0); */
+
+    /* Edited module adapted by me - divides clock by sel * 1024
+
+    logic [3:0] sel_s1 = 4'd0, sel_s2 = 4'd0;
+    logic [3:0] sel_r  = 4'd4;               // 12.5 MHz until the first reset latches the switches
+    logic [13:0] cnt   = 4'd0;
+    logic       clk_r  = 1'b0;
+
+    wire        use50 = (sel_r < 4'd1);                    // 0 or 1 -> 50 MHz
+    wire [13:0] n     = use50 ? 4'd2 : (sel_r << 10);      // ratio for the divided clock (2..15)
+    wire [13:0] half  = n >> 1;
+    wire        wrap  = (cnt >= (n - 4'd1));               // >= so a smaller n takes effect at once
+    wire [13:0] cnt_n = wrap ? 4'd0 : (cnt + 4'd1);
+
+    always_ff @(posedge clk_i) begin
+        sel_s1 <= sel_i;
+        sel_s2 <= sel_s1;
+        if (rst_i) sel_r <= sel_s2;
+        cnt   <= cnt_n;
+        clk_r <= (cnt_n < half);             // high for the first n/2 counts of each period
+    end
+
+    assign clk_o  = use50 ? clk_i : clk_r;
     assign tick_o = use50 | (cnt == 4'd0);
 
-endmodule
+    */
+
+    /* Newest module adapted by me - divides clock using sel as the index */
