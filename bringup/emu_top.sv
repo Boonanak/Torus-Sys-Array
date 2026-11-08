@@ -16,13 +16,14 @@ module emu_top (
     ,output logic [9:0]  LEDR
     ,output logic [6:0]  HEX0, HEX1, HEX2, HEX3, HEX4, HEX5
     ,inout  wire  [35:0] GPIO_0
+    ,inout  wire  [35:0] GPIO_1
 );
 
     // ---- clock, reset, run switch ----
     // reset synchronized into the 50 MHz domain
     logic rst, rst50, clk, tick;
     rst_gen #(.POR_CYCLES(16)) u_rst50 (.clk_i(CLOCK_50), .rst_async_i(~KEY[0]), .rst_o(rst50));
-    rst_gen #(.POR_CYCLES(16)) u_rst (.clk_i(clk), .rst_async_i(~KEY[0]), .rst_o(rst));
+    rst_slow #(.HOLD(16)) u_rst (.clk_i(clk), .rst_i(rst50), .rst_o(rst));
 
     // SW[9:6] pick the divide ratio (latched at reset)
     clk_div_sw u_div (.clk_i(CLOCK_50), .rst_i(rst50), .sel_i(SW[9:6]),
@@ -45,7 +46,8 @@ module emu_top (
 
     // ---- Choose benchmark ----
     function automatic logic [2:0] pick_bench(input logic [4:0] s);  // s[4]=SW[5] ... s[0]=SW[1]
-        if      (s[4]) pick_bench = 3'd5;
+        if (s[4:0] == 5'b10001) pick_bench = 3'd6;
+        else if (s[4]) pick_bench = 3'd5;
         else if (s[3]) pick_bench = 3'd4;
         else if (s[2]) pick_bench = 3'd3;
         else if (s[1]) pick_bench = 3'd2;
@@ -55,10 +57,10 @@ module emu_top (
 
     logic [4:0] bsw_s1, bsw_s2;
     logic [2:0] bench;
-    always_ff @(posedge clk) begin
+    always_ff @(posedge CLOCK_50) begin
         bsw_s1 <= SW[5:1];
         bsw_s2 <= bsw_s1;
-        if (rst) bench <= pick_bench(bsw_s2);
+        if (rst50) bench <= pick_bench(bsw_s2);
     end
 
     driver u_driver (
@@ -114,10 +116,10 @@ module emu_top (
         ,.trace_ready_i(trace_ready)
         ,.done_i       (done)
         ,.error_i      (error)
-        ,.parity_err_i (parity_err)
+        ,.parity_err_i (parity_err & tick)
         ,.send_addr_i  (send_addr)
         ,.recv_addr_i  (recv_addr)
-        ,.out_valid_i  (out_valid)
+        ,.out_valid_i  (out_valid & tick)
         ,.out_data_i   (out_data)
         ,.ledr_o       (LEDR)
         ,.hex0_o       (HEX0)
@@ -129,7 +131,9 @@ module emu_top (
         ,.uart_tx_o    (uart_tx)
     );
 
-    assign GPIO_0[0]    = uart_tx;
-    assign GPIO_0[35:1] = {35{1'bz}};
+    assign GPIO_0[35:0]  = {36{1'bz}};
+    assign GPIO_1[20:0]  = {21{1'bz}}; 
+    assign GPIO_1[21]    = uart_tx;  // UART TX to the PC (3.3 V adapter RX, shared GND)
+    assign GPIO_1[35:22] = {14{1'bz}};
 
 endmodule

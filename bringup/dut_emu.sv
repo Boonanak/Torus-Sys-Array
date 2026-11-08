@@ -1,5 +1,5 @@
 // DE1-SoC top level module for FPGA to act as chip
-module chip_top_emu (
+module dut_emu (
      input  logic        CLOCK_50
     ,input  logic [3:0]  KEY
     ,input  logic [9:0]  SW

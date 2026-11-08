@@ -57,6 +57,37 @@ module rst_gen #(
     assign rst_o = sync[1] | (por != POR_CYCLES);
 endmodule
 
+// rst_slow.sv  --  reset for a clock domain whose clock may be slow or even stopped.
+//
+// Asserts ASYNCHRONOUSLY the moment rst_i (the 50 MHz-domain reset) goes high, so it does
+// not need a slow-clock edge to take effect. Releases SYNCHRONOUSLY: rst_i must be low,
+// then 2 clk_i edges to synchronize, then HOLD more clk_i edges so every synchronous
+// reset in the domain sees several clock edges while reset is still asserted.
+module rst_slow #(
+    parameter int HOLD = 16
+)(
+     input  logic clk_i       // the slow (selected) clock
+    ,input  logic rst_i       // active-high reset from the always-running 50 MHz domain
+    ,output logic rst_o
+);
+    localparam int CW = $clog2(HOLD + 1);
+    localparam [CW-1:0] HOLD_C = HOLD;     // HOLD at the counter's width
+    logic [1:0]    sync = 2'b11;
+    logic [CW-1:0] cnt  = '0;
+
+    always_ff @(posedge clk_i or posedge rst_i) begin
+        if (rst_i) begin
+            sync <= 2'b11;
+            cnt  <= '0;
+        end else begin
+            sync <= {sync[0], 1'b0};
+            if (!sync[1] && cnt != HOLD_C) cnt <= cnt + 1'b1;
+        end
+    end
+
+    assign rst_o = sync[1] | (cnt != HOLD_C);
+endmodule
+
 // -----------------------------------------------------------------------
 // hex7seg: hex digit -> DE-series 7-segment pattern (segments are active low,
 // bit order {g,f,e,d,c,b,a}).

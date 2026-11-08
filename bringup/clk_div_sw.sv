@@ -29,9 +29,10 @@ module clk_div_sw (
 );
 
 
-    logic [3:0] sel_s1 = 4'd0, sel_s2 = 4'd0;
-    logic [3:0] sel_r  = 4'd4;               // 12.5 MHz until the first reset latches the switches
-    logic [15:0] counter;
+    logic [3:0]  sel_s1  = 4'd0, sel_s2 = 4'd0;
+    logic [3:0]  sel_r   = 4'd4;               // 12.5 MHz until the first reset latches the switches
+    logic [15:0] counter = 16'b0;
+    logic        clk_q   = 1'b0;
 
     wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
 
@@ -39,15 +40,12 @@ module clk_div_sw (
         sel_s1 <= sel_i;
         sel_s2 <= sel_s1;
         if (rst_i) sel_r <= sel_s2;
-        if (rst_i) counter <= 16'b0;
-        else begin
-            if (counter == 16'b1111111111111111) counter <= 16'b0;
-            else counter <= counter + 16'b1;
-        end
+        counter <= counter + 16'b1;
+        clk_q   <= clk_o;
     end
 
     assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
-    assign tick_o = use50;
+    assign tick_o = use50 | (clk_o & ~clk_q);   // one fast cycle right after each slow rising edge
 
 endmodule
 
