@@ -20,34 +20,34 @@
 // where tick_o is sampled high) every flop clocked by clk_o has just taken its new
 // value, so slow-domain signals are stable and can be sampled once per slow cycle
 // from clk_i.
-module clk_div_sw (
-     input  logic       clk_i
-    ,input  logic       rst_i        // synchronous to clk_i
-    ,input  logic [3:0] sel_i        // raw switch inputs (synchronized inside)
-    ,output logic       clk_o
-    ,output logic       tick_o
-);
+// module clk_div_sw (
+//      input  logic       clk_i
+//     ,input  logic       rst_i        // synchronous to clk_i
+//     ,input  logic [3:0] sel_i        // raw switch inputs (synchronized inside)
+//     ,output logic       clk_o
+//     ,output logic       tick_o
+// );
 
 
-    logic [3:0]  sel_s1  = 4'd0, sel_s2 = 4'd0;
-    logic [3:0]  sel_r   = 4'd4;               // 12.5 MHz until the first reset latches the switches
-    logic [15:0] counter = 16'b0;
-    logic        clk_q   = 1'b0;
+//     logic [3:0]  sel_s1  = 4'd0, sel_s2 = 4'd0;
+//     logic [3:0]  sel_r   = 4'd4;               // 12.5 MHz until the first reset latches the switches
+//     logic [15:0] counter = 16'b0;
+//     logic        clk_q   = 1'b0;
 
-    wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
+//     wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
 
-    always_ff @(posedge clk_i) begin
-        sel_s1 <= sel_i;
-        sel_s2 <= sel_s1;
-        if (rst_i) sel_r <= sel_s2;
-        counter <= counter + 16'b1;
-        clk_q   <= clk_o;
-    end
+//     always_ff @(posedge clk_i) begin
+//         sel_s1 <= sel_i;
+//         sel_s2 <= sel_s1;
+//         if (rst_i) sel_r <= sel_s2;
+//         counter <= counter + 16'b1;
+//         clk_q   <= clk_o;
+//     end
 
-    assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
-    assign tick_o = use50 | (clk_o & ~clk_q);   // one fast cycle right after each slow rising edge
+//     assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
+//     assign tick_o = use50 | (clk_o & ~clk_q);   // one fast cycle right after each slow rising edge
 
-endmodule
+// endmodule
 
 
     /* Original module written by Claude - divides clock by sel value

@@ -34,6 +34,35 @@ module clk_div #(
     endgenerate
 endmodule
 
+module clk_div_sw (
+     input  logic       clk_i
+    ,input  logic       rst_i        // synchronous to clk_i
+    ,input  logic [3:0] sel_i        // raw switch inputs (synchronized inside)
+    ,output logic       clk_o
+    ,output logic       tick_o
+);
+
+
+    logic [3:0]  sel_s1  = 4'd0, sel_s2 = 4'd0;
+    logic [3:0]  sel_r   = 4'd4;               // 12.5 MHz until the first reset latches the switches
+    logic [15:0] counter = 16'b0;
+    logic        clk_q   = 1'b0;
+
+    wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
+
+    always_ff @(posedge clk_i) begin
+        sel_s1 <= sel_i;
+        sel_s2 <= sel_s1;
+        if (rst_i) sel_r <= sel_s2;
+        counter <= counter + 16'b1;
+        clk_q   <= clk_o;
+    end
+
+    assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
+    assign tick_o = use50 | (clk_o & ~clk_q);   // one fast cycle right after each slow rising edge
+
+endmodule
+
 // -----------------------------------------------------------------------
 // rst_gen: synchronizes an asynchronous active-high reset (e.g. a button)
 // into clk_i and also holds reset for POR_CYCLES cycles after power-up.
@@ -188,7 +217,7 @@ endmodule
 module bringup_io #(
      parameter int CLK_HZ         = 12_500_000
     ,parameter int BAUD           = 115200
-    ,parameter int FIFO_ADDR_W    = 9
+    ,parameter int FIFO_ADDR_W    = 17
     ,parameter int HB_BIT         = 23
     ,parameter int TIMEOUT_CYCLES = CLK_HZ * 10   // ~10 s at 12.5 MHz
 )(
@@ -247,6 +276,7 @@ module bringup_io #(
     logic        fifo_v, uart_ready;
     logic [31:0] fifo_data;
 
+    // attempting to resolve UART issues by increasing the FIFO size
     flit_fifo #(.WIDTH(32), .ADDR_W(FIFO_ADDR_W)) u_fifo (
          .clk_i      (clk_i)
         ,.rst_i      (rst_i)

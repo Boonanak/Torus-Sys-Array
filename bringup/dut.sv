@@ -138,7 +138,7 @@ module dut (
     assign tx_valid  = up_valid;
     assign rx_token  = dn_token;
 
-    assign scan_out  = 1'b0;              // no scan chain in the FPGA build
+    // assign scan_out  = 1'b0;              // no scan chain in the FPGA build
 
     async_rst_sync_deassert u_dn_reset_sync(
         .clk(dn_clk),
@@ -232,6 +232,13 @@ module dut (
         .link_out_v_o(link_tx_valid),
         .link_out_data_o(link_tx_data_real),
         .link_out_yumi_i(link_tx_ready)
+    );
+
+    fake_scan_chain u_scan_chain (
+        .clk_i(core_clk),
+        .scan_en_i(scan_en),
+        .scan_in_i(scan_in),
+        .scan_out_o(scan_out)
     );
 
 endmodule

@@ -422,8 +422,8 @@ module driver (
     logic dut_v_lo, dut_v_r;
     logic[31:0] dut_data_lo, dut_data_r;
 
-    logic [35:0] send_rom_1, send_rom_2, send_rom_3, send_rom_4, send_rom_5, send_rom_6;
-    logic [35:0] recv_rom_1, recv_rom_2, recv_rom_3, recv_rom_4, recv_rom_5, recv_rom_6;
+    logic [35:0] send_rom_1, send_rom_2, send_rom_3, send_rom_4, send_rom_5, send_rom_6, send_rom_7;
+    logic [35:0] recv_rom_1, recv_rom_2, recv_rom_3, recv_rom_4, recv_rom_5, recv_rom_6, recv_rom_7;
 
     benchmark1_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_1 (.addr_i(rom_addr_send), .data_o(send_rom_1));
     benchmark1_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_1 (.addr_i(rom_addr_recv), .data_o(recv_rom_1));
@@ -437,6 +437,8 @@ module driver (
     benchmark5_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_5 (.addr_i(rom_addr_recv), .data_o(recv_rom_5));
     benchmark6_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_6 (.addr_i(rom_addr_send), .data_o(send_rom_6));
     benchmark6_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_6 (.addr_i(rom_addr_recv), .data_o(recv_rom_6));
+    benchmark7_send_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_send_7 (.addr_i(rom_addr_send), .data_o(send_rom_7));
+    benchmark7_recv_trace_rom #(.width_p(36), .addr_width_p(32)) ROM_recv_7 (.addr_i(rom_addr_recv), .data_o(recv_rom_7));
 
     always_comb begin
         case (bench_i)
@@ -446,6 +448,7 @@ module driver (
             3'd4:    begin rom_data_send = send_rom_4; rom_data_recv = recv_rom_4; end
             3'd5:    begin rom_data_send = send_rom_5; rom_data_recv = recv_rom_5; end
             3'd6:    begin rom_data_send = send_rom_6; rom_data_recv = recv_rom_6; end
+            3'd7:    begin rom_data_send = send_rom_7; rom_data_recv = recv_rom_7; end
             default: begin rom_data_send = '0;         rom_data_recv = '0;         end
         endcase
     end
@@ -530,7 +533,7 @@ module driver (
     assign dut_v_lo = fpga_rx_valid;
 
 
-    assign done_o       = done_send | done_recv;
+    assign done_o       = done_send & done_recv;
     assign error_o      = error_send | error_recv;
     assign parity_err_o = fpga_rx_parity_error;
     assign send_addr_o  = rom_addr_send;
