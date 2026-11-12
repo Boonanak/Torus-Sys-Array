@@ -39,6 +39,28 @@ module board_top (
     clk_div_sw u_div (.clk_i(CLOCK_50), .rst_i(rst50), .sel_i(SW[9:6]),
                     .clk_o(clk), .tick_o(tick));
 
+    // Scan chain also determines clock
+    logic core_clk, scan_clk, clk_drv, clk_chip, scan_mode;
+    scan_clk_mux u_scan_div (
+        .clk_fast_i(CLOCK_50),
+        .clk_run_i(clk),
+        .scan_clk_i(scan_clk),
+        .scan_mode_i(scan_mode),
+        .clk_drv_o(clk_drv),
+        .clk_chip_o(clk_chip)
+    );
+
+    // Scan control
+    logic scan_en, scan_in, scan_out;
+    scan_ctrl u_scan_ctrl (
+        .clk_i(CLOCK_50), .rst_i(rst50),
+        .key_toggle_n_i(KEY[2]), .key_step_n_i(KEY[3]), .key_dump_n_i(KEY[1]), .nsteps_i(SW[9:6]),
+        .safe_i(tick),
+        .scan_mode_o(scan_mode), .scan_en_o(scan_en), .scan_clk_o(scan_clk), .scan_in_o(scan_in), .scan_out_i(scan_out),
+        .out_valid_o(), .out_data_o(),
+        .active_o(), .ready_o(), .busy_o()
+    );
+
     logic [1:0] run_s;
     always_ff @(posedge clk) run_s <= {run_s[0], SW[0]};
     wire run = run_s[1];
@@ -63,6 +85,7 @@ module board_top (
     // ---- Choose benchmark ----
     function automatic logic [2:0] pick_bench(input logic [4:0] s);  // s[4]=SW[5] ... s[0]=SW[1]
         if (s[4:0] == 5'b10001) pick_bench = 3'd6;
+        else if (s[4:0] == 5'b10011) pick_bench = 3'd7;
         else if (s[4]) pick_bench = 3'd5;
         else if (s[3]) pick_bench = 3'd4;
         else if (s[2]) pick_bench = 3'd3;
