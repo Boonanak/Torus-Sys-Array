@@ -46,6 +46,7 @@ module clk_div_sw (
     logic [3:0]  sel_s1  = 4'd0, sel_s2 = 4'd0;
     logic [3:0]  sel_r   = 4'd4;               // 12.5 MHz until the first reset latches the switches
     logic [15:0] counter = 16'b0;
+    wire  [15:0] counter_n = counter + 16'b1;
     logic        clk_q   = 1'b0;
 
     wire        use50 = (sel_r < 4'd1);                    // 0 -> 50 MHz
@@ -59,7 +60,7 @@ module clk_div_sw (
     end
 
     assign clk_o  = use50 ? clk_i : counter[sel_r - 1];
-    assign tick_o = use50 | (clk_o & ~clk_q);   // one fast cycle right after each slow rising edge
+    assign tick_o = use50 | (clk_o & ~ clk_q);   // the fast cycle that ends at a slow rising edge
 
 endmodule
 
@@ -215,9 +216,9 @@ endmodule
 // All of it runs in clk_i's domain, so there is no clock crossing.
 // -----------------------------------------------------------------------
 module bringup_io #(
-     parameter int CLK_HZ         = 12_500_000
+     parameter int CLK_HZ         = 50_000_000
     ,parameter int BAUD           = 115200
-    ,parameter int FIFO_ADDR_W    = 17
+    ,parameter int FIFO_ADDR_W    = 11
     ,parameter int HB_BIT         = 23
     ,parameter int TIMEOUT_CYCLES = CLK_HZ * 10   // ~10 s at 12.5 MHz
 )(

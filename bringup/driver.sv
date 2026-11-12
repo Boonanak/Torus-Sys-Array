@@ -532,13 +532,25 @@ module driver (
     assign dut_data_lo = fpga_rx_data_real;
     assign dut_v_lo = fpga_rx_valid;
 
-
     assign done_o       = done_send & done_recv;
     assign error_o      = error_send | error_recv;
-    assign parity_err_o = fpga_rx_parity_error;
     assign send_addr_o  = rom_addr_send;
     assign recv_addr_o  = rom_addr_recv;
-    assign out_valid_o  = fpga_rx_valid & fpga_rx_yumi;
-    assign out_data_o   = fpga_rx_data_real;
+
+    logic        out_valid_q, parity_err_q;
+    logic [31:0] out_data_q;
+    always_ff @(posedge core_clk) begin
+        if (rst_i) begin
+            out_valid_q  <= 1'b0;
+            parity_err_q <= 1'b0;
+        end else begin
+            out_valid_q  <= fpga_rx_valid & fpga_rx_yumi;   // same edge the wrapper pops the flit
+            parity_err_q <= fpga_rx_parity_error;
+        end
+        out_data_q <= fpga_rx_data_real;
+    end
+    assign out_valid_o  = out_valid_q;
+    assign out_data_o   = out_data_q;
+    assign parity_err_o = parity_err_q;
 
 endmodule

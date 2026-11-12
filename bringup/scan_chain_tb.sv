@@ -25,6 +25,15 @@ module emu_top_tb();
                               repeat(15000) @(posedge CLOCK_50);
             KEY[0] <= 1;                    @(posedge CLOCK_50);
                               repeat(15000) @(posedge CLOCK_50);
+            SW[9:6] = 4'b0011; // Clock at 6.25 MHz
+            SW[5:1] = 5'b00001; // running benchmark 1
+            // Trace enable followed by reset
+            KEY[0] <= 0;    SW[0] <= 0;     @(posedge CLOCK_50);
+                                repeat(500) @(posedge CLOCK_50);
+                            SW[0] <= 1;     @(posedge CLOCK_50);
+                              repeat(15000) @(posedge CLOCK_50);
+            KEY[0] <= 1;                    @(posedge CLOCK_50);
+                              repeat(15000) @(posedge CLOCK_50);
             SW[9:6] = 4'b0001; // Clock at 25 MHz
             SW[5:1] = 5'b00011; // running benchmark 2
             KEY[0] <= 0;     repeat(15000) @(posedge CLOCK_50);
