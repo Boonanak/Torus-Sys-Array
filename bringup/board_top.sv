@@ -72,11 +72,10 @@ module board_top (
     end
 
     // ---- chip-facing signals (names match chip_top) ----
-    logic        core_clk, hard_reset;
+    logic        hard_reset;
     logic [16:0] rx_data, tx_data;
     logic        rx_clk, rx_valid, rx_token;
     logic        tx_clk, tx_valid, tx_token;
-    logic        scan_en, scan_in, scan_out;
 
     // ---- driver status ----
     logic        trace_ready, done, error, parity_err, out_valid;
@@ -103,7 +102,7 @@ module board_top (
     end
 
     driver u_driver (
-         .clk_i        (clk)
+         .clk_i        (clk_drv)
         ,.rst_i        (rst)
         ,.run_i        (run & (bench != 3'd0))
         ,.bench_i      (bench)
@@ -117,9 +116,9 @@ module board_top (
         ,.tx_clk       (tx_clk)
         ,.tx_valid     (tx_valid)
         ,.tx_token     (tx_token)
-        ,.scan_en      (scan_en)
-        ,.scan_in      (scan_in)
-        ,.scan_out     (scan_out)
+        ,.scan_en      ()
+        ,.scan_in      ()
+        ,.scan_out     ()
         ,.trace_ready_o (trace_ready)
         ,.done_o       (done)
         ,.error_o      (error)
@@ -131,32 +130,108 @@ module board_top (
     );
 
     // ---- FPGA -> chip  (GPIO_0, tri-stated unless drive-enable is on) ----
-    assign GPIO_0[16:0]  = oe ? rx_data    : {17{1'bz}};
-    assign GPIO_0[17]    = oe ? rx_clk     : 1'bz;
-    assign GPIO_0[18]    = oe ? rx_valid   : 1'bz;
-    assign GPIO_0[19]    = oe ? tx_token   : 1'bz;
-    assign GPIO_0[34]    = oe ? core_clk   : 1'bz;
-    assign GPIO_0[35]    = oe ? hard_reset : 1'bz;
-    assign GPIO_0[20]    = oe ? scan_en    : 1'bz;
-    assign GPIO_0[21]    = oe ? scan_in    : 1'bz;
-    assign GPIO_0[33:22] = {12{1'bz}};
+    // assign GPIO_0[16:0]  = oe ? rx_data    : {17{1'bz}};
+    // assign GPIO_0[17]    = oe ? rx_clk     : 1'bz;
+    // assign GPIO_0[18]    = oe ? rx_valid   : 1'bz;
+    // assign GPIO_0[19]    = oe ? tx_token   : 1'bz;
+    // assign GPIO_0[34]    = oe ? clk_chip   : 1'bz;
+    // assign GPIO_0[35]    = oe ? hard_reset : 1'bz;
+    // assign GPIO_0[20]    = oe ? scan_en    : 1'bz;
+    // assign GPIO_0[21]    = oe ? scan_in    : 1'bz;
+    // assign GPIO_0[33:22] = {12{1'bz}};
+
+    // ---- NEW FPGA -> chip on GPIO_0; ground wires are included every two wires
+    assign GPIO_0[0]  = oe ? rx_data[0]   : 1'bz;
+    assign GPIO_0[1]  = 1'b0;
+    assign GPIO_0[2]  = oe ? rx_data[1]   : 1'bz;
+    assign GPIO_0[3]  = oe ? rx_data[2]   : 1'bz;
+    assign GPIO_0[4]  = 1'b0;
+    assign GPIO_0[5]  = oe ? rx_data[3]   : 1'bz;
+    assign GPIO_0[6]  = oe ? rx_data[4]   : 1'bz;
+    assign GPIO_0[7]  = 1'b0;
+    assign GPIO_0[8]  = oe ? rx_data[5]   : 1'bz;
+    assign GPIO_0[9]  = oe ? rx_data[6]   : 1'bz;
+    assign GPIO_0[10] = 1'b0;
+    assign GPIO_0[11] = oe ? rx_data[7]   : 1'bz;
+    assign GPIO_0[12] = oe ? rx_data[8]   : 1'bz;
+    assign GPIO_0[13] = 1'b0;
+    assign GPIO_0[14] = oe ? rx_data[9]   : 1'bz;
+    assign GPIO_0[15] = oe ? rx_data[10]  : 1'bz;
+    assign GPIO_0[16] = 1'b0;
+    assign GPIO_0[17] = oe ? rx_data[11]  : 1'bz;
+    assign GPIO_0[18] = oe ? rx_data[12]  : 1'bz;
+    assign GPIO_0[19] = 1'b0;
+    assign GPIO_0[20] = oe ? rx_data[13]  : 1'bz;
+    assign GPIO_0[21] = oe ? rx_data[14]  : 1'bz;
+    assign GPIO_0[22] = 1'b0;
+    assign GPIO_0[23] = oe ? rx_data[15]  : 1'bz;
+    assign GPIO_0[24] = oe ? rx_data[16]  : 1'bz;
+    assign GPIO_0[25] = 1'b0;
+    assign GPIO_0[26] = 1'b0;
+    assign GPIO_0[27] = oe ? rx_clk       : 1'bz;
+    assign GPIO_0[28] = oe ? rx_valid     : 1'bz;
+    assign GPIO_0[29] = 1'b0;
+    assign GPIO_0[30] = 1'b0;
+    assign GPIO_0[31] = oe ? tx_token     : 1'bz;
+    assign GPIO_0[32] = 1'b0;
+    assign GPIO_0[33] = 1'b0;
+    assign GPIO_0[34] = oe ? clk_chip     : 1'bz;
+    assign GPIO_0[35] = oe ? hard_reset   : 1'bz;
 
     logic uart_tx;
     // ---- chip -> FPGA  (GPIO_1, inputs) ----
-    assign tx_data  = GPIO_1[16:0];
-    assign tx_clk   = GPIO_1[17];
-    assign tx_valid = GPIO_1[18];
-    assign rx_token = GPIO_1[19];
-    assign scan_out = GPIO_1[20];
-    assign GPIO_1[20:0]  = {21{1'bz}};     // chip -> FPGA inputs
-    assign GPIO_1[21]    = uart_tx;        // UART TX to the PC (3.3 V adapter RX, shared GND)
-    assign GPIO_1[35:22] = {14{1'bz}};
+    // assign tx_data  = GPIO_1[16:0];
+    // assign tx_clk   = GPIO_1[17];
+    // assign tx_valid = GPIO_1[18];
+    // assign rx_token = GPIO_1[19];
+    // assign scan_out = GPIO_1[20];
+    // assign GPIO_1[20:0]  = {21{1'bz}};     // chip -> FPGA inputs
+    // assign GPIO_1[21]    = uart_tx;        // UART TX to the PC (3.3 V adapter RX, shared GND)
+    // assign GPIO_1[35:22] = {14{1'bz}};
+
+    // ---- NEW chip -> FPGA on GPIO_1; ground wires are included every two wires
+    assign tx_data[0]  = GPIO_1[0];
+    assign GPIO_1[1]   = 1'b0;
+    assign tx_data[1]  = GPIO_1[2];
+    assign tx_data[2]  = GPIO_1[3];
+    assign GPIO_1[4]   = 1'b0;
+    assign tx_data[3]  = GPIO_1[5];
+    assign tx_data[4]  = GPIO_1[6];
+    assign GPIO_1[7]   = 1'b0;
+    assign tx_data[5]  = GPIO_1[8];
+    assign tx_data[6]  = GPIO_1[9];
+    assign GPIO_1[10]  = 1'b0;
+    assign tx_data[7]  = GPIO_1[11];
+    assign tx_data[8]  = GPIO_1[12];
+    assign GPIO_1[13]  = 1'b0;
+    assign tx_data[9]  = GPIO_1[14];
+    assign tx_data[10] = GPIO_1[15];
+    assign GPIO_1[16]  = 1'b0;
+    assign tx_data[11] = GPIO_1[17];
+    assign tx_data[12] = GPIO_1[18];
+    assign GPIO_1[19]  = 1'b0;
+    assign tx_data[13] = GPIO_1[20];
+    assign tx_data[14] = GPIO_1[21];
+    assign GPIO_1[22]  = 1'b0;
+    assign tx_data[15] = GPIO_1[23];
+    assign tx_data[16] = GPIO_1[24];
+    assign GPIO_1[25]  = 1'b0;
+    assign GPIO_1[26]  = 1'b0;
+    assign tx_clk      = GPIO_1[27];
+    assign tx_valid    = GPIO_1[28];
+    assign GPIO_1[29]  = 1'b0;
+    assign GPIO_1[30]  = 1'b0;
+    assign rx_token    = GPIO_1[31];
+    assign GPIO_1[32]  = 1'b0;
+    assign GPIO_1[33]  = 1'b0;
+    assign GPIO_1[34]  = 1'b0;
+    assign GPIO_1[35]  = uart_tx;
 
     // ---- LEDs, displays, UART ----
     logic [9:0] ledr;
     bringup_io #(.CLK_HZ(50_000_000)) u_io (
-         .clk_i        (clk)
-        ,.rst_i        (rst)
+         .clk_i        (CLOCK_50)
+        ,.rst_i        (rst50)
         ,.run_i        (run)
         ,.trace_ready_i(trace_ready)
         ,.done_i       (done)
