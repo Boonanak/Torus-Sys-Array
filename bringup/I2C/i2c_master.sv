@@ -3,28 +3,29 @@
 // Company:  www.circuitden.com
 // Engineer: Artin Isagholian
 //           artinisagholian@gmail.com
-// 
+//
 // Create Date: 01/20/2021 05:47:22 PM
-// Design Name: 
+// Design Name:
 // Module Name: i2c_master
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
+// Project Name:
+// Target Devices:
+// Tool Versions:
+// Description:
+//
 // Dependencies: cycle_timer.sv
-// 
+//
 // Revision:
 // Revision 0.01 - File Created
 // Additional Comments:
-// 
+//
 //////////////////////////////////////////////////////////////////////////////////
 module i2c_master#(
-    parameter integer unsigned NUMBER_OF_DATA_BYTES         = 1,
-    parameter integer unsigned NUMBER_OF_REGISTER_BYTES     = 1,
-    parameter integer unsigned ADDRESS_WIDTH                = 7,
-    parameter integer unsigned CHECK_FOR_CLOCK_STRETCHING   = 1,    //set to non zero value to enable
-    parameter integer unsigned CLOCK_STRETCHING_MAX_COUNT   = 'hFF  //set to 0 to disable, max number of divider ticks to wait during stretch check
+    parameter NUMBER_OF_DATA_BYTES          = 1,
+    parameter NUMBER_OF_REGISTER_BYTES      = 1,
+    parameter ADDRESS_WIDTH                 = 7,
+    parameter CHECK_FOR_CLOCK_STRETCHING    = 1,
+    parameter CLOCK_STRETCHING_TIMER_WIDTH  = 16,
+    parameter CLOCK_STRETCHING_MAX_COUNT    = 'hFF //set to 0 to disable, max number of divider ticks to wait during stretch check
 )(
     input   wire                                        clock,
     input   wire                                        reset_n,
@@ -36,7 +37,7 @@ module i2c_master#(
     input   wire    [15:0]                              divider,
 
     output  reg     [(NUMBER_OF_DATA_BYTES*8)-1:0]      miso_data,
-    output  logic                                       busy,
+    output  reg                                         busy,
 
     inout                                               external_serial_data,
     inout                                               external_serial_clock
@@ -49,6 +50,7 @@ i2c_master #(
     .NUMBER_OF_REGISTER_BYTES       (1),
     .ADDRESS_WIDTH                  (7),
     .CHECK_FOR_CLOCK_STRETCHING     (1),
+    .CLOCK_STRETCHING_TIMER_WIDTH   (16),
     .CLOCK_STRETCHING_MAX_COUNT     ('hFF)
 )
 i2c_master_inst(
@@ -68,12 +70,6 @@ i2c_master_inst(
     .external_serial_clock  ()
 );
 */
-
-localparam DATA_WIDTH                   = (NUMBER_OF_DATA_BYTES != 0) ? (NUMBER_OF_DATA_BYTES * 8) : 8;
-localparam REGISTER_WIDTH               = (NUMBER_OF_REGISTER_BYTES != 0) ? (NUMBER_OF_REGISTER_BYTES * 8) : 8;
-localparam MAX_NUMBER_BYTES             = (DATA_WIDTH > REGISTER_WIDTH) ? (DATA_WIDTH/8) : (REGISTER_WIDTH/8);
-localparam CLOCK_STRETCHING_TIMER_WIDTH = (CLOCK_STRETCHING_MAX_COUNT != 0) ? $clog2(CLOCK_STRETCHING_MAX_COUNT) : 1;
-
 
 wire            timeout_cycle_timer_clock;
 wire            timeout_cycle_timer_reset_n;
@@ -110,6 +106,10 @@ typedef enum
     S_WRITE_REG_DATA        = 10,
     S_SEND_ACK              = 11
 } state_type;
+
+localparam DATA_WIDTH       = (NUMBER_OF_DATA_BYTES * 8);
+localparam REGISTER_WIDTH   = (NUMBER_OF_REGISTER_BYTES * 8);
+localparam MAX_NUMBER_BYTES = (NUMBER_OF_DATA_BYTES > NUMBER_OF_REGISTER_BYTES) ? NUMBER_OF_DATA_BYTES : NUMBER_OF_REGISTER_BYTES;
 
 state_type                                  state;
 state_type                                  _state;
@@ -150,7 +150,7 @@ assign external_serial_data         = (serial_data_output_enable)   ? serial_dat
 
 assign timeout_cycle_timer_clock    = clock;
 assign timeout_cycle_timer_reset_n  = reset_n;
-assign timeout_cycle_timer_enable   = (CLOCK_STRETCHING_MAX_COUNT != 0) ? divider_tick : 0;
+assign timeout_cycle_timer_enable   = divider_tick;
 assign timeout_cycle_timer_count    = CLOCK_STRETCHING_MAX_COUNT;
 
 always_comb begin
@@ -161,6 +161,7 @@ always_comb begin
     _last_acknowledge               = last_acknowledge;
     _miso_data                      = miso_data;
     _saved_read_write               = saved_read_write;
+    _busy                           = busy;
     _divider_counter                = divider_counter;
     _saved_register_address         = saved_register_address;
     _saved_device_address           = saved_device_address;
@@ -171,7 +172,6 @@ always_comb begin
     _byte_counter                   = byte_counter;
     timeout_cycle_timer_load_count  = 0;
     serial_data_output_enable       = 1;
-    busy                            = (state == S_IDLE) ? 0 : 1;
 
     if (divider_counter == divider) begin
         _divider_counter    = 0;
@@ -199,28 +199,12 @@ always_comb begin
             _process_counter                = 0;
             _bit_counter                    = 0;
             _last_acknowledge               = 0;
+            _saved_read_write               = read_write;
+            _saved_register_address         = register_address;
+            _saved_device_address           = {device_address,1'b0};  // write
+            _saved_mosi_data                = mosi_data;
             _serial_data                    = 1;
             _serial_clock                   = 1;
-            _saved_read_write               = read_write;
-
-            if (NUMBER_OF_DATA_BYTES == 0) begin
-                _saved_mosi_data    = '0;
-            end
-            else begin
-                _saved_mosi_data    = mosi_data;
-            end
-            if (NUMBER_OF_REGISTER_BYTES == 0) begin
-                _saved_register_address = '0;
-            end
-            else begin
-                _saved_register_address = register_address;
-            end
-            if (ADDRESS_WIDTH == 0) begin
-                _saved_device_address   = '0;
-            end
-            else begin
-                _saved_device_address   = {device_address, 1'b0};  // write
-            end
 
             if (enable) begin
                 _state      = S_START;
@@ -238,7 +222,8 @@ always_comb begin
                         _process_counter    = 2;
                     end
                     2:  begin
-                        _bit_counter        = ADDRESS_WIDTH + 1;
+                        _serial_clock       = 0;
+                        _bit_counter        = 8;
                         _process_counter    = 3;
                     end
                     3:  begin
@@ -246,6 +231,7 @@ always_comb begin
                         _process_counter        = 0;
                         _state                  = post_state;
                         _serial_data            = saved_device_address[ADDRESS_WIDTH];
+                        _saved_device_address   = {saved_device_address[ADDRESS_WIDTH-1:0], saved_device_address[ADDRESS_WIDTH]};
                     end
                 endcase
             end
@@ -280,8 +266,6 @@ always_comb begin
                         _process_counter    = 3;
                     end
                     3: begin
-                        _process_counter    = 0;
-
                         if (bit_counter == 0) begin
                             _post_serial_data       = saved_register_address[REGISTER_WIDTH-1];
                             _saved_register_address = {saved_register_address[REGISTER_WIDTH-2:0], saved_register_address[REGISTER_WIDTH-1]};
@@ -291,12 +275,10 @@ always_comb begin
                             _byte_counter           = NUMBER_OF_REGISTER_BYTES - 1;
                         end
                         else begin
-                            _serial_data            = saved_device_address[ADDRESS_WIDTH-1];
-                        end
-
-                        if (ADDRESS_WIDTH != 0) begin
+                            _serial_data            = saved_device_address[ADDRESS_WIDTH];
                             _saved_device_address   = {saved_device_address[ADDRESS_WIDTH-1:0], saved_device_address[ADDRESS_WIDTH]};
                         end
+                        _process_counter    = 0;
                     end
                 endcase
             end
@@ -400,7 +382,7 @@ always_comb begin
                         end
                         else begin
                             _serial_data            = saved_register_address[REGISTER_WIDTH-1];
-                            _saved_register_address = {saved_register_address[REGISTER_WIDTH-2:0], saved_register_address[REGISTER_WIDTH-1]}; 
+                            _saved_register_address = {saved_register_address[REGISTER_WIDTH-2:0], saved_register_address[REGISTER_WIDTH-1]};
                         end
                         _process_counter    = 0;
                     end
@@ -480,14 +462,8 @@ always_comb begin
                     3: begin
                         _state                      = S_START;
                         _post_state                 = S_WRITE_ADDR_R;
+                        _saved_device_address       = {saved_device_address[ADDRESS_WIDTH:1],1'b1};    // read
                         _process_counter            = 0;
-
-                        if (ADDRESS_WIDTH == 0) begin
-                            _saved_device_address   = '1;
-                        end
-                        else begin
-                            _saved_device_address[0]    = 1; //read
-                        end
                     end
                 endcase
             end
@@ -496,7 +472,7 @@ always_comb begin
             if (process_counter == 3 && bit_counter == 0) begin
                 serial_data_output_enable   = 0;
             end
-            
+
             if (divider_tick) begin
                 case (process_counter)
                     0: begin
@@ -522,8 +498,6 @@ always_comb begin
                         _process_counter    = 3;
                     end
                     3: begin
-                        _process_counter    = 0;
-
                         if (bit_counter == 0) begin
                             _post_state         = S_READ_REG;
                             _post_serial_data   = 0;
@@ -532,18 +506,16 @@ always_comb begin
                             _byte_counter       = NUMBER_OF_DATA_BYTES - 1;
                         end
                         else begin
-                            _serial_data            = saved_device_address[ADDRESS_WIDTH-1];
-                        end
-
-                        if (ADDRESS_WIDTH != 0) begin
+                            _serial_data            = saved_device_address[ADDRESS_WIDTH];
                             _saved_device_address   = {saved_device_address[ADDRESS_WIDTH-1:0], saved_device_address[ADDRESS_WIDTH]};
                         end
+                        _process_counter    = 0;
                     end
                 endcase
             end
         end
         S_READ_REG: begin
-            if (process_counter != 3) begin
+            if (process_counter != 3 || bit_counter != 0) begin
                 serial_data_output_enable   = 0;
             end
 
@@ -690,6 +662,8 @@ always_comb begin
             end
         end
     endcase
+
+    _busy = (_state != S_IDLE);
 end
 
 always_ff @(posedge clock) begin
@@ -708,6 +682,7 @@ always_ff @(posedge clock) begin
         serial_clock            <= 0;
         serial_data             <= 0;
         post_serial_data        <= 0;
+        busy                    <= 0;
         byte_counter            <= 0;
     end
     else begin
@@ -725,8 +700,9 @@ always_ff @(posedge clock) begin
         serial_clock            <= _serial_clock;
         serial_data             <= _serial_data;
         post_serial_data        <= _post_serial_data;
+        busy                    <= _busy;
         byte_counter            <= _byte_counter;
     end
  end
-    
-endmodule 
+
+endmodule

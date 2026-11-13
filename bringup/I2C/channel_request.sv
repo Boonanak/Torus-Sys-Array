@@ -40,9 +40,9 @@ module channel_request (
 	// I2C address of device
 	localparam logic [6:0] DEVICE_ADDRESS = 7'h40;
 	
-	// Clock Divider equation (type real so that integer division is avoided)
+	// Clock Divider equation
 	localparam int CLOCK_SPEED_HZ     = 50_000_000;
-	localparam int I2C_CLOCK_SPEED_HZ = 400_000;
+	localparam int I2C_CLOCK_SPEED_HZ = 400_000; // target I2C Clock speed
 	localparam int DIVIDER = ((CLOCK_SPEED_HZ + (4*I2C_CLOCK_SPEED_HZ) - 1) / (4*I2C_CLOCK_SPEED_HZ)) - 1;
 
 	// I2C Signals
@@ -71,6 +71,7 @@ module channel_request (
 	
 	// State Advancement
 	always_ff @(posedge clk) begin
+		data_in <= '0; // data is never written
 		if (rst) begin
 			curr <= IDLE;
 		end else begin 
@@ -111,6 +112,7 @@ module channel_request (
 		 .NUMBER_OF_REGISTER_BYTES       (1),
 		 .ADDRESS_WIDTH                  (7),
 		 .CHECK_FOR_CLOCK_STRETCHING     (1),
+		 .CLOCK_STRETCHING_TIMER_WIDTH	 (16),
 		 .CLOCK_STRETCHING_MAX_COUNT     ('hFF)
 	)
 	i2c_master_inst(
