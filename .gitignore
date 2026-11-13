@@ -30,3 +30,6 @@ Verdi.*
 # ignore files created for svlangserver
 .vscode/*
 .rules.verible_lint
+
+#ignore quartus .bak files
+/bringup/I2C/*.bak
